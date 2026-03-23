@@ -13,6 +13,9 @@ public class Course : BaseEntity
     private readonly List<Enrollment> _enrollments = new();
     public IReadOnlyCollection<Enrollment> Enrollments => _enrollments.AsReadOnly();
 
+    private readonly List<Assignment> _assignments = new();
+    public IReadOnlyCollection<Assignment> Assignments => _assignments.AsReadOnly();
+
     public int LessonCount => _lessons.Count;
 
     // Factory

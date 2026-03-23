@@ -63,3 +63,4 @@ obj/
 # Rider / VS Code (optional)
 .idea/
 .vscode/
+/Backend/LMS.Api/appsettings.Development.json
