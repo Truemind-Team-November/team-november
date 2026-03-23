@@ -48,6 +48,14 @@ public class CourseConfiguration : IEntityTypeConfiguration<Course>
         builder.Navigation(x => x.Enrollments)
                .UsePropertyAccessMode(PropertyAccessMode.Field);
 
+       builder.Metadata
+             .FindNavigation(nameof(Course.Lessons))!
+             .SetField("_lessons");
+
+      builder.Metadata
+            .FindNavigation(nameof(Course.Enrollments))!
+            .SetField("_enrollments");
+
         // 🔥 Ignore computed property
         builder.Ignore(x => x.LessonCount);
     }

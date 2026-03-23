@@ -21,7 +21,15 @@ public class ExceptionMiddleware
         {
             _logger.LogError(ex, "Unhandled exception occurred");
 
+            if (context.Response.HasStarted)
+            {
+                _logger.LogWarning("Response already started, cannot handle exception");
+                throw;
+            }
+
+            context.Response.Clear();
             context.Response.ContentType = "application/json";
+
             context.Response.StatusCode = ex switch
             {
                 UnauthorizedAccessException => StatusCodes.Status401Unauthorized,
@@ -33,8 +41,9 @@ public class ExceptionMiddleware
             var response = new
             {
                 success = false,
-                message = context.Response.StatusCode == 500 ? "An unexpected error occurred"
-                : ex.Message
+                message = context.Response.StatusCode == 500
+                    ? "An unexpected error occurred"
+                    : ex.Message
             };
 
             await context.Response.WriteAsJsonAsync(response);

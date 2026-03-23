@@ -18,7 +18,6 @@ public class RequestResponseLoggingMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
-        // Skip unnecessary paths
         if (IsStaticFile(context.Request.Path) ||
             context.Request.Path.StartsWithSegments("/swagger"))
         {
@@ -30,7 +29,7 @@ public class RequestResponseLoggingMiddleware
 
         var originalBodyStream = context.Response.Body;
 
-        using var responseBody = new MemoryStream();
+        var responseBody = new MemoryStream(); // ❌ removed "using"
         context.Response.Body = responseBody;
 
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
@@ -39,13 +38,27 @@ public class RequestResponseLoggingMiddleware
         {
             await _next(context);
         }
+        catch
+        {
+            // reset stream before rethrow so exception middleware works
+            context.Response.Body = originalBodyStream;
+            throw;
+        }
         finally
         {
             stopwatch.Stop();
 
-            await LogResponse(context, stopwatch.ElapsedMilliseconds);
             responseBody.Seek(0, SeekOrigin.Begin);
+
+            await LogResponse(context, stopwatch.ElapsedMilliseconds);
+
+            responseBody.Seek(0, SeekOrigin.Begin);
+
             await responseBody.CopyToAsync(originalBodyStream);
+
+            context.Response.Body = originalBodyStream;
+
+            await responseBody.DisposeAsync(); // dispose AFTER copying
         }
     }
 
@@ -83,10 +96,14 @@ public class RequestResponseLoggingMiddleware
 
         string responseBody = "[Empty]";
 
-        // Only log JSON responses (avoid large files)
         if (context.Response.ContentType?.Contains("application/json") == true)
         {
-            using var reader = new StreamReader(context.Response.Body);
+            using var reader = new StreamReader(
+                context.Response.Body,
+                Encoding.UTF8,
+                leaveOpen: true
+            );
+
             responseBody = await reader.ReadToEndAsync();
         }
 

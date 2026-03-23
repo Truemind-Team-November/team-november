@@ -19,11 +19,11 @@ public class LessonContentConfiguration : IEntityTypeConfiguration<LessonContent
 
         // 🔹 TextContent (optional)
         builder.Property(x => x.TextContent)
-               .HasColumnType("nvarchar(max)");
+              .HasColumnType("text");
 
         // 🔹 Relationship with Lesson
         builder.HasOne(x => x.Lesson)
-               .WithMany("_contents")
+               .WithMany(x => x.Contents)
                .HasForeignKey(x => x.LessonId)
                .OnDelete(DeleteBehavior.Cascade);
 

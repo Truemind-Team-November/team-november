@@ -1,5 +1,4 @@
-﻿using LMS.Domain.Entities;
-
+﻿namespace LMS.Domain.Entities;
 public class LessonProgress : BaseEntity
 {
     public Guid UserId { get; private set; }

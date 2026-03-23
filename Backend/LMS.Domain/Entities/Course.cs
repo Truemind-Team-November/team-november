@@ -1,5 +1,4 @@
-﻿using LMS.Domain.Entities;
-
+﻿namespace LMS.Domain.Entities;
 public class Course : BaseEntity
 {
     public string Title { get; private set; } = default!;
