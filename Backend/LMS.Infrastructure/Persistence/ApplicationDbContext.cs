@@ -1,6 +1,7 @@
+using System.Linq.Expressions;
+using System.Reflection;
 using LMS.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
-using System.Reflection;
 
 namespace LMS.Infrastructure.Persistence;
 
@@ -20,7 +21,31 @@ public class ApplicationDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
         base.OnModelCreating(modelBuilder);
+        modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes()
+            .Where(e => typeof(BaseEntity).IsAssignableFrom(e.ClrType)))
+        {
+            modelBuilder.Entity(entityType.ClrType)
+                .HasQueryFilter(CreateFilterExpression(entityType.ClrType));
+        }
+    }
+    private static readonly Dictionary<Type, LambdaExpression> _filters = new();
+
+    private static LambdaExpression CreateFilterExpression(Type entityType)
+    {
+        if (_filters.TryGetValue(entityType, out var filter))
+            return filter;
+
+        var parameter = Expression.Parameter(entityType, "e");
+        var property = Expression.Property(parameter, nameof(BaseEntity.IsDeleted));
+        var condition = Expression.Equal(property, Expression.Constant(false, typeof(bool)));
+
+        var lambda = Expression.Lambda(condition, parameter);
+
+        _filters[entityType] = lambda;
+
+        return lambda;
     }
 }

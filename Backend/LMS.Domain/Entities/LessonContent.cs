@@ -1,6 +1,5 @@
-﻿using LMS.Domain.Entities;
-using LMS.Domain.Enums;
-
+﻿using LMS.Domain.Enums;
+namespace LMS.Domain.Entities;
 public class LessonContent : BaseEntity
 {
     public Guid LessonId { get; private set; }

@@ -1,12 +1,11 @@
-﻿using LMS.Domain.Entities;
-
+﻿namespace LMS.Domain.Entities;
 public class Enrollment : BaseEntity
 {
     public Guid UserId { get; private set; }
-    public User User { get; private set; } = default!; // 🔥 navigation
+    public User User { get; private set; } = default!; 
 
     public Guid CourseId { get; private set; }
-    public Course Course { get; private set; } = default!; // 🔥 navigation
+    public Course Course { get; private set; } = default!; 
 
     public DateTime EnrolledAt { get; private set; }
 

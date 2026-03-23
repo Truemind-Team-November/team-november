@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json.Serialization;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using LMS.Api.Extensions;
@@ -7,9 +8,12 @@ using LMS.Application.Interfaces.Repositories;
 using LMS.Application.Interfaces.Services;
 using LMS.Application.Services;
 using LMS.Application.Validators.Lesson;
+using LMS.Domain.Entities;
+using LMS.Domain.Enums;
 using LMS.Infrastructure.Persistence;
 using LMS.Infrastructure.Repositories;
 using LMS.Infrastructure.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -54,10 +58,9 @@ var secret = jwtSection["Secret"];
 if (string.IsNullOrWhiteSpace(secret))
 {  
     throw new InvalidOperationException("JWT Secret is not configured");
-} 
-const string scheme = "Bearer";
-builder.Services.AddAuthentication(scheme)
-    .AddJwtBearer(scheme,options =>
+}
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
         {
@@ -72,7 +75,11 @@ builder.Services.AddAuthentication(scheme)
         };
     });
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 
 // 🔹 7. Swagger (with JWT Support)
 builder.Services.AddEndpointsApiExplorer();
@@ -99,7 +106,48 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    try
+    {
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
+
+        db.Database.Migrate();
+
+        if (!db.Users.Any())
+        {
+            var user = User.Create(
+                "Admin",
+                "User",
+                "admin@lms.com",
+                hasher.HashPassword("Admin@123"),
+                UserRole.Admin
+
+            );
+
+            db.Users.Add(user);
+            db.SaveChanges();
+        }
+    }
+    catch (Exception ex)
+    {
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Migration failed");
+    }
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -107,12 +155,18 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHsts();
+}
 app.UseGlobalExceptionHandler();
-app.UseRequestResponseLogging();     
-
-
 app.UseHttpsRedirection();
 
+app.UseRequestResponseLogging();
+
+
+app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 

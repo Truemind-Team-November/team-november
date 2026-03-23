@@ -2,6 +2,7 @@ using LMS.Application.Common;
 using LMS.Application.DTOs.Lesson;
 using LMS.Application.Interfaces.Repositories;
 using LMS.Application.Interfaces.Services;
+using LMS.Domain.Entities;
 using LMS.Domain.Enums;
 
 namespace LMS.Application.Services;

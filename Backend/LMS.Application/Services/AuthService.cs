@@ -3,6 +3,7 @@ using LMS.Application.DTOs.Auth;
 using LMS.Application.Interfaces.Repositories;
 using LMS.Application.Interfaces.Services;
 using LMS.Domain.Entities;
+using LMS.Domain.Enums;
 
 namespace LMS.Application.Services;
 
@@ -26,9 +27,10 @@ public class AuthService : IAuthService
     }
     public async Task<BaseResponse<AuthResponse>> RegisterAsync(RegisterRequest request)
     {
-         var email = request.Email.Trim().ToLower();
+        var email = request.Email.Trim().ToLowerInvariant();
+
         var existingUser = await _userRepository.GetByEmailAsync(email);
-        if (existingUser != null)
+        if (existingUser != null && existingUser.IsActive)
         {
             return BaseResponse<AuthResponse>.Fail("Email already exists");
         }
@@ -39,7 +41,8 @@ public class AuthService : IAuthService
             request.FirstName,
             request.LastName,
             email,
-            hashedPassword
+            hashedPassword,
+            UserRole.Learner
         );
 
         await _userRepository.AddAsync(user);
@@ -47,21 +50,31 @@ public class AuthService : IAuthService
 
         var token = _jwtService.GenerateToken(user.Id, user.Email, user.Role.ToString());
 
-        var response = new AuthResponse(user.Id, user.FirstName, user.LastName, user.Email, user.Role.ToString(), token);
+        var response = new AuthResponse(
+            user.Id,
+            user.FirstName,
+            user.LastName,
+            user.Email,
+            user.Role,
+            token
+        );
 
         return BaseResponse<AuthResponse>.Ok(response, "User registered successfully");
     }
 
     public async Task<BaseResponse<AuthResponse>> LoginAsync(LoginRequest request)
     {
-        var email = request.Email.Trim().ToLower();
+        var email = request.Email.Trim().ToLowerInvariant();
+
         var user = await _userRepository.GetByEmailAsync(email);
-        if (user == null)
+
+        if (user == null || !user.IsActive)
         {
             return BaseResponse<AuthResponse>.Fail("Invalid email or password");
         }
 
         var isValid = _passwordHasher.VerifyPassword(request.Password, user.PasswordHash);
+
         if (!isValid)
         {
             return BaseResponse<AuthResponse>.Fail("Invalid email or password");
@@ -69,7 +82,14 @@ public class AuthService : IAuthService
 
         var token = _jwtService.GenerateToken(user.Id, user.Email, user.Role.ToString());
 
-        var response = new AuthResponse(user.Id, user.FirstName, user.LastName, user.Email, user.Role.ToString(), token);
+        var response = new AuthResponse(
+            user.Id,
+            user.FirstName,
+            user.LastName,
+            user.Email,
+            user.Role,
+            token
+        );
 
         return BaseResponse<AuthResponse>.Ok(response, "Login successful");
     }

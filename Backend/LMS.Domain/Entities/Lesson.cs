@@ -1,5 +1,4 @@
-﻿using LMS.Domain.Entities;
-
+﻿namespace LMS.Domain.Entities;
 public class Lesson : BaseEntity
 {
     public Guid CourseId { get; private set; }

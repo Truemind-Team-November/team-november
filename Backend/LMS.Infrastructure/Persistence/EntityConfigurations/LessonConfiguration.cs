@@ -18,10 +18,10 @@ public class LessonConfiguration : IEntityTypeConfiguration<Lesson>
                .IsRequired();
 
         // Course relationship (VERY IMPORTANT)
-        builder.HasOne(x => x.Course)
-               .WithMany("_lessons")
-               .HasForeignKey(x => x.CourseId)
-               .OnDelete(DeleteBehavior.Cascade);
+       builder.HasOne(x => x.Course)
+       .WithMany(x => x.Lessons)
+       .HasForeignKey(x => x.CourseId)
+       .OnDelete(DeleteBehavior.Cascade);
 
         // Audit fields
         builder.Property(x => x.CreatedAt)
@@ -37,6 +37,10 @@ public class LessonConfiguration : IEntityTypeConfiguration<Lesson>
 
         builder.Navigation(x => x.Contents)
                .UsePropertyAccessMode(PropertyAccessMode.Field);
+       
+        builder.Metadata
+               .FindNavigation(nameof(Lesson.Contents))!
+               .SetField("_contents");
 
         // Unique order per course
         builder.HasIndex(x => new { x.CourseId, x.Order })
