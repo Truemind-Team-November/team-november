@@ -18,6 +18,9 @@ public class ApplicationDbContext : DbContext
     public DbSet<Enrollment> Enrollments => Set<Enrollment>();
     public DbSet<Progress> Progresses => Set<Progress>();
     public DbSet<LessonProgress> LessonProgresses => Set<LessonProgress>();
+    public DbSet<Assignment> Assignments => Set<Assignment>();
+    public DbSet<Submission> Submissions => Set<Submission>();
+    public DbSet<Certificate> Certificates => Set<Certificate>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

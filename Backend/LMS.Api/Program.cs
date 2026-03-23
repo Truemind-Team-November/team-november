@@ -31,6 +31,9 @@ builder.Services.AddScoped<ILessonRepository, LessonRepository>();
 builder.Services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
 builder.Services.AddScoped<IProgressRepository, ProgressRepository>();
 builder.Services.AddScoped<ILessonProgressRepository, LessonProgressRepository>();
+builder.Services.AddScoped<IAssignmentRepository, AssignmentRepository>();
+builder.Services.AddScoped<ISubmissionRepository, SubmissionRepository>();
+builder.Services.AddScoped<ICertificateRepository, CertificateRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 // 🔹 3. Register Services
@@ -39,6 +42,8 @@ builder.Services.AddScoped<ICourseService, CourseService>();
 builder.Services.AddScoped<ILessonService, LessonService>();
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 builder.Services.AddScoped<IProgressService, ProgressService>();
+builder.Services.AddScoped<IAssignmentService, AssignmentService>();
+builder.Services.AddScoped<ICertificateService, CertificateService>();
 
 // 🔹 4. Shared Infrastructure
 builder.Services.AddHttpContextAccessor();
