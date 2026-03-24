@@ -21,7 +21,7 @@ public class LessonRepository : ILessonRepository
             .FirstOrDefaultAsync(l => l.Id == id);
     }
 
-    public async Task<IEnumerable<Lesson>> GetAllAsync()
+    public async Task<List<Lesson>> GetAllAsync()
     {
         return await _context.Lessons
             .Include(l => l.Contents)

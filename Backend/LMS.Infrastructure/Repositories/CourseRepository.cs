@@ -22,7 +22,7 @@ public class CourseRepository : ICourseRepository
             .FirstOrDefaultAsync(c => c.Id == id);
     }
 
-    public async Task<IEnumerable<Course>> GetAllAsync()
+    public async Task<List<Course>> GetAllAsync()
     {
         return await _context.Courses.Include(c => c.Instructor).ToListAsync();
     }

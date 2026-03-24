@@ -19,7 +19,7 @@ public class ProgressRepository : IProgressRepository
         return await _context.Progresses.FindAsync(id);
     }
 
-    public async Task<IEnumerable<Progress>> GetAllAsync()
+    public async Task<List<Progress>> GetAllAsync()
     {
         return await _context.Progresses.ToListAsync();
     }

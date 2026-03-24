@@ -10,11 +10,13 @@ public class SubmitAssignmentRequestValidator : AbstractValidator<SubmitAssignme
         RuleFor(x => x.AssignmentId)
             .NotEmpty().WithMessage("Assignment is required");
 
-        RuleFor(x => x.UserId)
-            .NotEmpty().WithMessage("User is required");
+        RuleFor(x => x.AssignmentId)
+                    .NotEmpty().WithMessage("Assignment is required");
 
         RuleFor(x => x.Answer)
-            .NotEmpty().WithMessage("Answer is required")
+            .NotEmpty()
+            .Must(a => !string.IsNullOrWhiteSpace(a))
+            .WithMessage("Answer cannot be empty")
             .MaximumLength(5000).WithMessage("Answer must not exceed 5000 characters");
     }
 }
