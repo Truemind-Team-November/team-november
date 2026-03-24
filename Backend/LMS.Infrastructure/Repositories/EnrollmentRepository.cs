@@ -19,7 +19,7 @@ public class EnrollmentRepository : IEnrollmentRepository
         return await _context.Enrollments.FindAsync(id);
     }
 
-    public async Task<IEnumerable<Enrollment>> GetAllAsync()
+    public async Task<List<Enrollment>> GetAllAsync()
     {
         return await _context.Enrollments.ToListAsync();
     }

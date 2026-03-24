@@ -19,7 +19,7 @@ public class UserRepository : IUserRepository
         return await _context.Users.FindAsync(id);
     }
 
-    public async Task<IEnumerable<User>> GetAllAsync()
+    public async Task<List<User>> GetAllAsync()
     {
         return await _context.Users.ToListAsync();
     }

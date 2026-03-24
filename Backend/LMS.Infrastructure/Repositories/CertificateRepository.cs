@@ -22,7 +22,7 @@ public class CertificateRepository : ICertificateRepository
             .FirstOrDefaultAsync(c => c.Id == id);
     }
 
-    public async Task<IEnumerable<Certificate>> GetAllAsync()
+    public async Task<List<Certificate>> GetAllAsync()
     {
         return await _context.Certificates
             .Include(c => c.User)
