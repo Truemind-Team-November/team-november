@@ -61,7 +61,7 @@ var jwtSection = builder.Configuration.GetSection("Jwt");
 builder.Services.Configure<JwtOptions>(jwtSection);
 var secret = jwtSection["Secret"];
 if (string.IsNullOrWhiteSpace(secret))
-{  
+{
     throw new InvalidOperationException("JWT Secret is not configured");
 }
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -153,13 +153,9 @@ using (var scope = app.Services.CreateScope())
         logger.LogError(ex, "Migration failed");
     }
 }
+app.UseSwagger();
+app.UseSwaggerUI();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
 
 if (!app.Environment.IsDevelopment())
 {
