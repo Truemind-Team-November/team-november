@@ -18,6 +18,8 @@ public class Course : BaseEntity
 
     public int LessonCount => _lessons.Count;
 
+    private Course() { }
+
     // Factory
     public static Course Create(string title, string description, Guid instructorId)
     {

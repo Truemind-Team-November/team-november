@@ -10,6 +10,8 @@ public class LessonContent : BaseEntity
     public string? Url { get; private set; }
     public string? TextContent { get; private set; }
 
+    private LessonContent() { } // For EF Core
+
     public static LessonContent CreateVideo(Guid lessonId, string url)
     {
         if (lessonId == Guid.Empty)

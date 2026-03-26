@@ -12,6 +12,8 @@ public class Lesson : BaseEntity
 
     public int ContentCount => _contents.Count;
 
+    private Lesson() { } // For EF Core
+
     public static Lesson Create(Guid courseId, string title, int order)
     {
         if (courseId == Guid.Empty)
