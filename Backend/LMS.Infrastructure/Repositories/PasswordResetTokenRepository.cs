@@ -1,4 +1,5 @@
 using LMS.Application.Interfaces.Repositories;
+using LMS.Application.Interfaces.Services;
 using LMS.Domain.Entities;
 using LMS.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -8,6 +9,7 @@ namespace LMS.Infrastructure.Repositories;
 public class PasswordResetTokenRepository : IPasswordResetTokenRepository
 {
     private readonly ApplicationDbContext _context;
+    private readonly IPasswordHasher _passwordHasher;
 
     public PasswordResetTokenRepository(ApplicationDbContext context)
     {
@@ -28,13 +30,6 @@ public class PasswordResetTokenRepository : IPasswordResetTokenRepository
             .ToListAsync();
     }
 
-    public async Task<PasswordResetToken?> GetByTokenAsync(string token)
-    {
-        return await _context.PasswordResetTokens
-            .Include(x => x.User) // needed for reset flow
-            .FirstOrDefaultAsync(x => x.TokenHash == token);
-    }
-
     public async Task AddAsync(PasswordResetToken entity)
     {
         await _context.PasswordResetTokens.AddAsync(entity);
@@ -50,5 +45,29 @@ public class PasswordResetTokenRepository : IPasswordResetTokenRepository
     {
         _context.PasswordResetTokens.Remove(entity);
         return Task.CompletedTask;
+    }
+
+    public async Task<List<PasswordResetToken>> GetValidTokensAsync()
+    {
+        return await _context.PasswordResetTokens
+            .Include(t => t.User)
+            .Where(t => !t.IsUsed && t.ExpiresAt > DateTime.UtcNow)
+            .ToListAsync();
+    }
+
+    public async Task<int> InvalidateUserTokensAsync(Guid userId)
+    {
+        var tokens = await _context.PasswordResetTokens
+        .Where(t => t.UserId == userId
+         && !t.IsUsed
+         && t.ExpiresAt > DateTime.UtcNow)
+        .ToListAsync();
+
+        foreach (var token in tokens)
+        {
+            token.MarkAsUsed();
+        }
+
+        return tokens.Count;
     }
 }

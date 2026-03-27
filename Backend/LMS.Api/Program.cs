@@ -44,6 +44,10 @@ builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 builder.Services.AddScoped<IProgressService, ProgressService>();
 builder.Services.AddScoped<IAssignmentService, AssignmentService>();
 builder.Services.AddScoped<ICertificateService, CertificateService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<ISubmissionService, SubmissionService>();
+builder.Services.AddHostedService<TokenCleanupService>();
+
 
 // 🔹 4. Shared Infrastructure
 builder.Services.AddHttpContextAccessor();

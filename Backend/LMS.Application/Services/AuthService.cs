@@ -1,9 +1,11 @@
 using LMS.Application.Common;
 using LMS.Application.DTOs.Auth;
+using LMS.Application.Email;
 using LMS.Application.Interfaces.Repositories;
 using LMS.Application.Interfaces.Services;
 using LMS.Domain.Entities;
 using LMS.Domain.Enums;
+using Microsoft.Extensions.Configuration;
 
 namespace LMS.Application.Services;
 
@@ -14,19 +16,25 @@ public class AuthService : IAuthService
     private readonly IJwtService _jwtService;
     private readonly IPasswordResetTokenRepository _tokenRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IEmailService _emailService;
+    private readonly IConfiguration _config;
 
     public AuthService(
         IUserRepository userRepository,
         IPasswordHasher passwordHasher,
         IJwtService jwtService,
         IPasswordResetTokenRepository tokenRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IEmailService emailService,
+        IConfiguration config)
     {
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
         _jwtService = jwtService;
         _tokenRepository = tokenRepository;
         _unitOfWork = unitOfWork;
+        _emailService = emailService;
+        _config = config;
     }
     public async Task<BaseResponse<AuthResponse>> RegisterAsync(RegisterRequest request)
     {
@@ -50,6 +58,10 @@ public class AuthService : IAuthService
 
         await _userRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
+
+        var html = EmailTemplates.Welcome($"{user.FirstName} {user.LastName}");
+
+        await _emailService.SendEmailAsync(user.Email, "Welcome to LMS", html);
 
         var token = _jwtService.GenerateToken(user.Id, user.Email, user.Role.ToString());
 
@@ -103,25 +115,37 @@ public class AuthService : IAuthService
 
         var user = await _userRepository.GetByEmailAsync(email);
 
-        // Don't expose existence
         if (user == null || !user.IsActive)
             return BaseResponse<string>.Ok("If the email exists, a reset link has been sent");
 
-        var token = Guid.NewGuid().ToString();
+        await _tokenRepository.InvalidateUserTokensAsync(user.Id);
+
+        var rawToken = Guid.NewGuid().ToString();
+
+        var tokenHash = _passwordHasher.HashPassword(rawToken);
 
         var resetToken = PasswordResetToken.Create(
             user.Id,
-            token,
+            tokenHash,
             DateTime.UtcNow.AddMinutes(15)
         );
 
         await _tokenRepository.AddAsync(resetToken);
         await _unitOfWork.SaveChangesAsync();
 
-        // TEMP (until email service)
-        Console.WriteLine($"RESET TOKEN: {token}");
+        var frontendUrl = _config["App:FrontendUrl"];
 
-        return BaseResponse<string>.Ok("Reset token generated (check console)");
+        var resetLink = $"{frontendUrl}/reset-password?token={rawToken}";
+
+        var html = EmailTemplates.PasswordReset(resetLink);
+
+        await _emailService.SendEmailAsync(
+            user.Email,
+            "Reset your password",
+            html
+        );
+
+        return BaseResponse<string>.Ok("If the email exists, a reset link has been sent");
     }
 
     public async Task<BaseResponse<string>> ResetPasswordAsync(ResetPasswordRequest request)
@@ -129,12 +153,23 @@ public class AuthService : IAuthService
         if (request.Password != request.ConfirmPassword)
             return BaseResponse<string>.Fail("Passwords do not match");
 
-        var token = await _tokenRepository.GetByTokenAsync(request.Token);
+        var tokens = await _tokenRepository.GetValidTokensAsync();
 
-        if (token == null || token.IsUsed || token.Expiry < DateTime.UtcNow)
+        PasswordResetToken? matchedToken = null;
+
+        foreach (var token in tokens)
+        {
+            if (_passwordHasher.VerifyPassword(request.Token, token.TokenHash))
+            {
+                matchedToken = token;
+                break;
+            }
+        }
+
+        if (matchedToken == null)
             return BaseResponse<string>.Fail("Invalid or expired token");
 
-        var user = token.User;
+        var user = matchedToken.User;
 
         if (user == null || !user.IsActive)
             return BaseResponse<string>.Fail("User not found");
@@ -143,11 +178,10 @@ public class AuthService : IAuthService
 
         user.SetPassword(hashedPassword);
 
-        token.MarkAsUsed();
+        matchedToken.MarkAsUsed();
 
         await _unitOfWork.SaveChangesAsync();
 
         return BaseResponse<string>.Ok("Password reset successful");
-
     }
 }

@@ -7,14 +7,14 @@ public class PasswordResetToken : BaseEntity
 
     public string TokenHash { get; private set; } = default!;
 
-    public DateTime Expiry { get; private set; }
+    public DateTime ExpiresAt { get; private set; }
     public bool IsUsed { get; private set; }
     public DateTime? UsedAt { get; private set; }
 
     private PasswordResetToken() { }
 
     // ?? Factory
-    public static PasswordResetToken Create(Guid userId, string tokenHash, DateTime expiry)
+    public static PasswordResetToken Create(Guid userId, string tokenHash, DateTime expiresAt)
     {
         if (userId == Guid.Empty)
             throw new ArgumentException("User is required");
@@ -26,7 +26,7 @@ public class PasswordResetToken : BaseEntity
         {
             UserId = userId,
             TokenHash = tokenHash,
-            Expiry = expiry,
+            ExpiresAt = expiresAt,
             IsUsed = false
         };
     }
@@ -43,7 +43,7 @@ public class PasswordResetToken : BaseEntity
 
     public bool IsExpired()
     {
-        return DateTime.UtcNow > Expiry;
+        return DateTime.UtcNow > ExpiresAt;
     }
 
 }
