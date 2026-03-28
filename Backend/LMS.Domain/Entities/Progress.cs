@@ -13,6 +13,8 @@ public class Progress : BaseEntity
     public User User { get; private set; } = default!;
     public Course Course { get; private set; } = default!;
 
+    private Progress() { }
+
     // Factory
     public static Progress Create(Guid userId, Guid courseId, int totalLessons)
     {

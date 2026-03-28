@@ -11,6 +11,7 @@ public class LessonProgress : BaseEntity
     public User User { get; private set; } = default!;
     public Lesson Lesson { get; private set; } = default!;
 
+    private LessonProgress() { } // EF Core
     // Factory
     public static LessonProgress Create(Guid userId, Guid lessonId)
     {

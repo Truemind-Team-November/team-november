@@ -12,6 +12,8 @@ public class Assignment : BaseEntity
     private readonly List<Submission> _submissions = new();
     public IReadOnlyCollection<Submission> Submissions => _submissions.AsReadOnly();
 
+    private Assignment() { }
+
     // Factory
     public static Assignment Create(Guid courseId, string title, string description, DateTime dueDate)
     {

@@ -19,6 +19,8 @@ public class User : BaseEntity
 
     public string FullName => $"{FirstName} {LastName}";
 
+    private User() { }
+
     public static User Create(string firstName, string lastName, string email, string passwordHash, UserRole role)
     {
         if (string.IsNullOrWhiteSpace(firstName))
@@ -57,4 +59,15 @@ public class User : BaseEntity
         Role = role;
         SetUpdated();
     }
+
+    public void SetPassword(string hashedPassword)
+    {
+        if (string.IsNullOrWhiteSpace(hashedPassword))
+            throw new ArgumentException("Password hash is required");
+
+        PasswordHash = hashedPassword;
+        SetUpdated();
+    }
+
+
 }

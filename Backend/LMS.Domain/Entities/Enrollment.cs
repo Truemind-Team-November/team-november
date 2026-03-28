@@ -14,6 +14,8 @@ public class Enrollment : BaseEntity
 
     public bool IsActive => !IsCompleted;
 
+    private Enrollment() { } // EF Core
+
     // Factory
     public static Enrollment Create(Guid userId, Guid courseId)
     {

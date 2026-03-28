@@ -3,6 +3,7 @@ using System;
 using LMS.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace LMS.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260327180604_AddedPasswordReset")]
+    partial class AddedPasswordReset
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -314,8 +317,6 @@ namespace LMS.Infrastructure.Migrations
                     b.ToTable("LessonProgresses");
                 });
 
-<<<<<<< HEAD
-=======
             modelBuilder.Entity("LMS.Domain.Entities.PasswordResetToken", b =>
                 {
                     b.Property<Guid>("Id")
@@ -357,7 +358,6 @@ namespace LMS.Infrastructure.Migrations
                     b.ToTable("PasswordResetTokens");
                 });
 
->>>>>>> origin/master
             modelBuilder.Entity("LMS.Domain.Entities.Progress", b =>
                 {
                     b.Property<Guid>("Id")
@@ -603,8 +603,6 @@ namespace LMS.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-<<<<<<< HEAD
-=======
             modelBuilder.Entity("LMS.Domain.Entities.PasswordResetToken", b =>
                 {
                     b.HasOne("LMS.Domain.Entities.User", "User")
@@ -616,7 +614,6 @@ namespace LMS.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
->>>>>>> origin/master
             modelBuilder.Entity("LMS.Domain.Entities.Progress", b =>
                 {
                     b.HasOne("LMS.Domain.Entities.Course", "Course")
