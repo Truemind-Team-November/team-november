@@ -1,29 +1,30 @@
 import Image from "next/image";
+import Link from "next/link";
 
 /* Navigation sections data */
 const navSections = [
   {
     title: "MAIN",
     items: [
-      { icon: "/assets/sidebar/dashboard_icon.svg", label: "Dashboard" },
-      { icon: "/assets/sidebar/course_catalog_icon.svg", label: "Course Catalog" },
-      { icon: "/assets/sidebar/assignment_icon.svg", label: "Assignments" },
-      { icon: "/assets/sidebar/my_progress_icon.svg", label: "My Progress" },
+      { icon: "/assets/sidebar/dashboard_icon.svg", label: "Dashboard", href: "/dashboard" },
+      { icon: "/assets/sidebar/course_catalog_icon.svg", label: "Course Catalog", href: "/coursecatalog" },
+      { icon: "/assets/sidebar/assignment_icon.svg", label: "Assignments", href: "/assignments" },
+      { icon: "/assets/sidebar/my_progress_icon.svg", label: "My Progress", href: "/dashboard" },
     ],
   },
   {
     title: "COMMUNITY",
     items: [
-      { icon: "/assets/sidebar/discussions_icon.svg", label: "Discussions" },
-      { icon: "/assets/sidebar/my_team_icon.svg", label: "My Team" },
-      { icon: "/assets/sidebar/notification_icon.svg", label: "Notifications" },
+      { icon: "/assets/sidebar/discussions_icon.svg", label: "Discussions", href: "/discussion" },
+      { icon: "/assets/sidebar/my_team_icon.svg", label: "My Team", href: "/teamallocation" },
+      { icon: "/assets/sidebar/notification_icon.svg", label: "Notifications", href: "/notification" },
     ],
   },
   {
     title: "ACCOUNT",
     items: [
-      { icon: "/assets/sidebar/profile_icon.svg", label: "Profile" },
-      { icon: "/assets/sidebar/certificates_icon.svg", label: "Certificates" },
+      { icon: "/assets/sidebar/profile_icon.svg", label: "Profile", href: "/profile" },
+      { icon: "/assets/sidebar/certificates_icon.svg", label: "Certificates", href: "/dashboard" },
     ],
   },
 ];
@@ -66,10 +67,11 @@ const Sidebar = ({ badges = {}, activeTab = "Dashboard" }) => {
                   const isActive = item.label === activeTab;
 
                   return (
-                    <button
+                    <Link
                       key={item.label}
+                      href={item.href}
                       id={`nav-${item.label.toLowerCase().replace(/\s+/g, "-")}`}
-                      className={`flex flex-row items-center py-[12px] px-[10px] gap-[33px] w-full rounded-[12px] cursor-pointer transition-colors duration-200 border-none
+                      className={`flex flex-row items-center py-[12px] px-[10px] gap-[33px] w-full rounded-[12px] cursor-pointer transition-colors duration-200 border-none no-underline
                         ${isActive ? "bg-[#3E5C8E] hover:bg-[#3E5C8E]" : "bg-transparent hover:bg-[#3E5C8E]/40"}
                         ${showBadge ? "justify-between" : ""}`}
                     >
@@ -96,7 +98,7 @@ const Sidebar = ({ badges = {}, activeTab = "Dashboard" }) => {
                           </span>
                         </div>
                       )}
-                    </button>
+                    </Link>
                   );
                 })}
               </div>
