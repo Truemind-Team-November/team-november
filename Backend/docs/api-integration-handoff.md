@@ -138,6 +138,21 @@ Returns:
 - total discussion posts
 - recent platform activity
 
+### `GET /api/dashboard/instructor`
+
+Instructor-only dashboard endpoint.
+
+Returns:
+- total courses
+- total lessons
+- total assignments
+- total submissions
+- pending grading count
+- total learners across the instructor's courses
+- instructor course overview
+- pending submission reviews
+- recent instructor activity
+
 ## Profile
 
 ### `GET /api/profile/me`
@@ -323,3 +338,4 @@ Issues a certificate when the learner meets the grading threshold and all course
 - The backend supports learner-facing screens plus some instructor/admin create flows not yet exposed in the current UI.
 - Role changes affect newly issued JWTs immediately, but an already-issued token will still carry the old role claim until the user signs in again or refreshes the token.
 - Admin dashboard data is separate from the learner dashboard payload and should be consumed from `GET /api/dashboard/admin`.
+- Instructor dashboard data is separate from the learner and admin dashboard payloads and should be consumed from `GET /api/dashboard/instructor`.

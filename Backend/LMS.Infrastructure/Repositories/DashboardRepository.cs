@@ -323,4 +323,136 @@ public class DashboardRepository : IDashboardRepository
             recentActivity
         );
     }
+
+    public async Task<InstructorDashboardResponse?> GetInstructorDashboardAsync(
+        Guid userId,
+        int courseLimit = 6,
+        int reviewLimit = 8,
+        int activityLimit = 8)
+    {
+        var now = DateTime.UtcNow;
+
+        var user = await _context.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(item => item.Id == userId);
+
+        if (user == null)
+            return null;
+
+        var courses = await _context.Courses
+            .AsNoTracking()
+            .Where(item => item.InstructorId == userId)
+            .Include(item => item.Lessons)
+            .Include(item => item.Assignments)
+            .Include(item => item.Enrollments)
+            .OrderByDescending(item => item.CreatedAt)
+            .ToListAsync();
+
+        var courseIds = courses.Select(item => item.Id).ToList();
+
+        var submissions = await _context.Submissions
+            .AsNoTracking()
+            .Where(item => courseIds.Contains(item.Assignment.CourseId))
+            .Include(item => item.Assignment)
+                .ThenInclude(assignment => assignment.Course)
+            .Include(item => item.User)
+            .ToListAsync();
+
+        var totalCourses = courses.Count;
+        var totalLessons = courses.Sum(item => item.Lessons.Count);
+        var totalAssignments = courses.Sum(item => item.Assignments.Count);
+        var totalSubmissions = submissions.Count;
+        var pendingGrading = submissions.Count(item => !item.Score.HasValue);
+        var totalLearners = courses
+            .SelectMany(item => item.Enrollments)
+            .Select(item => item.UserId)
+            .Distinct()
+            .Count();
+
+        var courseOverview = courses
+            .Take(courseLimit)
+            .Select(item => new InstructorCourseOverviewResponse(
+                item.Id,
+                item.Title,
+                item.Category,
+                item.Lessons.Count,
+                item.Assignments.Count,
+                item.Enrollments.Select(x => x.UserId).Distinct().Count()
+            ))
+            .ToList();
+
+        var pendingReviews = submissions
+            .Where(item => !item.Score.HasValue)
+            .OrderByDescending(item => item.SubmittedAt)
+            .Take(reviewLimit)
+            .Select(item => new InstructorSubmissionReviewResponse(
+                item.Id,
+                item.AssignmentId,
+                item.Assignment.Title,
+                item.Assignment.Course.Title,
+                item.User.FullName,
+                item.SubmittedAt
+            ))
+            .ToList();
+
+        var courseActivities = courses
+            .Select(item => new InstructorRecentActivityResponse(
+                "course_created",
+                $"You created the course {item.Title}",
+                item.CreatedAt
+            ));
+
+        var lessonActivities = await _context.Lessons
+            .AsNoTracking()
+            .Where(item => courseIds.Contains(item.CourseId))
+            .Include(item => item.Course)
+            .Select(item => new InstructorRecentActivityResponse(
+                "lesson_created",
+                $"Lesson {item.Title} was added to {item.Course.Title}",
+                item.CreatedAt
+            ))
+            .ToListAsync();
+
+        var assignmentActivities = await _context.Assignments
+            .AsNoTracking()
+            .Where(item => courseIds.Contains(item.CourseId))
+            .Include(item => item.Course)
+            .Select(item => new InstructorRecentActivityResponse(
+                "assignment_created",
+                $"Assignment {item.Title} was created for {item.Course.Title}",
+                item.CreatedAt
+            ))
+            .ToListAsync();
+
+        var submissionActivities = submissions
+            .Select(item => new InstructorRecentActivityResponse(
+                "submission_received",
+                $"{item.User.FullName} submitted {item.Assignment.Title}",
+                item.SubmittedAt
+            ));
+
+        var recentActivity = courseActivities
+            .Concat(lessonActivities)
+            .Concat(assignmentActivities)
+            .Concat(submissionActivities)
+            .OrderByDescending(item => item.OccurredAt)
+            .Take(activityLimit)
+            .ToList();
+
+        return new InstructorDashboardResponse(
+            GetGreeting(now),
+            user.FullName,
+            new InstructorDashboardMetricCardsResponse(
+                totalCourses,
+                totalLessons,
+                totalAssignments,
+                totalSubmissions,
+                pendingGrading,
+                totalLearners
+            ),
+            courseOverview,
+            pendingReviews,
+            recentActivity
+        );
+    }
 }

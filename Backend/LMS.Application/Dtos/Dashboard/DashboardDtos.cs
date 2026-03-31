@@ -90,3 +90,45 @@ public record AdminDashboardResponse(
     AdminDashboardMetricCardsResponse Metrics,
     IReadOnlyCollection<AdminRecentActivityResponse> RecentActivity
 );
+
+public record InstructorDashboardMetricCardsResponse(
+    int TotalCourses,
+    int TotalLessons,
+    int TotalAssignments,
+    int TotalSubmissions,
+    int PendingGrading,
+    int TotalLearners
+);
+
+public record InstructorCourseOverviewResponse(
+    Guid CourseId,
+    string Title,
+    string Category,
+    int LessonCount,
+    int AssignmentCount,
+    int LearnerCount
+);
+
+public record InstructorSubmissionReviewResponse(
+    Guid SubmissionId,
+    Guid AssignmentId,
+    string AssignmentTitle,
+    string CourseTitle,
+    string LearnerName,
+    DateTime SubmittedAt
+);
+
+public record InstructorRecentActivityResponse(
+    string Type,
+    string Description,
+    DateTime OccurredAt
+);
+
+public record InstructorDashboardResponse(
+    string Greeting,
+    string FullName,
+    InstructorDashboardMetricCardsResponse Metrics,
+    IReadOnlyCollection<InstructorCourseOverviewResponse> Courses,
+    IReadOnlyCollection<InstructorSubmissionReviewResponse> PendingReviews,
+    IReadOnlyCollection<InstructorRecentActivityResponse> RecentActivity
+);
