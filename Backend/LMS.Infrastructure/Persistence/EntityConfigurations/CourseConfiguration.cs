@@ -16,6 +16,16 @@ public class CourseConfiguration : IEntityTypeConfiguration<Course>
                .IsRequired()
                .HasMaxLength(1000);
 
+        builder.Property(x => x.Category)
+               .IsRequired()
+               .HasMaxLength(100);
+
+        builder.Property(x => x.EstimatedHours)
+               .IsRequired();
+
+        builder.Property(x => x.ThumbnailUrl)
+               .HasMaxLength(500);
+
         builder.Property(x => x.CreatedAt)
                .HasDefaultValueSql("NOW()");
 
