@@ -46,8 +46,9 @@ public class ProfileRepository : IProfileRepository
             gradedSubmissions.Count == 0 ? 0 : Math.Round(gradedSubmissions.Average(item => item.Score!.Value), 0)
         );
 
-        var badges = BuildBadges(user);
-        var achievements = await BuildAchievementsAsync(userId, learningSummary);
+        var contributionCount = await GetDiscussionContributionCountAsync(userId);
+        var badges = BuildBadges(user, contributionCount);
+        var achievements = await BuildAchievementsAsync(userId, learningSummary, contributionCount);
 
         return new UserProfileResponse(
             user.Id,
@@ -58,14 +59,17 @@ public class ProfileRepository : IProfileRepository
             new PersonalInformationResponse(
                 user.FullName,
                 user.Email,
-                user.PhoneNumber
+                user.PhoneNumber,
+                user.Discipline,
+                user.CohortLabel,
+                user.Location
             ),
             learningSummary,
             achievements
         );
     }
 
-    private static IReadOnlyCollection<ProfileBadgeResponse> BuildBadges(Domain.Entities.User user)
+    private static IReadOnlyCollection<ProfileBadgeResponse> BuildBadges(Domain.Entities.User user, int contributionCount)
     {
         var badges = new List<ProfileBadgeResponse>
         {
@@ -78,12 +82,16 @@ public class ProfileRepository : IProfileRepository
         if (!string.IsNullOrWhiteSpace(user.Team?.Name))
             badges.Add(new ProfileBadgeResponse(user.Team.Name));
 
+        if (contributionCount > 0)
+            badges.Add(new ProfileBadgeResponse("Top Contributor"));
+
         return badges;
     }
 
     private async Task<IReadOnlyCollection<ProfileAchievementResponse>> BuildAchievementsAsync(
         Guid userId,
-        LearningSummaryResponse learningSummary)
+        LearningSummaryResponse learningSummary,
+        int contributionCount)
     {
         var activities = new List<DateTime>();
 
@@ -137,7 +145,28 @@ public class ProfileRepository : IProfileRepository
             ));
         }
 
+        if (contributionCount >= 5)
+        {
+            achievements.Add(new ProfileAchievementResponse(
+                "Top Contributor",
+                $"{contributionCount} discussion contribution(s)"
+            ));
+        }
+
         return achievements;
+    }
+
+    private async Task<int> GetDiscussionContributionCountAsync(Guid userId)
+    {
+        var postCount = await _context.DiscussionPosts
+            .AsNoTracking()
+            .CountAsync(item => item.UserId == userId);
+
+        var replyCount = await _context.DiscussionReplies
+            .AsNoTracking()
+            .CountAsync(item => item.UserId == userId);
+
+        return postCount + replyCount;
     }
 
     private static string BuildHeadline(Domain.Entities.User user)

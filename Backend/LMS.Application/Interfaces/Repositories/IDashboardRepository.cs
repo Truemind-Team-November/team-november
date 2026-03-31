@@ -11,4 +11,9 @@ public interface IDashboardRepository
         int activityLimit = 5,
         int teamMemberPreviewLimit = 3
     );
+
+    Task<AdminDashboardResponse?> GetAdminDashboardAsync(
+        Guid userId,
+        int activityLimit = 8
+    );
 }

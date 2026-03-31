@@ -1,5 +1,6 @@
 using LMS.Application.DTOs.Dashboard;
 using LMS.Application.Interfaces.Repositories;
+using LMS.Domain.Enums;
 using LMS.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -125,6 +126,27 @@ public class DashboardRepository : IDashboardRepository
             ))
             .ToListAsync();
 
+        var discussionPostActivities = await _context.DiscussionPosts
+            .AsNoTracking()
+            .Where(item => item.UserId == userId)
+            .Select(item => new RecentActivityResponse(
+                "discussion_posted",
+                $"You started the discussion {item.Title}",
+                item.CreatedAt
+            ))
+            .ToListAsync();
+
+        var discussionReplyActivities = await _context.DiscussionReplies
+            .AsNoTracking()
+            .Where(item => item.UserId == userId)
+            .Include(item => item.Post)
+            .Select(item => new RecentActivityResponse(
+                "discussion_replied",
+                $"You replied to {item.Post.Title}",
+                item.CreatedAt
+            ))
+            .ToListAsync();
+
         var enrollmentActivities = await _context.Enrollments
             .AsNoTracking()
             .Where(item => item.UserId == userId)
@@ -139,6 +161,8 @@ public class DashboardRepository : IDashboardRepository
         var recentActivity = lessonActivities
             .Concat(submissionActivities)
             .Concat(certificateActivities)
+            .Concat(discussionPostActivities)
+            .Concat(discussionReplyActivities)
             .Concat(enrollmentActivities)
             .OrderByDescending(item => item.OccurredAt)
             .Take(activityLimit)
@@ -186,6 +210,8 @@ public class DashboardRepository : IDashboardRepository
                 user.FullName,
                 user.PublicId,
                 user.Discipline,
+                user.CohortLabel,
+                user.Location,
                 user.Role.ToString(),
                 user.Team?.Name
             )
@@ -203,5 +229,98 @@ public class DashboardRepository : IDashboardRepository
             return "Good afternoon";
 
         return "Good evening";
+    }
+
+    public async Task<AdminDashboardResponse?> GetAdminDashboardAsync(Guid userId, int activityLimit = 8)
+    {
+        var now = DateTime.UtcNow;
+
+        var user = await _context.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(item => item.Id == userId);
+
+        if (user == null)
+            return null;
+
+        var totalUsers = await _context.Users.AsNoTracking().CountAsync();
+        var totalLearners = await _context.Users.AsNoTracking().CountAsync(x => x.Role == UserRole.Learner);
+        var totalInstructors = await _context.Users.AsNoTracking().CountAsync(x => x.Role == UserRole.Instructor);
+        var totalAdmins = await _context.Users.AsNoTracking().CountAsync(x => x.Role == UserRole.Admin);
+        var pendingInstructorRequests = await _context.InstructorRoleRequests.AsNoTracking().CountAsync(x => x.Status == RoleRequestStatus.Pending);
+        var totalTeams = await _context.Teams.AsNoTracking().CountAsync();
+        var totalCourses = await _context.Courses.AsNoTracking().CountAsync();
+        var totalAssignments = await _context.Assignments.AsNoTracking().CountAsync();
+        var totalSubmissions = await _context.Submissions.AsNoTracking().CountAsync();
+        var totalCertificates = await _context.Certificates.AsNoTracking().CountAsync();
+        var totalDiscussionPosts = await _context.DiscussionPosts.AsNoTracking().CountAsync();
+
+        var userActivities = await _context.Users
+            .AsNoTracking()
+            .OrderByDescending(x => x.CreatedAt)
+            .Take(activityLimit)
+            .Select(x => new AdminRecentActivityResponse(
+                "user_registered",
+                $"New user registered: {x.FullName}",
+                x.CreatedAt))
+            .ToListAsync();
+
+        var roleRequestActivities = await _context.InstructorRoleRequests
+            .AsNoTracking()
+            .Include(x => x.User)
+            .OrderByDescending(x => x.CreatedAt)
+            .Take(activityLimit)
+            .Select(x => new AdminRecentActivityResponse(
+                "role_request",
+                $"{x.User.FullName} submitted an instructor role request",
+                x.CreatedAt))
+            .ToListAsync();
+
+        var courseActivities = await _context.Courses
+            .AsNoTracking()
+            .OrderByDescending(x => x.CreatedAt)
+            .Take(activityLimit)
+            .Select(x => new AdminRecentActivityResponse(
+                "course_created",
+                $"New course created: {x.Title}",
+                x.CreatedAt))
+            .ToListAsync();
+
+        var discussionActivities = await _context.DiscussionPosts
+            .AsNoTracking()
+            .Include(x => x.User)
+            .OrderByDescending(x => x.CreatedAt)
+            .Take(activityLimit)
+            .Select(x => new AdminRecentActivityResponse(
+                "discussion_posted",
+                $"{x.User.FullName} started a discussion: {x.Title}",
+                x.CreatedAt))
+            .ToListAsync();
+
+        var recentActivity = userActivities
+            .Concat(roleRequestActivities)
+            .Concat(courseActivities)
+            .Concat(discussionActivities)
+            .OrderByDescending(x => x.OccurredAt)
+            .Take(activityLimit)
+            .ToList();
+
+        return new AdminDashboardResponse(
+            GetGreeting(now),
+            user.FullName,
+            new AdminDashboardMetricCardsResponse(
+                totalUsers,
+                totalLearners,
+                totalInstructors,
+                totalAdmins,
+                pendingInstructorRequests,
+                totalTeams,
+                totalCourses,
+                totalAssignments,
+                totalSubmissions,
+                totalCertificates,
+                totalDiscussionPosts
+            ),
+            recentActivity
+        );
     }
 }

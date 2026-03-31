@@ -11,7 +11,10 @@ public record ProfileBadgeResponse(string Label);
 public record PersonalInformationResponse(
     string FullName,
     string Email,
-    string? PhoneNumber
+    string? PhoneNumber,
+    string Discipline,
+    string? CohortLabel,
+    string? Location
 );
 
 public record LearningSummaryResponse(
