@@ -47,6 +47,7 @@ builder.Services.AddScoped<ICertificateService, CertificateService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<ISubmissionService, SubmissionService>();
 builder.Services.AddHostedService<TokenCleanupService>();
+builder.Services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
 
 
 // 🔹 4. Shared Infrastructure

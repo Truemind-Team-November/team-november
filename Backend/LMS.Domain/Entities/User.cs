@@ -3,6 +3,7 @@ namespace LMS.Domain.Entities;
 
 public class User : BaseEntity
 {
+    public string PublicId { get; private set; } = default!;
     public string FirstName { get; private set; } = default!;
     public string LastName { get; private set; } = default!;
     public string Email { get; private set; } = default!;
@@ -41,8 +42,10 @@ public class User : BaseEntity
         if (!Enum.IsDefined(typeof(UserRole), role))
             throw new ArgumentException("Invalid role");
 
+        var publicId = GeneratePublicId();
         return new User
         {
+            PublicId = publicId,
             FirstName = firstName.Trim(),
             LastName = lastName.Trim(),
             Email = email.Trim().ToLowerInvariant(),
@@ -67,6 +70,11 @@ public class User : BaseEntity
 
         PasswordHash = hashedPassword;
         SetUpdated();
+    }
+
+    private static string GeneratePublicId()
+    {
+        return $"TF-{DateTime.UtcNow.Year}-{Guid.NewGuid().ToString()[..6].ToUpper()}";
     }
 
 
