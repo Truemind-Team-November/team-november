@@ -30,6 +30,14 @@ public class EnrollmentRepository : IEnrollmentRepository
             .FirstOrDefaultAsync(e => e.UserId == userId && e.CourseId == courseId);
     }
 
+    public async Task<List<Enrollment>> GetByUserIdAsync(Guid userId)
+    {
+        return await _context.Enrollments
+            .AsNoTracking()
+            .Where(e => e.UserId == userId)
+            .ToListAsync();
+    }
+
     public async Task<List<Enrollment>> GetByCourseIdAsync(Guid courseId)
     {
         return await _context.Enrollments

@@ -60,7 +60,7 @@ public class SubmissionService : ISubmissionService
         return BaseResponse<SubmissionResponse>.Ok(MapToResponse(submission));
     }
 
-    public async Task<BaseResponse<SubmissionResponse>> GradeAsync(Guid submissionId, decimal score)
+    public async Task<BaseResponse<SubmissionResponse>> GradeAsync(Guid submissionId, decimal score, string? feedback)
     {
         var submission = await _submissionRepository.GetByIdAsync(submissionId);
 
@@ -69,7 +69,7 @@ public class SubmissionService : ISubmissionService
 
         try
         {
-            submission.Grade(score); // Domain logic handles validation
+            submission.Grade(score, feedback);
         }
         catch (Exception ex)
         {
@@ -97,7 +97,9 @@ public class SubmissionService : ISubmissionService
             submission.UserId,
             submission.Answer,
             submission.Score,
-            submission.SubmittedAt
+            submission.Feedback,
+            submission.SubmittedAt,
+            submission.Score.HasValue
         );
     }
 
