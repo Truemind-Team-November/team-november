@@ -9,7 +9,6 @@ namespace LMS.Infrastructure.Repositories;
 public class PasswordResetTokenRepository : IPasswordResetTokenRepository
 {
     private readonly ApplicationDbContext _context;
-    private readonly IPasswordHasher _passwordHasher;
 
     public PasswordResetTokenRepository(ApplicationDbContext context)
     {

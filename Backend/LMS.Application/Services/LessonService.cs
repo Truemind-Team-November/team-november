@@ -28,6 +28,7 @@ public class LessonService : ILessonService
         IEnrollmentRepository enrollmentRepository,
         IProgressRepository progressRepository,
         ICurrentUserService currentUserService,
+        INotificationService notificationService,
         IUnitOfWork unitOfWork)
    
     {
@@ -38,6 +39,7 @@ public class LessonService : ILessonService
         _enrollmentRepository = enrollmentRepository;
         _progressRepository = progressRepository;
         _currentUserService = currentUserService;
+        _notificationService = notificationService;
         _unitOfWork = unitOfWork;
     }
 

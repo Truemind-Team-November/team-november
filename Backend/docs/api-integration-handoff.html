@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TalentFlow API Integration Handoff</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f7fb;
+      --page: #ffffff;
+      --ink: #162033;
+      --muted: #5a6780;
+      --line: #d9e1ee;
+      --brand: #1d5bd2;
+      --brand-soft: #e9f0ff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.5;
+    }
+
+    .page {
+      width: 900px;
+      margin: 24px auto;
+      padding: 40px 48px 56px;
+      background: var(--page);
+      border: 1px solid var(--line);
+      box-shadow: 0 12px 36px rgba(22, 32, 51, 0.08);
+    }
+
+    h1, h2, h3 {
+      margin: 0 0 12px;
+      line-height: 1.2;
+    }
+
+    h1 {
+      font-size: 30px;
+      color: var(--brand);
+    }
+
+    h2 {
+      margin-top: 28px;
+      padding-bottom: 8px;
+      font-size: 20px;
+      border-bottom: 2px solid var(--line);
+    }
+
+    h3 {
+      margin-top: 24px;
+      font-size: 16px;
+    }
+
+    p {
+      margin: 0 0 12px;
+    }
+
+    .lead {
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+
+    .meta {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 24px;
+      padding: 16px 18px;
+      margin-bottom: 24px;
+      background: var(--brand-soft);
+      border: 1px solid #cdddff;
+      border-radius: 10px;
+      font-size: 14px;
+    }
+
+    .endpoint {
+      margin: 14px 0;
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fbfcff;
+    }
+
+    .method {
+      display: inline-block;
+      min-width: 54px;
+      padding: 3px 8px;
+      margin-right: 8px;
+      border-radius: 999px;
+      background: var(--brand);
+      color: #fff;
+      font-weight: 700;
+      font-size: 12px;
+      text-align: center;
+    }
+
+    code, pre {
+      font-family: Consolas, "Courier New", monospace;
+    }
+
+    code {
+      padding: 1px 5px;
+      background: #f0f4fa;
+      border-radius: 4px;
+      font-size: 0.95em;
+    }
+
+    pre {
+      padding: 12px 14px;
+      overflow-x: auto;
+      background: #111827;
+      color: #e5eefb;
+      border-radius: 8px;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    ul {
+      margin: 0 0 12px 20px;
+      padding: 0;
+    }
+
+    li {
+      margin: 0 0 6px;
+    }
+
+    .note {
+      padding: 12px 14px;
+      border-left: 4px solid var(--brand);
+      background: #f7faff;
+      color: var(--muted);
+    }
+
+    @page {
+      size: A4;
+      margin: 16mm;
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      .page {
+        width: auto;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        box-shadow: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1>TalentFlow API Integration Handoff</h1>
+    <p class="lead">
+      Backend integration guide for the implemented TalentFlow learner experience. This document is intended for the frontend team and covers the active API surface for auth, dashboard, profile, notifications, courses, lessons, assignments, progress, discussion, teams, and certificates.
+    </p>
+
+    <div class="meta">
+      <div><strong>Project:</strong> TalentFlow</div>
+      <div><strong>Scope:</strong> Backend API Integration</div>
+      <div><strong>Date:</strong> 2026-03-31</div>
+      <div><strong>Auth:</strong> Bearer JWT for protected routes</div>
+    </div>
+
+    <h2>Response Shape</h2>
+    <p>Protected and public API endpoints return the standard response envelope below:</p>
+    <pre>{
+  "success": true,
+  "message": "Success",
+  "data": {}
+}</pre>
+
+    <h2>Auth</h2>
+
+    <div class="endpoint">
+      <p><span class="method">POST</span><code>/api/auth/register</code></p>
+      <p>Registers a learner account.</p>
+      <p>Request fields: <code>firstName</code>, <code>lastName</code>, <code>email</code>, <code>discipline</code>, <code>password</code>, <code>confirmPassword</code>.</p>
+      <p>Note: role is not accepted from the UI; the backend always assigns <code>Learner</code>.</p>
+    </div>
+
+    <div class="endpoint">
+      <p><span class="method">POST</span><code>/api/auth/login</code></p>
+      <p>Authenticates the user and returns the JWT plus identity data.</p>
+    </div>
+
+    <div class="endpoint">
+      <p><span class="method">POST</span><code>/api/auth/forgot-password</code></p>
+      <p>Sends the password reset email using the configured frontend URL.</p>
+    </div>
+
+    <div class="endpoint">
+      <p><span class="method">POST</span><code>/api/auth/reset-password</code></p>
+      <p>Resets the password using the reset token from the email link.</p>
+    </div>
+
+    <h2>Dashboard</h2>
+
+    <div class="endpoint">
+      <p><span class="method">GET</span><code>/api/dashboard/me</code></p>
+      <p>Returns the learner dashboard payload:</p>
+      <ul>
+        <li>greeting and full name</li>
+        <li>metric cards</li>
+        <li>continue learning</li>
+        <li>upcoming deadlines</li>
+        <li>recent activity</li>
+        <li>team preview</li>
+        <li>identity card with public ID, discipline, cohort, location, role, and team</li>
+      </ul>
+    </div>
+
+    <h2>Profile</h2>
+
+    <div class="endpoint">
+      <p><span class="method">GET</span><code>/api/profile/me</code></p>
+      <p>Returns profile header, badges, personal information, learning summary, and achievements.</p>
+    </div>
+
+    <div class="endpoint">
+      <p><span class="method">PUT</span><code>/api/profile/me</code></p>
+      <p>Updates <code>firstName</code>, <code>lastName</code>, and <code>phoneNumber</code>.</p>
+    </div>
+
+    <h2>Notifications</h2>
+
+    <div class="endpoint">
+      <p><span class="method">GET</span><code>/api/notification</code></p>
+      <p>Returns the current user’s in-app notifications.</p>
+    </div>
+
+    <div class="endpoint">
+      <p><span class="method">GET</span><code>/api/notification/unread-count</code></p>
+      <p>Returns unread notification count for the badge UI.</p>
+    </div>
+
+    <div class="endpoint">
+      <p><span class="method">PUT</span><code>/api/notification/{notificationId}/read</code></p>
+      <p>Marks one notification as read.</p>
+    </div>
+
+    <div class="endpoint">
+      <p><span class="method">PUT</span><code>/api/notification/read-all</code></p>
+      <p>Marks all notifications as read.</p>
+    </div>
+
+    <h2>Teams</h2>
+
+    <div class="endpoint">
+      <p><span class="method">GET</span><code>/api/team</code></p>
+      <p>Returns all teams with member previews.</p>
+    </div>
+
+    <div class="endpoint">
+      <p><span class="method">GET</span><code>/api/team/my-team</code></p>
+      <p>Returns the authenticated learner’s assigned team.</p>
+    </div>
+
+    <h2>Course Catalog and Detail</h2>
+
+    <div class="endpoint">
+      <p><span class="method">GET</span><code>/api/course</code></p>
+      <p>Course catalog endpoint.</p>
+      <p>Query params: <code>search</code>, <code>category</code>, <code>enrolledOnly</code>.</p>
+    </div>
+
+    <div class="endpoint">
+      <p><span class="method">GET</span><code>/api/course/{id}</code></p>
+      <p>Returns course detail with metadata, progress, includes, modules, and resume lesson information.</p>
+    </div>
+
+    <div class="endpoint">
+      <p><span class="method">POST</span><code>/api/course</code></p>
+      <p>Admin/instructor endpoint for creating a course.</p>
+    </div>
+
+    <div class="endpoint">
+      <p><span class="method">PUT</span><code>/api/course/{id}</code></p>
+      <p>Admin/instructor endpoint for updating a course.</p>
+    </div>
+
+    <h2>Lesson Player</h2>
+
+    <div class="endpoint">
+      <p><span class="method">GET</span><code>/api/lesson/course/{courseId}</code></p>
+      <p>Returns lesson summaries for a course.</p>
+    </div>
+
+    <div class="endpoint">
+      <p><span class="method">GET</span><code>/api/lesson/{lessonId}</code></p>
+      <p>Returns lesson-player content, sidebar lessons, note, navigation ids, and progress.</p>
+    </div>
+
+    <div class="endpoint">
+      <p><span class="method">POST</span><code>/api/lesson/{lessonId}/complete</code></p>
+      <p>Marks the lesson complete and updates course progress.</p>
+    </div>
+
+    <div class="endpoint">
+      <p><span class="method">PUT</span><code>/api/lesson/{lessonId}/note</code></p>
+      <p>Saves or updates the user’s quick note for the lesson.</p>
+    </div>
+
+    <div class="endpoint">
+      <p><span class="method">POST</span><code>/api/lesson</code></p>
+      <p>Instructor endpoint for creating a lesson.</p>
+    </div>
+
+    <div class="endpoint">
+      <p><span class="method">POST</span><code>/api/lesson/content</code></p>
+      <p>Instructor endpoint for adding lesson content.</p>
+    </div>
+
+    <h2>Assignments and Submissions</h2>
+
+    <div class="endpoint">
+      <p><span class="method">GET</span><code>/api/assignment/my</code></p>
+      <p>Learner assignment list for the UI tabs.</p>
+      <p>Query param: <code>status</code> with values such as <code>Pending</code>, <code>Submitted</code>, or <code>Graded</code>.</p>
+    </div>
+
+    <div class="endpoint">
+      <p><span class="method">GET</span><code>/api/assignment/course/{courseId}</code></p>
+      <p>Returns assignments for a specific course.</p>
+    </div>
+
+    <div class="endpoint">
+      <p><span class="method">GET</span><code>/api/assignment</code></p>
+      <p>Paginated assignment endpoint.</p>
+    </div>
+
+    <div class="endpoint">
+      <p><span class="method">POST</span><code>/api/assignment</code></p>
+      <p>Admin/instructor endpoint for creating an assignment.</p>
+    </div>
+
+    <div class="endpoint">
+      <p><span class="method">POST</span><code>/api/submission</code></p>
+      <p>Learner endpoint for submitting an assignment.</p>
+    </div>
+
+    <div class="endpoint">
+      <p><span class="method">PUT</span><code>/api/submission/{submissionId}/grade</code></p>
+      <p>Instructor/admin endpoint for grading a submission and attaching feedback.</p>
+    </div>
+
+    <h2>Progress</h2>
+
+    <div class="endpoint">
+      <p><span class="method">GET</span><code>/api/progress/me</code></p>
+      <p>Returns the learner progress screen payload:</p>
+      <ul>
+        <li>per-course progress cards</li>
+        <li>overall progress percentage</li>
+        <li>skill breakdown</li>
+        <li>graded work history</li>
+      </ul>
+    </div>
+
+    <h2>Discussion Forum</h2>
+
+    <div class="endpoint">
+      <p><span class="method">GET</span><code>/api/discussion</code></p>
+      <p>Returns discussion post summaries.</p>
+      <p>Query params: <code>tag</code>, <code>search</code>.</p>
+    </div>
+
+    <div class="endpoint">
+      <p><span class="method">GET</span><code>/api/discussion/{postId}</code></p>
+      <p>Returns the thread detail with the post and replies.</p>
+    </div>
+
+    <div class="endpoint">
+      <p><span class="method">POST</span><code>/api/discussion</code></p>
+      <p>Creates a discussion post with tags.</p>
+    </div>
+
+    <div class="endpoint">
+      <p><span class="method">POST</span><code>/api/discussion/{postId}/reply</code></p>
+      <p>Adds a reply to an existing discussion thread.</p>
+    </div>
+
+    <div class="endpoint">
+      <p><span class="method">GET</span><code>/api/discussion/top-contributors?count=5</code></p>
+      <p>Returns the top contributor list for the sidebar panel.</p>
+    </div>
+
+    <p class="note">
+      The discussion forum is a public threaded forum, not private messaging. When someone replies to a user’s post, the backend creates an in-app notification.
+    </p>
+
+    <h2>Certificates</h2>
+
+    <div class="endpoint">
+      <p><span class="method">GET</span><code>/api/certificate/me</code></p>
+      <p>Returns the learner’s certificates with course title, public ID, discipline, cohort label, final score, certificate number, and issued date.</p>
+    </div>
+
+    <div class="endpoint">
+      <p><span class="method">POST</span><code>/api/certificate/{courseId}</code></p>
+      <p>Issues a certificate when the learner meets the grading threshold and all course assignments are graded.</p>
+    </div>
+
+    <h2>Frontend Notes</h2>
+    <ul>
+      <li>All protected endpoints require <code>Authorization: Bearer &lt;token&gt;</code>.</li>
+      <li>The UI should remove role selection from registration.</li>
+      <li>The registration form must send <code>confirmPassword</code>.</li>
+      <li>Notification updates are in-app only right now; there is no socket-based live push.</li>
+      <li>The backend supports learner-facing screens plus some instructor/admin create flows not yet exposed in the current UI.</li>
+    </ul>
+  </div>
+</body>
+</html>

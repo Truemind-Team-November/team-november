@@ -31,4 +31,18 @@ public class DashboardController : ControllerBase
         var result = await _dashboardService.GetMyDashboardAsync();
         return result.Success ? Ok(result) : BadRequest(result);
     }
+
+    /// <summary>
+    /// Get the admin dashboard overview
+    /// </summary>
+    [HttpGet("admin")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(typeof(BaseResponse<AdminDashboardResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BaseResponse<string>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(BaseResponse<string>), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> GetAdminDashboard()
+    {
+        var result = await _dashboardService.GetAdminDashboardAsync();
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
 }

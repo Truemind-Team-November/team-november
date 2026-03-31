@@ -12,7 +12,7 @@ public class Enrollment : BaseEntity
     public bool IsCompleted { get; private set; }
     public DateTime? CompletedAt { get; private set; }
 
-    public bool IsActive => !IsCompleted;
+    public new bool IsActive => !IsCompleted;
 
     private Enrollment() { } // EF Core
 

@@ -47,6 +47,8 @@ public record InternIdentityCardResponse(
     string FullName,
     string PublicId,
     string Discipline,
+    string? CohortLabel,
+    string? Location,
     string Role,
     string? TeamName
 );
@@ -60,4 +62,31 @@ public record DashboardResponse(
     IReadOnlyCollection<RecentActivityResponse> RecentActivity,
     TeamPreviewResponse? MyTeam,
     InternIdentityCardResponse IdentityCard
+);
+
+public record AdminDashboardMetricCardsResponse(
+    int TotalUsers,
+    int TotalLearners,
+    int TotalInstructors,
+    int TotalAdmins,
+    int PendingInstructorRequests,
+    int TotalTeams,
+    int TotalCourses,
+    int TotalAssignments,
+    int TotalSubmissions,
+    int TotalCertificates,
+    int TotalDiscussionPosts
+);
+
+public record AdminRecentActivityResponse(
+    string Type,
+    string Description,
+    DateTime OccurredAt
+);
+
+public record AdminDashboardResponse(
+    string Greeting,
+    string FullName,
+    AdminDashboardMetricCardsResponse Metrics,
+    IReadOnlyCollection<AdminRecentActivityResponse> RecentActivity
 );

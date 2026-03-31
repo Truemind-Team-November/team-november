@@ -6,4 +6,5 @@ namespace LMS.Application.Interfaces.Services;
 public interface IDashboardService
 {
     Task<BaseResponse<DashboardResponse>> GetMyDashboardAsync();
+    Task<BaseResponse<AdminDashboardResponse>> GetAdminDashboardAsync();
 }
