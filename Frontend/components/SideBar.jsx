@@ -83,6 +83,7 @@ const Sidebar = ({ badges = {}, activeTab = "Dashboard" }) => {
                             alt={`${item.label} icon`}
                             width={32}
                             height={32}
+                            className="w-auto h-auto"
                           />
                         </div>
                         <span className="text-[16px] font-bold leading-[125%] text-center text-[#CEE0FD] whitespace-nowrap">
@@ -137,6 +138,7 @@ const Sidebar = ({ badges = {}, activeTab = "Dashboard" }) => {
             alt="Settings"
             width={20}
             height={20}
+            className="w-auto h-auto"
           />
         </button>
       </div>
