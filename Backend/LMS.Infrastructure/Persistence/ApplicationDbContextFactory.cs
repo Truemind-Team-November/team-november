@@ -11,7 +11,7 @@ public class ApplicationDbContextFactory
         var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
 
         optionsBuilder.UseNpgsql(
-            "Host=localhost;Port=5432;Database=lmsDb;Username=postgres;Password=postgres"
+            "Host=localhost;Port=5433;Database=lmsDb;Username=postgres;Password=postgres"
         );
 
         return new ApplicationDbContext(optionsBuilder.Options);
