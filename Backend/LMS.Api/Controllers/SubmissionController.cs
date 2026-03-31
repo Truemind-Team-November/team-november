@@ -35,7 +35,7 @@ public class SubmissionController : ControllerBase
     [Authorize(Roles = "Admin,Instructor")]
     public async Task<IActionResult> Grade(Guid submissionId, [FromBody] GradeSubmissionRequest request)
     {
-        var result = await _submissionService.GradeAsync(submissionId, request.Score);
+        var result = await _submissionService.GradeAsync(submissionId, request.Score, request.Feedback);
 
         return result.Success ? Ok(result) : BadRequest(result);
     }

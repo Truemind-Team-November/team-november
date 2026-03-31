@@ -26,7 +26,7 @@ public class AssignmentController : ControllerBase
     {
         var result = await _assignmentService.CreateAssignmentAsync(request);
 
-        if (!result.Success)
+        if (!result.Success || result.Data == null)
             return BadRequest(result);
 
         return CreatedAtAction(nameof(GetByCourseId),
@@ -43,6 +43,14 @@ public class AssignmentController : ControllerBase
     {
         var result = await _assignmentService.GetAssignmentsByCourseIdAsync(courseId);
         return Ok(result);
+    }
+
+    [HttpGet("my")]
+    [Authorize(Roles = "Learner")]
+    public async Task<IActionResult> GetMyAssignments([FromQuery] string? status = null)
+    {
+        var result = await _assignmentService.GetMyAssignmentsAsync(status);
+        return result.Success ? Ok(result) : BadRequest(result);
     }
 
     /// <summary>

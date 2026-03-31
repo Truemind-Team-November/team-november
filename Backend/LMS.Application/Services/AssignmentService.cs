@@ -12,17 +12,26 @@ public class AssignmentService : IAssignmentService
 {
     private readonly IAssignmentRepository _assignmentRepository;
     private readonly ICourseRepository _courseRepository;
+    private readonly ISubmissionRepository _submissionRepository;
+    private readonly IEnrollmentRepository _enrollmentRepository;
+    private readonly ICurrentUserService _currentUserService;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<AssignmentService> _logger;
 
     public AssignmentService(
         IAssignmentRepository assignmentRepository,
         ICourseRepository courseRepository,
+        ISubmissionRepository submissionRepository,
+        IEnrollmentRepository enrollmentRepository,
+        ICurrentUserService currentUserService,
         IUnitOfWork unitOfWork,
         ILogger<AssignmentService> logger)
     {
         _assignmentRepository = assignmentRepository;
         _courseRepository = courseRepository;
+        _submissionRepository = submissionRepository;
+        _enrollmentRepository = enrollmentRepository;
+        _currentUserService = currentUserService;
         _unitOfWork = unitOfWork;
         _logger = logger;
     }
@@ -79,11 +88,67 @@ public class AssignmentService : IAssignmentService
         return BaseResponse<IEnumerable<AssignmentResponse>>.Ok(assignments.Select(MapToResponse));
     }
 
+    public async Task<BaseResponse<IEnumerable<LearnerAssignmentResponse>>> GetMyAssignmentsAsync(string? status)
+    {
+        if (!_currentUserService.UserId.HasValue)
+            return BaseResponse<IEnumerable<LearnerAssignmentResponse>>.Fail("Unauthorized");
+
+        var enrollments = await _enrollmentRepository.GetByUserIdAsync(_currentUserService.UserId.Value);
+        var courseIds = enrollments.Select(x => x.CourseId).ToHashSet();
+
+        if (courseIds.Count == 0)
+            return BaseResponse<IEnumerable<LearnerAssignmentResponse>>.Ok([]);
+
+        var assignments = (await _assignmentRepository.GetAllAsync())
+            .Where(x => courseIds.Contains(x.CourseId))
+            .OrderBy(x => x.DueDate)
+            .ToList();
+
+        var submissions = await _submissionRepository.GetByUserIdAsync(_currentUserService.UserId.Value);
+        var submissionsByAssignmentId = submissions.ToDictionary(x => x.AssignmentId, x => x);
+
+        var normalizedStatus = status?.Trim();
+
+        var items = assignments
+            .Select(assignment =>
+            {
+                submissionsByAssignmentId.TryGetValue(assignment.Id, out var submission);
+
+                var assignmentStatus = submission == null
+                    ? "Pending"
+                    : submission.Score.HasValue
+                        ? "Graded"
+                        : "Submitted";
+
+                return new LearnerAssignmentResponse(
+                    assignment.Id,
+                    assignment.CourseId,
+                    assignment.Course?.Title ?? "Unknown Course",
+                    assignment.Title,
+                    assignment.Description,
+                    assignment.DueDate,
+                    assignmentStatus,
+                    assignment.IsPastDue(),
+                    submission?.Id,
+                    submission?.Answer,
+                    submission?.SubmittedAt,
+                    submission?.Score,
+                    submission?.Feedback
+                );
+            })
+            .Where(item => string.IsNullOrWhiteSpace(normalizedStatus) ||
+                           string.Equals(item.Status, normalizedStatus, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        return BaseResponse<IEnumerable<LearnerAssignmentResponse>>.Ok(items);
+    }
+
     private static AssignmentResponse MapToResponse(Assignment assignment)
     {
         return new AssignmentResponse(
             assignment.Id,
             assignment.CourseId,
+            assignment.Course?.Title ?? "Unknown Course",
             assignment.Title,
             assignment.Description,
             assignment.DueDate,

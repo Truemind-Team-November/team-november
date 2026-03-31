@@ -48,11 +48,7 @@ public class Submission : BaseEntity
             throw new ArgumentException("Score must be between 0 and 100");
 
         Score = score;
-        Feedback = Feedback;
+        Feedback = string.IsNullOrWhiteSpace(feedback) ? null : feedback.Trim();
         SetUpdated();
     }
-
-
-
-
 }

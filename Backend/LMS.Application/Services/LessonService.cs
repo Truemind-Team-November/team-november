@@ -10,13 +10,31 @@ namespace LMS.Application.Services;
 public class LessonService : ILessonService
 {
     private readonly ILessonRepository _lessonRepository;
+    private readonly ILessonProgressRepository _lessonProgressRepository;
+    private readonly ILessonNoteRepository _lessonNoteRepository;
     private readonly ICourseRepository _courseRepository;
+    private readonly IEnrollmentRepository _enrollmentRepository;
+    private readonly IProgressRepository _progressRepository;
+    private readonly ICurrentUserService _currentUserService;
     private readonly IUnitOfWork _unitOfWork;
 
-    public LessonService(ILessonRepository lessonRepository, ICourseRepository courseRepository, IUnitOfWork unitOfWork)
+    public LessonService(
+        ILessonRepository lessonRepository,
+        ILessonProgressRepository lessonProgressRepository,
+        ILessonNoteRepository lessonNoteRepository,
+        ICourseRepository courseRepository,
+        IEnrollmentRepository enrollmentRepository,
+        IProgressRepository progressRepository,
+        ICurrentUserService currentUserService,
+        IUnitOfWork unitOfWork)
     {
         _lessonRepository = lessonRepository;
+        _lessonProgressRepository = lessonProgressRepository;
+        _lessonNoteRepository = lessonNoteRepository;
         _courseRepository = courseRepository;
+        _enrollmentRepository = enrollmentRepository;
+        _progressRepository = progressRepository;
+        _currentUserService = currentUserService;
         _unitOfWork = unitOfWork;
     }
 
@@ -67,7 +85,6 @@ public class LessonService : ILessonService
 
     public async Task<BaseResponse<IEnumerable<LessonResponse>>> GetLessonsByCourseIdAsync(Guid courseId)
     {
-       
         var lessons = await _lessonRepository.GetByCourseIdAsync(courseId);
         if (lessons.Count == 0)
         {
@@ -75,6 +92,160 @@ public class LessonService : ILessonService
         }
         var response = lessons.Select(MapToResponse).ToList();
         return BaseResponse<IEnumerable<LessonResponse>>.Ok(response);
+    }
+
+    public async Task<BaseResponse<LessonPlayerResponse>> GetLessonPlayerAsync(Guid lessonId)
+    {
+        if (!_currentUserService.UserId.HasValue)
+            return BaseResponse<LessonPlayerResponse>.Fail("User is not authenticated");
+
+        var lesson = await _lessonRepository.GetByIdAsync(lessonId);
+        if (lesson == null)
+            return BaseResponse<LessonPlayerResponse>.Fail("Lesson not found");
+
+        var enrollment = await _enrollmentRepository.GetByUserAndCourseAsync(_currentUserService.UserId.Value, lesson.CourseId);
+        if (enrollment == null)
+            return BaseResponse<LessonPlayerResponse>.Fail("You must enroll in this course to access lessons");
+
+        var course = await _courseRepository.GetByIdAsync(lesson.CourseId);
+        if (course == null)
+            return BaseResponse<LessonPlayerResponse>.Fail("Course not found");
+
+        var orderedLessons = (await _lessonRepository.GetByCourseIdAsync(lesson.CourseId))
+            .OrderBy(x => x.Order)
+            .ToList();
+
+        var completedLessons = new Dictionary<Guid, bool>();
+        foreach (var lessonItem in orderedLessons)
+        {
+            var progress = await _lessonProgressRepository.GetByUserAndLessonAsync(_currentUserService.UserId.Value, lessonItem.Id);
+            completedLessons[lessonItem.Id] = progress?.IsCompleted ?? false;
+        }
+
+        var currentIndex = orderedLessons.FindIndex(x => x.Id == lessonId);
+        Guid? previousLessonId = currentIndex > 0 ? orderedLessons[currentIndex - 1].Id : null;
+        Guid? nextLessonId = currentIndex >= 0 && currentIndex < orderedLessons.Count - 1 ? orderedLessons[currentIndex + 1].Id : null;
+        var firstIncompleteLessonId = orderedLessons.FirstOrDefault(x => !completedLessons[x.Id])?.Id;
+
+        var sidebar = orderedLessons
+            .Select(item =>
+            {
+                var isCompleted = completedLessons[item.Id];
+                var hasIncompleteBefore = orderedLessons
+                    .Where(x => x.Order < item.Order)
+                    .Any(x => !completedLessons[x.Id]);
+
+                return new LessonPlayerSidebarItemResponse(
+                    item.Id,
+                    item.Title,
+                    item.Order,
+                    isCompleted,
+                    hasIncompleteBefore && !isCompleted,
+                    item.Id == lessonId || firstIncompleteLessonId == item.Id
+                );
+            })
+            .ToList();
+
+        var progressSummary = await _progressRepository.GetByUserAndCourseAsync(_currentUserService.UserId.Value, lesson.CourseId);
+        var note = await _lessonNoteRepository.GetByUserAndLessonAsync(_currentUserService.UserId.Value, lessonId);
+        var lessonProgress = await _lessonProgressRepository.GetByUserAndLessonAsync(_currentUserService.UserId.Value, lessonId);
+
+        var response = new LessonPlayerResponse(
+            lesson.CourseId,
+            course.Title,
+            lesson.Id,
+            lesson.Title,
+            lesson.Order,
+            Math.Round(progressSummary?.Percentage ?? 0, 1),
+            lessonProgress?.IsCompleted ?? false,
+            previousLessonId,
+            nextLessonId,
+            lesson.Contents
+                .Select(content => new LessonPlayerContentResponse(content.Id, content.ContentType, content.Url, content.TextContent))
+                .ToList(),
+            sidebar,
+            note == null ? null : new LessonNoteResponse(note.Id, note.Content, note.UpdatedAt ?? note.CreatedAt)
+        );
+
+        return BaseResponse<LessonPlayerResponse>.Ok(response);
+    }
+
+    public async Task<BaseResponse<bool>> CompleteLessonAsync(Guid lessonId)
+    {
+        if (!_currentUserService.UserId.HasValue)
+            return BaseResponse<bool>.Fail("User is not authenticated");
+
+        var lesson = await _lessonRepository.GetByIdAsync(lessonId);
+        if (lesson == null)
+            return BaseResponse<bool>.Fail("Lesson not found");
+
+        var enrollment = await _enrollmentRepository.GetByUserAndCourseAsync(_currentUserService.UserId.Value, lesson.CourseId);
+        if (enrollment == null)
+            return BaseResponse<bool>.Fail("You must enroll in this course to complete lessons");
+
+        var lessonProgress = await _lessonProgressRepository.GetByUserAndLessonAsync(_currentUserService.UserId.Value, lessonId);
+        if (lessonProgress == null)
+        {
+            lessonProgress = LessonProgress.Create(_currentUserService.UserId.Value, lessonId);
+            await _lessonProgressRepository.AddAsync(lessonProgress);
+        }
+
+        if (!lessonProgress.IsCompleted)
+        {
+            lessonProgress.MarkAsCompleted();
+            await _lessonProgressRepository.UpdateAsync(lessonProgress);
+        }
+
+        var totalLessons = (await _lessonRepository.GetByCourseIdAsync(lesson.CourseId)).Count;
+        var completedLessonsCount = await _lessonProgressRepository.GetCompletedLessonsCountAsync(_currentUserService.UserId.Value, lesson.CourseId);
+        var progress = await _progressRepository.GetByUserAndCourseAsync(_currentUserService.UserId.Value, lesson.CourseId);
+
+        if (progress == null)
+        {
+            progress = Progress.Create(_currentUserService.UserId.Value, lesson.CourseId, totalLessons);
+            await _progressRepository.AddAsync(progress);
+        }
+
+        progress.UpdateProgress(completedLessonsCount);
+        await _progressRepository.UpdateAsync(progress);
+
+        if (progress.Percentage >= 100 && !enrollment.IsCompleted)
+        {
+            enrollment.MarkAsCompleted();
+            await _enrollmentRepository.UpdateAsync(enrollment);
+        }
+
+        return BaseResponse<bool>.Ok(true, "Lesson completed successfully");
+    }
+
+    public async Task<BaseResponse<LessonNoteResponse>> SaveLessonNoteAsync(Guid lessonId, SaveLessonNoteRequest request)
+    {
+        if (!_currentUserService.UserId.HasValue)
+            return BaseResponse<LessonNoteResponse>.Fail("User is not authenticated");
+
+        var lesson = await _lessonRepository.GetByIdAsync(lessonId);
+        if (lesson == null)
+            return BaseResponse<LessonNoteResponse>.Fail("Lesson not found");
+
+        var enrollment = await _enrollmentRepository.GetByUserAndCourseAsync(_currentUserService.UserId.Value, lesson.CourseId);
+        if (enrollment == null)
+            return BaseResponse<LessonNoteResponse>.Fail("You must enroll in this course to save notes");
+
+        var note = await _lessonNoteRepository.GetByUserAndLessonAsync(_currentUserService.UserId.Value, lessonId);
+        if (note == null)
+        {
+            note = LessonNote.Create(_currentUserService.UserId.Value, lessonId, request.Content);
+            await _lessonNoteRepository.AddAsync(note);
+        }
+        else
+        {
+            note.UpdateContent(request.Content);
+            await _lessonNoteRepository.UpdateAsync(note);
+        }
+
+        return BaseResponse<LessonNoteResponse>.Ok(
+            new LessonNoteResponse(note.Id, note.Content, note.UpdatedAt ?? note.CreatedAt),
+            "Lesson note saved successfully");
     }
 
     private LessonResponse MapToResponse(Lesson lesson)
