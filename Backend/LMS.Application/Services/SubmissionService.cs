@@ -13,6 +13,7 @@ public class SubmissionService : ISubmissionService
     private readonly IAssignmentRepository _assignmentRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserService _currentUserService;
+    private readonly INotificationService _notificationService;
     private readonly ILogger<SubmissionService> _logger;
 
     public SubmissionService(
@@ -20,12 +21,14 @@ public class SubmissionService : ISubmissionService
         IAssignmentRepository assignmentRepository,
         IUnitOfWork unitOfWork,
         ICurrentUserService currentUserService,
+        INotificationService notificationService,
         ILogger<SubmissionService> logger)
     {
         _submissionRepository = submissionRepository;
         _assignmentRepository = assignmentRepository;
         _unitOfWork = unitOfWork;
         _currentUserService = currentUserService;
+        _notificationService = notificationService;
         _logger = logger;
     }
 
@@ -73,8 +76,15 @@ public class SubmissionService : ISubmissionService
             return BaseResponse<SubmissionResponse>.Fail(ex.Message);
         }
 
-       await _submissionRepository.UpdateAsync(submission);
+        await _submissionRepository.UpdateAsync(submission);
         await _unitOfWork.SaveChangesAsync();
+        await _notificationService.NotifyUserAsync(new LMS.Application.DTOs.Notification.CreateNotificationRequest(
+            submission.UserId,
+            LMS.Domain.Enums.NotificationType.AssignmentGraded,
+            "Assignment Graded",
+            $"{submission.Assignment.Title} has been graded. Score: {submission.Score:0.##}/100.",
+            "/assignments"
+        ));
 
         return BaseResponse<SubmissionResponse>.Ok(MapToResponse(submission), "Submission graded successfully");
     }

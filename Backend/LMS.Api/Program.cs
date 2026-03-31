@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using LMS.Api.Extensions;
+using LMS.Application.Common;
 using LMS.Application.Common.Options;
 using LMS.Application.Interfaces.Repositories;
 using LMS.Application.Interfaces.Services;
@@ -26,6 +27,11 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 // 🔹 2. Register Repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ICourseBrowseRepository, CourseBrowseRepository>();
+builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+builder.Services.AddScoped<IProfileRepository, ProfileRepository>();
+builder.Services.AddScoped<ITeamRepository, TeamRepository>();
 builder.Services.AddScoped<ICourseRepository, CourseRepository>();
 builder.Services.AddScoped<ILessonRepository, LessonRepository>();
 builder.Services.AddScoped<ILessonNoteRepository, LessonNoteRepository>();
@@ -39,6 +45,10 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 // 🔹 3. Register Services
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IProfileService, ProfileService>();
+builder.Services.AddScoped<ITeamService, TeamService>();
 builder.Services.AddScoped<ICourseService, CourseService>();
 builder.Services.AddScoped<ILessonService, LessonService>();
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
@@ -138,14 +148,48 @@ using (var scope = app.Services.CreateScope())
 
         db.Database.Migrate();
 
+        foreach (var teamDefinition in TeamCatalog.DefaultTeams)
+        {
+            var existingTeam = db.Teams.FirstOrDefault(team => team.Name == teamDefinition.Name);
+            if (existingTeam == null)
+            {
+                db.Teams.Add(Team.Create(teamDefinition.Name, teamDefinition.Description));
+            }
+        }
+
+        db.SaveChanges();
+
+        var teamsByName = db.Teams.ToDictionary(team => team.Name, StringComparer.OrdinalIgnoreCase);
+        var usersWithoutTeams = db.Users
+            .Where(user => user.TeamId == null && !string.IsNullOrWhiteSpace(user.Discipline))
+            .ToList();
+
+        foreach (var user in usersWithoutTeams)
+        {
+            if (!TeamCatalog.IsSupportedDiscipline(user.Discipline))
+                continue;
+
+            var teamName = TeamCatalog.GetTeamNameForDiscipline(user.Discipline);
+            if (!teamsByName.TryGetValue(teamName, out var team))
+                continue;
+
+            user.AssignToTeam(team.Id);
+        }
+
+        db.SaveChanges();
+
         if (!db.Users.Any())
         {
             var user = User.Create(
                 "Admin",
                 "User",
                 "admin@lms.com",
+                "Administration",
                 hasher.HashPassword("Admin@123"),
-                UserRole.Admin
+                UserRole.Admin,
+                null,
+                LearnerProfileDefaults.CohortLabel,
+                LearnerProfileDefaults.Location
 
             );
 

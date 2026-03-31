@@ -13,9 +13,11 @@ public class LessonService : ILessonService
     private readonly ILessonProgressRepository _lessonProgressRepository;
     private readonly ILessonNoteRepository _lessonNoteRepository;
     private readonly ICourseRepository _courseRepository;
-    private readonly IEnrollmentRepository _enrollmentRepository;
+
     private readonly IProgressRepository _progressRepository;
     private readonly ICurrentUserService _currentUserService;
+    private readonly IEnrollmentRepository _enrollmentRepository;
+    private readonly INotificationService _notificationService;
     private readonly IUnitOfWork _unitOfWork;
 
     public LessonService(
@@ -27,6 +29,7 @@ public class LessonService : ILessonService
         IProgressRepository progressRepository,
         ICurrentUserService currentUserService,
         IUnitOfWork unitOfWork)
+   
     {
         _lessonRepository = lessonRepository;
         _lessonProgressRepository = lessonProgressRepository;
@@ -46,6 +49,16 @@ public class LessonService : ILessonService
         var lesson = Lesson.Create(request.CourseId, request.Title, request.Order);
         await _lessonRepository.AddAsync(lesson);
         await _unitOfWork.SaveChangesAsync();
+
+        var enrollments = await _enrollmentRepository.GetByCourseIdAsync(request.CourseId);
+        await _notificationService.NotifyUsersAsync(enrollments.Select(enrollment =>
+            new LMS.Application.DTOs.Notification.CreateNotificationRequest(
+                enrollment.UserId,
+                LMS.Domain.Enums.NotificationType.LessonAvailable,
+                "New Lesson Available",
+                $"A new lesson, {lesson.Title}, has been added to {course.Title}.",
+                $"/courses/{course.Id}"
+            )));
 
         return BaseResponse<LessonResponse>.Ok(MapToResponse(lesson), "Lesson created successfully");
     }

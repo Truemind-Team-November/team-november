@@ -3,6 +3,9 @@ public class Course : BaseEntity
 {
     public string Title { get; private set; } = default!;
     public string Description { get; private set; } = default!;
+    public string Category { get; private set; } = default!;
+    public int EstimatedHours { get; private set; }
+    public string? ThumbnailUrl { get; private set; }
 
     public Guid InstructorId { get; private set; }
     public User Instructor { get; private set; } = default!; // 🔥 navigation
@@ -21,13 +24,25 @@ public class Course : BaseEntity
     private Course() { }
 
     // Factory
-    public static Course Create(string title, string description, Guid instructorId)
+    public static Course Create(
+        string title,
+        string description,
+        string category,
+        int estimatedHours,
+        string? thumbnailUrl,
+        Guid instructorId)
     {
         if (string.IsNullOrWhiteSpace(title))
             throw new ArgumentException("Course title is required");
 
         if (string.IsNullOrWhiteSpace(description))
             throw new ArgumentException("Course description is required");
+
+        if (string.IsNullOrWhiteSpace(category))
+            throw new ArgumentException("Course category is required");
+
+        if (estimatedHours < 0)
+            throw new ArgumentException("Estimated hours must be zero or greater");
 
         if (instructorId == Guid.Empty)
             throw new ArgumentException("Instructor is required");
@@ -36,12 +51,15 @@ public class Course : BaseEntity
         {
             Title = title.Trim(),
             Description = description.Trim(),
+            Category = category.Trim(),
+            EstimatedHours = estimatedHours,
+            ThumbnailUrl = string.IsNullOrWhiteSpace(thumbnailUrl) ? null : thumbnailUrl.Trim(),
             InstructorId = instructorId
         };
     }
 
     // Domain behavior
-    public void UpdateDetails(string title, string description)
+    public void UpdateDetails(string title, string description, string category, int estimatedHours, string? thumbnailUrl)
     {
         if (string.IsNullOrWhiteSpace(title))
             throw new ArgumentException("Course title is required");
@@ -49,8 +67,17 @@ public class Course : BaseEntity
         if (string.IsNullOrWhiteSpace(description))
             throw new ArgumentException("Course description is required");
 
+        if (string.IsNullOrWhiteSpace(category))
+            throw new ArgumentException("Course category is required");
+
+        if (estimatedHours < 0)
+            throw new ArgumentException("Estimated hours must be zero or greater");
+
         Title = title.Trim();
         Description = description.Trim();
+        Category = category.Trim();
+        EstimatedHours = estimatedHours;
+        ThumbnailUrl = string.IsNullOrWhiteSpace(thumbnailUrl) ? null : thumbnailUrl.Trim();
 
         SetUpdated();
     }

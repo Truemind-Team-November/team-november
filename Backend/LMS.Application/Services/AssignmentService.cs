@@ -13,14 +13,16 @@ public class AssignmentService : IAssignmentService
     private readonly IAssignmentRepository _assignmentRepository;
     private readonly ICourseRepository _courseRepository;
     private readonly ISubmissionRepository _submissionRepository;
-    private readonly IEnrollmentRepository _enrollmentRepository;
     private readonly ICurrentUserService _currentUserService;
+    private readonly IEnrollmentRepository _enrollmentRepository;
+    private readonly INotificationService _notificationService;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<AssignmentService> _logger;
 
     public AssignmentService(
         IAssignmentRepository assignmentRepository,
         ICourseRepository courseRepository,
+        INotificationService notificationService,
         ISubmissionRepository submissionRepository,
         IEnrollmentRepository enrollmentRepository,
         ICurrentUserService currentUserService,
@@ -30,8 +32,9 @@ public class AssignmentService : IAssignmentService
         _assignmentRepository = assignmentRepository;
         _courseRepository = courseRepository;
         _submissionRepository = submissionRepository;
-        _enrollmentRepository = enrollmentRepository;
         _currentUserService = currentUserService;
+        _enrollmentRepository = enrollmentRepository;
+        _notificationService = notificationService;
         _unitOfWork = unitOfWork;
         _logger = logger;
     }
@@ -56,6 +59,16 @@ public class AssignmentService : IAssignmentService
 
         await _assignmentRepository.AddAsync(assignment);
         await _unitOfWork.SaveChangesAsync();
+
+        var enrollments = await _enrollmentRepository.GetByCourseIdAsync(request.CourseId);
+        await _notificationService.NotifyUsersAsync(enrollments.Select(enrollment =>
+            new LMS.Application.DTOs.Notification.CreateNotificationRequest(
+                enrollment.UserId,
+                LMS.Domain.Enums.NotificationType.AssignmentPosted,
+                "New Assignment Posted",
+                $"{assignment.Title} has been posted for {course.Title}.",
+                "/assignments"
+            )));
 
         return BaseResponse<AssignmentResponse>.Ok(
             MapToResponse(assignment),
