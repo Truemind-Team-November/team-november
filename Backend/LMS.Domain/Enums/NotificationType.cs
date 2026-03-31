@@ -7,5 +7,6 @@ public enum NotificationType
     AssignmentPosted,
     AssignmentGraded,
     LessonAvailable,
-    CertificateMilestone
+    CertificateMilestone,
+    DiscussionReply
 }

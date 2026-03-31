@@ -21,6 +21,10 @@ public class ApplicationDbContext : DbContext
     public DbSet<Progress> Progresses => Set<Progress>();
     public DbSet<LessonProgress> LessonProgresses => Set<LessonProgress>();
     public DbSet<LessonNote> LessonNotes => Set<LessonNote>();
+    public DbSet<DiscussionPost> DiscussionPosts => Set<DiscussionPost>();
+    public DbSet<DiscussionReply> DiscussionReplies => Set<DiscussionReply>();
+    public DbSet<DiscussionTag> DiscussionTags => Set<DiscussionTag>();
+    public DbSet<DiscussionPostTag> DiscussionPostTags => Set<DiscussionPostTag>();
     public DbSet<Assignment> Assignments => Set<Assignment>();
     public DbSet<Submission> Submissions => Set<Submission>();
     public DbSet<Certificate> Certificates => Set<Certificate>();
