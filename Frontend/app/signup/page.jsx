@@ -119,7 +119,7 @@ export default function Signup() {
           <input
             type="password"
             id="Password"
-            placeholder="Enter your password"
+            placeholder="Minimum 8 characters"
             required
             className="w-full h-10 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4 mt-2"
           />
