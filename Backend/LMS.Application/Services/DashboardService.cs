@@ -39,4 +39,16 @@ public class DashboardService : IDashboardService
 
         return BaseResponse<AdminDashboardResponse>.Ok(dashboard);
     }
+
+    public async Task<BaseResponse<InstructorDashboardResponse>> GetInstructorDashboardAsync()
+    {
+        if (_currentUserService.UserId == null)
+            return BaseResponse<InstructorDashboardResponse>.Fail("Unauthorized");
+
+        var dashboard = await _dashboardRepository.GetInstructorDashboardAsync(_currentUserService.UserId.Value);
+        if (dashboard == null)
+            return BaseResponse<InstructorDashboardResponse>.Fail("User not found");
+
+        return BaseResponse<InstructorDashboardResponse>.Ok(dashboard);
+    }
 }

@@ -16,4 +16,11 @@ public interface IDashboardRepository
         Guid userId,
         int activityLimit = 8
     );
+
+    Task<InstructorDashboardResponse?> GetInstructorDashboardAsync(
+        Guid userId,
+        int courseLimit = 6,
+        int reviewLimit = 8,
+        int activityLimit = 8
+    );
 }

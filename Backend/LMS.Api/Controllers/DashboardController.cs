@@ -45,4 +45,18 @@ public class DashboardController : ControllerBase
         var result = await _dashboardService.GetAdminDashboardAsync();
         return result.Success ? Ok(result) : BadRequest(result);
     }
+
+    /// <summary>
+    /// Get the instructor dashboard overview
+    /// </summary>
+    [HttpGet("instructor")]
+    [Authorize(Roles = "Instructor")]
+    [ProducesResponseType(typeof(BaseResponse<InstructorDashboardResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BaseResponse<string>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(BaseResponse<string>), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> GetInstructorDashboard()
+    {
+        var result = await _dashboardService.GetInstructorDashboardAsync();
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
 }
