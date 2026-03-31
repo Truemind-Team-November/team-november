@@ -9,4 +9,6 @@ public interface ICourseService
     Task<BaseResponse<CourseResponse>> UpdateCourseAsync(Guid id, UpdateCourseRequest request);
     Task<BaseResponse<CourseResponse>> GetCourseByIdAsync(Guid id);
     Task<BaseResponse<IEnumerable<CourseResponse>>> GetAllCoursesAsync();
+    Task<BaseResponse<IEnumerable<CourseCatalogItemResponse>>> GetCatalogAsync(string? search, string? category, bool enrolledOnly);
+    Task<BaseResponse<CourseDetailResponse>> GetCourseDetailAsync(Guid courseId);
 }

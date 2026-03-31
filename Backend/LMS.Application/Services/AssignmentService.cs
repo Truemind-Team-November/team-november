@@ -12,17 +12,23 @@ public class AssignmentService : IAssignmentService
 {
     private readonly IAssignmentRepository _assignmentRepository;
     private readonly ICourseRepository _courseRepository;
+    private readonly IEnrollmentRepository _enrollmentRepository;
+    private readonly INotificationService _notificationService;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<AssignmentService> _logger;
 
     public AssignmentService(
         IAssignmentRepository assignmentRepository,
         ICourseRepository courseRepository,
+        IEnrollmentRepository enrollmentRepository,
+        INotificationService notificationService,
         IUnitOfWork unitOfWork,
         ILogger<AssignmentService> logger)
     {
         _assignmentRepository = assignmentRepository;
         _courseRepository = courseRepository;
+        _enrollmentRepository = enrollmentRepository;
+        _notificationService = notificationService;
         _unitOfWork = unitOfWork;
         _logger = logger;
     }
@@ -47,6 +53,16 @@ public class AssignmentService : IAssignmentService
 
         await _assignmentRepository.AddAsync(assignment);
         await _unitOfWork.SaveChangesAsync();
+
+        var enrollments = await _enrollmentRepository.GetByCourseIdAsync(request.CourseId);
+        await _notificationService.NotifyUsersAsync(enrollments.Select(enrollment =>
+            new LMS.Application.DTOs.Notification.CreateNotificationRequest(
+                enrollment.UserId,
+                LMS.Domain.Enums.NotificationType.AssignmentPosted,
+                "New Assignment Posted",
+                $"{assignment.Title} has been posted for {course.Title}.",
+                "/assignments"
+            )));
 
         return BaseResponse<AssignmentResponse>.Ok(
             MapToResponse(assignment),
