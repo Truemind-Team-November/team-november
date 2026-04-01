@@ -11,6 +11,7 @@ public class User : BaseEntity
     public string? PhoneNumber { get; private set; }
     public string? CohortLabel { get; private set; }
     public string? Location { get; private set; }
+    public string? ProfileImageUrl { get; private set; }
     public Guid? TeamId { get; private set; }
     public Team? Team { get; private set; }
     public string PasswordHash { get; private set; } = default!;
@@ -88,6 +89,12 @@ public class User : BaseEntity
         FirstName = firstName.Trim();
         LastName = lastName.Trim();
         PhoneNumber = string.IsNullOrWhiteSpace(phoneNumber) ? null : phoneNumber.Trim();
+        SetUpdated();
+    }
+
+    public void UpdateProfileImage(string? profileImageUrl)
+    {
+        ProfileImageUrl = string.IsNullOrWhiteSpace(profileImageUrl) ? null : profileImageUrl.Trim();
         SetUpdated();
     }
 

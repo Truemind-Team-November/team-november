@@ -33,6 +33,7 @@ public record UserProfileResponse(
     Guid UserId,
     string FullName,
     string PublicId,
+    string? ProfileImageUrl,
     string Headline,
     IReadOnlyCollection<ProfileBadgeResponse> Badges,
     PersonalInformationResponse PersonalInformation,

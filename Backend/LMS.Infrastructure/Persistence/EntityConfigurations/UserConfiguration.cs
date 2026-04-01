@@ -43,6 +43,9 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(x => x.Location)
                .HasMaxLength(150);
 
+        builder.Property(x => x.ProfileImageUrl)
+               .HasMaxLength(500);
+
         builder.HasIndex(x => x.TeamId);
 
         builder.Property(x => x.PasswordHash)
