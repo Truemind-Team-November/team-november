@@ -104,6 +104,12 @@ public class CourseBrowseRepository : ICourseBrowseRepository
             .AsNoTracking()
             .CountAsync(item => item.CourseId == courseId);
 
+        var instructorRoleRequest = await _context.InstructorRoleRequests
+            .AsNoTracking()
+            .Where(item => item.UserId == course.InstructorId && item.Status == LMS.Domain.Enums.RoleRequestStatus.Approved)
+            .OrderByDescending(item => item.UpdatedAt ?? item.CreatedAt)
+            .FirstOrDefaultAsync();
+
         var orderedLessons = course.Lessons
             .OrderBy(item => item.Order)
             .ToList();
@@ -121,7 +127,9 @@ public class CourseBrowseRepository : ICourseBrowseRepository
                 return new CourseModuleResponse(
                     lesson.Id,
                     lesson.Title,
+                    lesson.Description,
                     lesson.Order,
+                    lesson.EstimatedMinutes,
                     isCompleted,
                     hasIncompleteBefore && !isCompleted,
                     firstIncompleteLesson?.Id == lesson.Id,
@@ -145,7 +153,13 @@ public class CourseBrowseRepository : ICourseBrowseRepository
             course.Category,
             course.EstimatedHours,
             course.ThumbnailUrl,
-            course.Instructor?.FullName ?? "Unknown",
+            new CourseInstructorResponse(
+                course.InstructorId,
+                course.Instructor?.FullName ?? "Unknown",
+                course.Instructor?.ProfileImageUrl,
+                string.IsNullOrWhiteSpace(course.Instructor?.Discipline) ? "Instructor" : $"{course.Instructor.Discipline} Instructor",
+                instructorRoleRequest?.Bio
+            ),
             Math.Round(progress?.Percentage ?? 0, 1),
             progress != null,
             course.Lessons.Count,

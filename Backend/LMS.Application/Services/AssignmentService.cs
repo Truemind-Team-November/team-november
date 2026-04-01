@@ -144,6 +144,10 @@ public class AssignmentService : IAssignmentService
                     assignment.IsPastDue(),
                     submission?.Id,
                     submission?.Answer,
+                    submission?.AttachmentUrl,
+                    submission?.AttachmentName,
+                    submission?.AttachmentContentType,
+                    submission?.AttachmentSizeBytes,
                     submission?.SubmittedAt,
                     submission?.Score,
                     submission?.Feedback

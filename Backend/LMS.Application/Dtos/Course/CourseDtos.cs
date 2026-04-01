@@ -46,11 +46,21 @@ public record CourseCatalogItemResponse(
 public record CourseModuleResponse(
     Guid LessonId,
     string Title,
+    string? Description,
     int Order,
+    int? EstimatedMinutes,
     bool IsCompleted,
     bool IsLocked,
     bool IsCurrent,
     int ContentCount
+);
+
+public record CourseInstructorResponse(
+    Guid InstructorId,
+    string FullName,
+    string? ProfileImageUrl,
+    string Headline,
+    string? Bio
 );
 
 public record CourseIncludesResponse(
@@ -68,7 +78,7 @@ public record CourseDetailResponse(
     string Category,
     int EstimatedHours,
     string? ThumbnailUrl,
-    string InstructorName,
+    CourseInstructorResponse Instructor,
     double ProgressPercentage,
     bool IsEnrolled,
     int LessonCount,

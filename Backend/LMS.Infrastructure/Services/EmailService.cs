@@ -85,7 +85,7 @@ public class EmailService : IEmailService
         var portValue = _config["Email:Port"];
         var username = _config["Email:Username"];
         var password = _config["Email:Password"];
-        var fromAddress = _config["Email:FromAddress"];
+        var fromAddress =username;
         var fromName = _config["Email:FromName"];
         var enableSsl = bool.TryParse(_config["Email:EnableSsl"], out var parsedEnableSsl) ? parsedEnableSsl : true;
 

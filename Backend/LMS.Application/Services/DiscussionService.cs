@@ -27,9 +27,9 @@ public class DiscussionService : IDiscussionService
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<BaseResponse<IEnumerable<DiscussionPostSummaryResponse>>> GetPostsAsync(string? tag, string? search)
+    public async Task<BaseResponse<IEnumerable<DiscussionPostSummaryResponse>>> GetPostsAsync(string? tag, string? search, string? sort)
     {
-        var posts = await _discussionRepository.GetPostsAsync(tag, search);
+        var posts = await _discussionRepository.GetPostsAsync(tag, search, sort);
         return BaseResponse<IEnumerable<DiscussionPostSummaryResponse>>.Ok(
             posts.Select(MapPostSummary).ToList());
     }

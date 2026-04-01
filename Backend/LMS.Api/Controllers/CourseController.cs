@@ -1,4 +1,5 @@
 using LMS.Application.Common;
+using LMS.Application.Common.Storage;
 using LMS.Application.DTOs.Course;
 using LMS.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -36,6 +37,27 @@ public class CourseController : ControllerBase
     {
         var result = await _courseService.UpdateCourseAsync(id, request);
         return result.Success ? Ok(result) : BadRequest(result);
+    }
+
+    [HttpPost("{id:guid}/thumbnail")]
+    [Authorize(Roles = "Admin,Instructor")]
+    [ProducesResponseType(typeof(BaseResponse<CourseResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BaseResponse<string>), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> UploadThumbnail(Guid id, IFormFile? file, CancellationToken cancellationToken)
+    {
+        if (file == null || file.Length == 0)
+            return BadRequest(BaseResponse<string>.Fail("Thumbnail file is required"));
+
+        await using var stream = file.OpenReadStream();
+        var request = new FileUploadRequest(
+            stream,
+            file.FileName,
+            file.ContentType,
+            string.Empty
+        );
+
+        var result = await _courseService.UploadThumbnailAsync(id, request, cancellationToken);
+        return result.Success ? Ok(result) : result.Message.Contains("not found") ? NotFound(result) : BadRequest(result);
     }
 
     [HttpGet]

@@ -21,9 +21,9 @@ public class DiscussionController : ControllerBase
 
     [HttpGet]
     [ProducesResponseType(typeof(BaseResponse<IEnumerable<DiscussionPostSummaryResponse>>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetPosts([FromQuery] string? tag = null, [FromQuery] string? search = null)
+    public async Task<IActionResult> GetPosts([FromQuery] string? tag = null, [FromQuery] string? search = null, [FromQuery] string? sort = null)
     {
-        var result = await _discussionService.GetPostsAsync(tag, search);
+        var result = await _discussionService.GetPostsAsync(tag, search, sort);
         return Ok(result);
     }
 

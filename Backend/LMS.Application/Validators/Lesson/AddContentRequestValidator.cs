@@ -15,6 +15,10 @@ public class AddContentRequestValidator : AbstractValidator<AddLessonContentRequ
             .IsInEnum()
             .WithMessage("Invalid content type");
 
+        RuleFor(x => x.Title)
+            .MaximumLength(200)
+            .When(x => !string.IsNullOrWhiteSpace(x.Title));
+
         RuleFor(x => x.ContentUrl)
             .Must(url => !string.IsNullOrWhiteSpace(url))
             .When(x => x.ContentType != ContentType.Text)

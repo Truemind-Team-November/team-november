@@ -5,7 +5,7 @@ namespace LMS.Application.Interfaces.Repositories;
 
 public interface IDiscussionRepository
 {
-    Task<List<DiscussionPost>> GetPostsAsync(string? tag, string? search);
+    Task<List<DiscussionPost>> GetPostsAsync(string? tag, string? search, string? sort);
     Task<DiscussionPost?> GetPostByIdAsync(Guid postId);
     Task<DiscussionTag?> GetTagByNameAsync(string name);
     Task AddPostAsync(DiscussionPost post);

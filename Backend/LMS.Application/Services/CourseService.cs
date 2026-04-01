@@ -1,8 +1,11 @@
 using LMS.Application.Common;
+using LMS.Application.Common.Options;
+using LMS.Application.Common.Storage;
 using LMS.Application.DTOs.Course;
 using LMS.Application.Interfaces.Repositories;
 using LMS.Application.Interfaces.Services;
 using LMS.Domain.Entities;
+using Microsoft.Extensions.Options;
 
 namespace LMS.Application.Services;
 
@@ -11,15 +14,21 @@ public class CourseService : ICourseService
     private readonly ICourseRepository _courseRepository;
     private readonly ICourseBrowseRepository _courseBrowseRepository;
     private readonly ICurrentUserService _currentUserService;
+    private readonly IFileStorageService _fileStorageService;
+    private readonly FileStorageOptions _fileStorageOptions;
 
     public CourseService(
         ICourseRepository courseRepository,
         ICourseBrowseRepository courseBrowseRepository,
-        ICurrentUserService currentUserService)
+        ICurrentUserService currentUserService,
+        IFileStorageService fileStorageService,
+        IOptions<FileStorageOptions> fileStorageOptions)
     {
         _courseRepository = courseRepository;
         _courseBrowseRepository = courseBrowseRepository;
         _currentUserService = currentUserService;
+        _fileStorageService = fileStorageService;
+        _fileStorageOptions = fileStorageOptions.Value;
     }
 
     public async Task<BaseResponse<CourseResponse>> CreateCourseAsync(CreateCourseRequest request)
@@ -83,6 +92,35 @@ public class CourseService : ICourseService
             return BaseResponse<CourseDetailResponse>.Fail("Course not found");
 
         return BaseResponse<CourseDetailResponse>.Ok(course);
+    }
+
+    public async Task<BaseResponse<CourseResponse>> UploadThumbnailAsync(
+        Guid courseId,
+        FileUploadRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var course = await _courseRepository.GetByIdAsync(courseId);
+        if (course == null)
+            return BaseResponse<CourseResponse>.Fail("Course not found");
+
+        if (!request.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+            return BaseResponse<CourseResponse>.Fail("Only image files are allowed");
+
+        FileUploadResult uploadResult;
+        try
+        {
+            var uploadRequest = request with { Folder = _fileStorageOptions.CourseThumbnailFolder };
+            uploadResult = await _fileStorageService.UploadImageAsync(uploadRequest, cancellationToken);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BaseResponse<CourseResponse>.Fail(ex.Message);
+        }
+
+        course.UpdateThumbnail(uploadResult.Url);
+        await _courseRepository.UpdateAsync(course);
+
+        return BaseResponse<CourseResponse>.Ok(MapToResponse(course), "Course thumbnail uploaded successfully");
     }
 
     private CourseResponse MapToResponse(Course course)
