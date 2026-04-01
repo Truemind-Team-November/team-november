@@ -11,8 +11,18 @@ public class SubmissionConfiguration : IEntityTypeConfiguration<Submission>
         builder.HasKey(x => x.Id);
 
         builder.Property(x => x.Answer)
-               .IsRequired()
                .HasMaxLength(5000);
+
+        builder.Property(x => x.AttachmentUrl)
+               .HasMaxLength(1000);
+
+        builder.Property(x => x.AttachmentName)
+               .HasMaxLength(255);
+
+        builder.Property(x => x.AttachmentContentType)
+               .HasMaxLength(150);
+
+        builder.Property(x => x.AttachmentSizeBytes);
 
         builder.Property(x => x.Score)
                .HasColumnType("decimal(5,2)");

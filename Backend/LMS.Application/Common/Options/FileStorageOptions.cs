@@ -9,5 +9,7 @@ public class FileStorageOptions
     public string ApiKey { get; set; } = string.Empty;
     public string ApiSecret { get; set; } = string.Empty;
     public string ProfileImageFolder { get; set; } = "talentflow/profile-images";
+    public string CourseThumbnailFolder { get; set; } = "talentflow/course-thumbnails";
     public string LessonDocumentFolder { get; set; } = "talentflow/lesson-documents";
+    public string SubmissionAttachmentFolder { get; set; } = "talentflow/submission-attachments";
 }

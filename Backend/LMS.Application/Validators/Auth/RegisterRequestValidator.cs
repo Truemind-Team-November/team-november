@@ -1,7 +1,6 @@
 ﻿using FluentValidation;
 using LMS.Application.Common;
 using LMS.Application.DTOs.Auth;
-
 namespace LMS.Application.Validators.Auth;
 
 public class RegisterRequestValidator : AbstractValidator<RegisterRequest>

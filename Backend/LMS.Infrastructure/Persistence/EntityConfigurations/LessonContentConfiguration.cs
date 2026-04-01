@@ -13,6 +13,9 @@ public class LessonContentConfiguration : IEntityTypeConfiguration<LessonContent
                .HasConversion<string>()
                .IsRequired();
 
+        builder.Property(x => x.Title)
+               .HasMaxLength(200);
+
         // 🔹 URL (optional)
         builder.Property(x => x.Url)
                .HasMaxLength(1000);

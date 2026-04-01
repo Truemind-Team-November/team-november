@@ -82,6 +82,12 @@ public class Course : BaseEntity
         SetUpdated();
     }
 
+    public void UpdateThumbnail(string? thumbnailUrl)
+    {
+        ThumbnailUrl = string.IsNullOrWhiteSpace(thumbnailUrl) ? null : thumbnailUrl.Trim();
+        SetUpdated();
+    }
+
     public void AddLesson(Lesson lesson)
     {
         if (lesson == null)

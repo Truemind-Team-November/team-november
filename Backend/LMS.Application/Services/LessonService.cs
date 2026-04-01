@@ -57,7 +57,7 @@ public class LessonService : ILessonService
         var course = await _courseRepository.GetByIdAsync(request.CourseId);
         if (course == null) return BaseResponse<LessonResponse>.Fail("Course not found");
 
-        var lesson = Lesson.Create(request.CourseId, request.Title, request.Order);
+        var lesson = Lesson.Create(request.CourseId, request.Title, request.Order, request.Description, request.EstimatedMinutes);
         await _lessonRepository.AddAsync(lesson);
         await _unitOfWork.SaveChangesAsync();
 
@@ -95,9 +95,9 @@ public class LessonService : ILessonService
 
         LessonContent content = request.ContentType switch
         {
-            ContentType.Video => LessonContent.CreateVideo(request.LessonId, request.ContentUrl!),
-            ContentType.Pdf => LessonContent.CreatePdf(request.LessonId, request.ContentUrl!),
-            ContentType.Text => LessonContent.CreateText(request.LessonId, request.TextContent!),
+            ContentType.Video => LessonContent.CreateVideo(request.LessonId, request.ContentUrl!, request.Title),
+            ContentType.Pdf => LessonContent.CreatePdf(request.LessonId, request.ContentUrl!, request.Title),
+            ContentType.Text => LessonContent.CreateText(request.LessonId, request.TextContent!, request.Title),
             _ => throw new ArgumentException("Invalid content type")
         };
 
@@ -163,6 +163,7 @@ public class LessonService : ILessonService
                     item.Id,
                     item.Title,
                     item.Order,
+                    item.EstimatedMinutes,
                     isCompleted,
                     hasIncompleteBefore && !isCompleted,
                     item.Id == lessonId || firstIncompleteLessonId == item.Id
@@ -179,13 +180,14 @@ public class LessonService : ILessonService
             course.Title,
             lesson.Id,
             lesson.Title,
+            lesson.Description,
             lesson.Order,
             Math.Round(progressSummary?.Percentage ?? 0, 1),
             lessonProgress?.IsCompleted ?? false,
             previousLessonId,
             nextLessonId,
             lesson.Contents
-                .Select(content => new LessonPlayerContentResponse(content.Id, content.ContentType, content.Url, content.TextContent))
+                .Select(content => new LessonPlayerContentResponse(content.Id, content.ContentType, content.Title, content.Url, content.TextContent))
                 .ToList(),
             sidebar,
             note == null ? null : new LessonNoteResponse(note.Id, note.Content, note.UpdatedAt ?? note.CreatedAt)
@@ -298,7 +300,7 @@ public class LessonService : ILessonService
             return BaseResponse<LessonResponse>.Fail(ex.Message);
         }
 
-        var content = LessonContent.CreatePdf(lessonId, uploadResult.Url);
+        var content = LessonContent.CreatePdf(lessonId, uploadResult.Url, Path.GetFileNameWithoutExtension(request.FileName));
         lesson.AddContent(content);
         await _unitOfWork.SaveChangesAsync();
 
@@ -311,6 +313,8 @@ public class LessonService : ILessonService
             lesson.Id,
             lesson.CourseId,
             lesson.Title,
+            lesson.Description,
+            lesson.EstimatedMinutes,
             lesson.Order,
             lesson.ContentCount
         );

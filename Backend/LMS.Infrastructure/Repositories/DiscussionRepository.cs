@@ -14,7 +14,7 @@ public class DiscussionRepository : IDiscussionRepository
         _context = context;
     }
 
-    public async Task<List<LMS.Domain.Entities.DiscussionPost>> GetPostsAsync(string? tag, string? search)
+    public async Task<List<LMS.Domain.Entities.DiscussionPost>> GetPostsAsync(string? tag, string? search, string? sort)
     {
         var query = _context.Set<LMS.Domain.Entities.DiscussionPost>()
             .AsNoTracking()
@@ -38,8 +38,11 @@ public class DiscussionRepository : IDiscussionRepository
                 x.Content.ToLower().Contains(normalizedSearch));
         }
 
+        query = string.Equals(sort, "trending", StringComparison.OrdinalIgnoreCase)
+            ? query.OrderByDescending(x => x.Replies.Count).ThenByDescending(x => x.CreatedAt)
+            : query.OrderByDescending(x => x.CreatedAt);
+
         return await query
-            .OrderByDescending(x => x.CreatedAt)
             .ToListAsync();
     }
 

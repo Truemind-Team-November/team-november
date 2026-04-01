@@ -10,7 +10,11 @@ public record RegisterRequest(
     string Password,
     string ConfirmPassword
 );
+
 public record LoginRequest(string Email, string Password);
+
+public record GoogleSignInRequest(string IdToken, string? Discipline = null);
+
 public record AuthResponse(
     Guid Id,
     string PublicId,
@@ -25,4 +29,4 @@ public record AuthResponse(
 );
 
 public record ForgotPasswordRequest(string Email);
-public record ResetPasswordRequest( string Token, string Password, string ConfirmPassword);
+public record ResetPasswordRequest(string Token, string Password, string ConfirmPassword);

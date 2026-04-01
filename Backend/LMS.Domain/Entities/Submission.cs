@@ -8,7 +8,11 @@ public class Submission : BaseEntity
     public Guid UserId { get; private set; }
     public User User { get; private set; } = default!;
 
-    public string Answer { get; private set; } = default!;
+    public string? Answer { get; private set; }
+    public string? AttachmentUrl { get; private set; }
+    public string? AttachmentName { get; private set; }
+    public string? AttachmentContentType { get; private set; }
+    public long? AttachmentSizeBytes { get; private set; }
     public string? Feedback { get; private set; }
     public decimal? Score { get; private set; }
     public DateTime SubmittedAt { get; private set; }
@@ -16,7 +20,7 @@ public class Submission : BaseEntity
     private Submission() { }
 
     // Factory
-    public static Submission Create(Guid assignmentId, Guid userId, string answer)
+    public static Submission Create(Guid assignmentId, Guid userId, string? answer)
     {
         if (assignmentId == Guid.Empty)
             throw new ArgumentException("Assignment is required");
@@ -24,18 +28,30 @@ public class Submission : BaseEntity
         if (userId == Guid.Empty)
             throw new ArgumentException("User is required");
 
-        if (string.IsNullOrWhiteSpace(answer))
-            throw new ArgumentException("Answer is required");
-
-        if (answer.Length > 5000)
+        if (!string.IsNullOrWhiteSpace(answer) && answer.Length > 5000)
             throw new ArgumentException("Answer is too long");
         return new Submission
         {
             AssignmentId = assignmentId,
             UserId = userId,
-            Answer = answer.Trim(),
+            Answer = string.IsNullOrWhiteSpace(answer) ? null : answer.Trim(),
             SubmittedAt = DateTime.UtcNow
         };
+    }
+
+    public void AttachFile(string attachmentUrl, string attachmentName, string? attachmentContentType, long? attachmentSizeBytes)
+    {
+        if (string.IsNullOrWhiteSpace(attachmentUrl))
+            throw new ArgumentException("Attachment URL is required");
+
+        if (string.IsNullOrWhiteSpace(attachmentName))
+            throw new ArgumentException("Attachment name is required");
+
+        AttachmentUrl = attachmentUrl.Trim();
+        AttachmentName = attachmentName.Trim();
+        AttachmentContentType = string.IsNullOrWhiteSpace(attachmentContentType) ? null : attachmentContentType.Trim();
+        AttachmentSizeBytes = attachmentSizeBytes > 0 ? attachmentSizeBytes : null;
+        SetUpdated();
     }
 
     // Domain behavior
