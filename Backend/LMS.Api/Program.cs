@@ -61,6 +61,7 @@ builder.Services.AddScoped<IAssignmentService, AssignmentService>();
 builder.Services.AddScoped<ICertificateService, CertificateService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<ISubmissionService, SubmissionService>();
+builder.Services.AddHttpClient<IFileStorageService, CloudinaryFileStorageService>();
 builder.Services.AddHostedService<TokenCleanupService>();
 builder.Services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
 
@@ -78,6 +79,7 @@ builder.Services.AddValidatorsFromAssemblyContaining<CreateLessonRequestValidato
 
 // 🔹 6. JWT Authentication
 var jwtSection = builder.Configuration.GetSection("Jwt");
+builder.Services.Configure<FileStorageOptions>(builder.Configuration.GetSection(FileStorageOptions.SectionName));
 builder.Services.Configure<JwtOptions>(jwtSection);
 var secret = jwtSection["Secret"];
 if (string.IsNullOrWhiteSpace(secret))

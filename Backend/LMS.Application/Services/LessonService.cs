@@ -1,9 +1,12 @@
 using LMS.Application.Common;
+using LMS.Application.Common.Options;
+using LMS.Application.Common.Storage;
 using LMS.Application.DTOs.Lesson;
 using LMS.Application.Interfaces.Repositories;
 using LMS.Application.Interfaces.Services;
 using LMS.Domain.Entities;
 using LMS.Domain.Enums;
+using Microsoft.Extensions.Options;
 
 namespace LMS.Application.Services;
 
@@ -19,6 +22,8 @@ public class LessonService : ILessonService
     private readonly IEnrollmentRepository _enrollmentRepository;
     private readonly INotificationService _notificationService;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IFileStorageService _fileStorageService;
+    private readonly FileStorageOptions _fileStorageOptions;
 
     public LessonService(
         ILessonRepository lessonRepository,
@@ -29,7 +34,9 @@ public class LessonService : ILessonService
         IProgressRepository progressRepository,
         ICurrentUserService currentUserService,
         INotificationService notificationService,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IFileStorageService fileStorageService,
+        IOptions<FileStorageOptions> fileStorageOptions)
    
     {
         _lessonRepository = lessonRepository;
@@ -41,6 +48,8 @@ public class LessonService : ILessonService
         _currentUserService = currentUserService;
         _notificationService = notificationService;
         _unitOfWork = unitOfWork;
+        _fileStorageService = fileStorageService;
+        _fileStorageOptions = fileStorageOptions.Value;
     }
 
     public async Task<BaseResponse<LessonResponse>> CreateLessonAsync(CreateLessonRequest request)
@@ -261,6 +270,39 @@ public class LessonService : ILessonService
         return BaseResponse<LessonNoteResponse>.Ok(
             new LessonNoteResponse(note.Id, note.Content, note.UpdatedAt ?? note.CreatedAt),
             "Lesson note saved successfully");
+    }
+
+    public async Task<BaseResponse<LessonResponse>> UploadPdfContentAsync(
+        Guid lessonId,
+        FileUploadRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var lesson = await _lessonRepository.GetByIdAsync(lessonId);
+        if (lesson == null)
+            return BaseResponse<LessonResponse>.Fail("Lesson not found");
+
+        var isPdfContentType = string.Equals(request.ContentType, "application/pdf", StringComparison.OrdinalIgnoreCase);
+        var hasPdfExtension = Path.GetExtension(request.FileName).Equals(".pdf", StringComparison.OrdinalIgnoreCase);
+
+        if (!isPdfContentType && !hasPdfExtension)
+            return BaseResponse<LessonResponse>.Fail("Only PDF files are allowed");
+
+        FileUploadResult uploadResult;
+        try
+        {
+            var uploadRequest = request with { Folder = _fileStorageOptions.LessonDocumentFolder };
+            uploadResult = await _fileStorageService.UploadDocumentAsync(uploadRequest, cancellationToken);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BaseResponse<LessonResponse>.Fail(ex.Message);
+        }
+
+        var content = LessonContent.CreatePdf(lessonId, uploadResult.Url);
+        lesson.AddContent(content);
+        await _unitOfWork.SaveChangesAsync();
+
+        return BaseResponse<LessonResponse>.Ok(MapToResponse(lesson), "PDF content uploaded successfully");
     }
 
     private LessonResponse MapToResponse(Lesson lesson)
