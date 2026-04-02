@@ -5,20 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import styles from './sidebar.module.css';
 
-interface NavItem {
-  id: string;
-  label: string;
-  href: string;
-  icon: string;
-  badge?: number;
-}
-
-interface NavSection {
-  title: string;
-  items: NavItem[];
-}
-
-const navSections: NavSection[] = [
+const navSections = [
   {
     title: 'MAIN',
     items: [
@@ -49,7 +36,7 @@ export default function Sidebar() {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  const isActive = (href: string): boolean => {
+  const isActive = (href) => {
     return pathname === href || pathname.startsWith(href + '/');
   };
 

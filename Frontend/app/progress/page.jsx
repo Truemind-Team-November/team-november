@@ -1,26 +1,6 @@
 import styles from './progress.module.css';
 
-type ProgressCard = {
-  title: string;
-  value: number;
-  ringClass: string;
-  valueClass: string;
-};
-
-type SkillItem = {
-  name: string;
-  value: number;
-  fillClass: string;
-};
-
-type ActivityItem = {
-  title: string;
-  subtitle: string;
-  score: number;
-  colorClass: string;
-};
-
-const progressCards: ProgressCard[] = [
+const progressCards = [
   {
     title: 'UI/UX Fundamentals',
     value: 72,
@@ -47,7 +27,7 @@ const progressCards: ProgressCard[] = [
   },
 ];
 
-const skills: SkillItem[] = [
+const skills = [
   { name: 'Visual Design', value: 82, fillClass: 'fill82' },
   { name: 'User Research', value: 68, fillClass: 'fill68' },
   { name: 'Prototyping', value: 55, fillClass: 'fill55' },
@@ -55,7 +35,7 @@ const skills: SkillItem[] = [
   { name: 'Communication', value: 75, fillClass: 'fill75' },
 ];
 
-const activities: ActivityItem[] = [
+const activities = [
   {
     title: 'Sprint Retrospective',
     subtitle: 'Agile & scrum \u2018Mar 15',
