@@ -1,6 +1,6 @@
 import Image from "next/image";
-import Sidebar from "@/components/Sidebar";
 import { ThemeColors } from "@/components/ThemeColors";
+import Sidebar from "@/components/SideBar";
 
 /* ── Course module data ── */
 const modules = [

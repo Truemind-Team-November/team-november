@@ -1,3 +1,4 @@
+import Sidebar from '@/components/SideBar';
 import { ThemeColors } from '@/components/ThemeColors';
 
 export default function Dashboard() {
@@ -29,7 +30,9 @@ export default function Dashboard() {
     ];
 
     return (
-        <main style={{ backgroundColor: ThemeColors.bgBlue }} className="min-h-screen text-zinc-300 font-sans p-4">
+        <main className='flex'>
+       <Sidebar/> 
+        <section style={{ backgroundColor: ThemeColors.bgBlue }} className="min-h-dvh text-zinc-300 font-sans p-4 w-full">
 
             {/* Header */}
             <div className="flex md:items-center justify-between mb-5 px-2 max-md:flex-col max-md:gap-5">
@@ -187,6 +190,7 @@ export default function Dashboard() {
 
                 </div>
             </div>
+        </section>
         </main>
     );
 }
