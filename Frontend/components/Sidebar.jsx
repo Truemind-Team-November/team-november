@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import styles from './sidebar.module.css';
 
 const navSections = [
   {
@@ -41,14 +40,16 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className={`${styles.sidebar} ${isCollapsed ? styles.collapsed : ''}`}>
-      <div className={styles.header}>
-        <div className={styles.logo}>
-          <span className={styles.logoText}>Talent</span>
-          <span className={styles.logoAccent}>Flow</span>
+    <aside
+      className={`sticky top-0 z-50 flex h-screen flex-col overflow-y-auto border-r border-[#4B4C4E] bg-[#101723] p-4 transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-72'}`}
+    >
+      <div className="mb-8 flex items-center justify-between gap-2">
+        <div className={`flex min-w-0 gap-1 font-bold tracking-tight ${isCollapsed ? 'text-lg' : 'text-2xl'}`}>
+          <span className="text-white">Talent</span>
+          <span className="text-[#0950C3]">Flow</span>
         </div>
         <button
-          className={styles.collapseBtn}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-[#4FACFE]/40 bg-[#4FACFE]/10 text-sm font-semibold text-[#4FACFE] transition hover:bg-[#4FACFE]/20"
           onClick={() => setIsCollapsed(!isCollapsed)}
           aria-label="Toggle sidebar"
         >
@@ -56,24 +57,30 @@ export default function Sidebar() {
         </button>
       </div>
 
-      <nav className={styles.nav}>
+      <nav className="flex flex-1 flex-col gap-6">
         {navSections.map((section) => (
-          <div key={section.title} className={styles.navSection}>
-            <p className={styles.navSectionTitle}>{section.title}</p>
-            <ul className={styles.navList}>
+          <div key={section.title}>
+            {!isCollapsed && (
+              <p className="mb-2 px-3 text-[11px] font-bold uppercase tracking-[1px] text-[#0950C3]">
+                {section.title}
+              </p>
+            )}
+            <ul className="space-y-1">
               {section.items.map((item) => (
-                <li key={item.id} className={styles.navItem}>
+                <li key={item.id}>
                   <Link
                     href={item.href}
-                    className={`${styles.navLink} ${isActive(item.href) ? styles.active : ''}`}
+                    className={`relative flex min-h-10 items-center rounded-lg px-3 text-[13px] font-medium transition ${isCollapsed ? 'justify-center' : 'gap-3'} ${isActive(item.href) ? 'border-l-4 border-[#4FACFE] bg-[#3E5C8E] text-[#CEE0FD]' : 'text-[#A0A9B3] hover:bg-[#4FACFE]/10 hover:text-[#4FACFE]'}`}
                     title={isCollapsed ? item.label : ''}
                   >
-                    <span className={styles.navIcon} role="img" aria-label={item.label}>
+                    <span className="flex w-5 shrink-0 items-center justify-center text-base" role="img" aria-label={item.label}>
                       {item.icon}
                     </span>
-                    {!isCollapsed && <span className={styles.navLabel}>{item.label}</span>}
+                    {!isCollapsed && <span className="flex-1 truncate">{item.label}</span>}
                     {!isCollapsed && item.badge && (
-                      <span className={styles.badge}>{item.badge}</span>
+                      <span className="ml-auto min-w-5 rounded bg-[#0950C3] px-1.5 py-0.5 text-center text-[11px] font-bold text-white">
+                        {item.badge}
+                      </span>
                     )}
                   </Link>
                 </li>
@@ -83,12 +90,14 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      <div className={styles.userCard}>
-        <div className={styles.userAvatar}>AO</div>
+      <div className="mt-auto flex flex-col items-center gap-2 rounded-[10px] border border-[#4FACFE]/20 bg-[#4FACFE]/10 p-4 text-center">
+        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[#0950C3] text-lg font-bold text-white">
+          AO
+        </div>
         {!isCollapsed && (
           <>
-            <div className={styles.userName}>Adeeze okoro</div>
-            <div className={styles.userRole}>UI/UX Intern</div>
+            <div className="truncate text-[13px] font-bold text-white">Adeeze okoro</div>
+            <div className="truncate text-[11px] text-[#A0A9B3]">UI/UX Intern</div>
           </>
         )}
       </div>
