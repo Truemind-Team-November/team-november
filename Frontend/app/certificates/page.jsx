@@ -1,23 +1,24 @@
 "use client";
 import Sidebar from "@/components/SideBar";
 import Image from "next/image";
+import { ThemeColors } from "@/components/ThemeColors";
 
 export default function CertificatesPage() {
   return (
     <main
-      className="flex min-h-screen font-sans text-white bg-[#0b1120]"
-      style={{ fontFamily: "var(--font-inter), 'Inter', sans-serif" }}
+      className="flex min-h-screen font-sans text-white"
+      style={{ fontFamily: "var(--font-inter), 'Inter', sans-serif", backgroundColor: ThemeColors.bgBlue }}
     >
       <Sidebar activeTab="Certificates" />
       <div
         className="flex-1 w-full flex flex-col min-h-screen"
-        style={{ background: "#0B1422" }}
+        style={{ backgroundColor: ThemeColors.bgBlue }}
       >
         {/* Top Bar */}
         <div
           className="flex items-center justify-between px-8 py-5"
           style={{
-            background: "#101723",
+            backgroundColor: ThemeColors.bgBlue,
             borderBottom: "0.75px solid rgba(214,227,245,0.25)",
           }}
         >
@@ -41,7 +42,7 @@ export default function CertificatesPage() {
           {/* Progress Banner */}
           <div
             className="flex flex-wrap items-center gap-6 px-6 py-7 rounded-2xl"
-            style={{ background: "#101723", border: "1px solid #0950C3" }}
+            style={{ backgroundColor: ThemeColors.bgBlue, border: "1px solid #0950C3" }}
           >
             <Image
               src="/assets/certificates/certficates-page-icon.svg"
@@ -99,7 +100,7 @@ export default function CertificatesPage() {
             className="relative flex-1 rounded-2xl overflow-hidden flex flex-col justify-between p-8 md:p-14 lg:p-20"
             style={{
               background:
-                "linear-gradient(180deg, #101723 0%, #2D3D58 48%, #051838 80%)",
+                `linear-gradient(180deg, ${ThemeColors.bgBlue} 0%, #2D3D58 48%, #051838 80%)`,
               border: "1px solid #0950C3",
               minHeight: "560px",
             }}

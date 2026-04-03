@@ -1,6 +1,7 @@
 "use client";
 import Sidebar from "@/components/SideBar";
 import Image from "next/image";
+import { ThemeColors } from "@/components/ThemeColors";
 
 const iconMap = {
   assignment_due: "/assets/notifications/assignment-due.svg",
@@ -96,7 +97,7 @@ const notifications = [
 function NotificationItem({ notif, index }) {
   return (
     <div
-      className="relative flex items-center px-6 py-0 border-b transition-all duration-200 cursor-pointer group bg-[#131d2e] hover:bg-[#101723]"
+      className={`relative flex items-center px-6 py-0 border-b transition-all duration-200 cursor-pointer group hover:bg-black/20 ${notif.isRead ? "bg-transparent" : "bg-[#131d2e]"}`}
       style={{
         height: "117px",
         borderColor: "#D6E3F5",
@@ -201,7 +202,7 @@ export default function NotificationsPage() {
       style={{ fontFamily: "var(--font-inter), 'Inter', sans-serif" }}
     >
       <Sidebar activeTab="Notifications" />
-      <div className="min-h-screen w-full" style={{ background: "#0b1120" }}>
+      <div className="min-h-screen w-full" style={{ backgroundColor: ThemeColors.bgBlue }}>
         {/* Main container — max 1436px, full width on tablet */}
         <div
           className="mx-auto w-full"
@@ -216,7 +217,7 @@ export default function NotificationsPage() {
             className="flex flex-row items-center justify-between px-5 sm:px-6"
             style={{
               height: 98,
-              background: "#101723",
+              background: "transparent",
               borderBottom: "0.75px solid #D6E3F5",
             }}
           >
