@@ -6,7 +6,9 @@ public class Team : BaseEntity
     public string Description { get; private set; } = default!;
 
     private readonly List<User> _members = new();
+    private readonly List<Discipline> _disciplines = new();
     public IReadOnlyCollection<User> Members => _members.AsReadOnly();
+    public IReadOnlyCollection<Discipline> Disciplines => _disciplines.AsReadOnly();
 
     public int MemberCount => _members.Count;
 

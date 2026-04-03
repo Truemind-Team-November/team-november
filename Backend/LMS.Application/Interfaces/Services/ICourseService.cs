@@ -12,5 +12,7 @@ public interface ICourseService
     Task<BaseResponse<IEnumerable<CourseResponse>>> GetAllCoursesAsync();
     Task<BaseResponse<IEnumerable<CourseCatalogItemResponse>>> GetCatalogAsync(string? search, string? category, bool enrolledOnly);
     Task<BaseResponse<CourseDetailResponse>> GetCourseDetailAsync(Guid courseId);
+    Task<BaseResponse<IReadOnlyCollection<CourseReviewResponse>>> GetCourseReviewsAsync(Guid courseId);
+    Task<BaseResponse<CourseReviewResponse>> CreateOrUpdateReviewAsync(Guid courseId, CreateCourseReviewRequest request);
     Task<BaseResponse<CourseResponse>> UploadThumbnailAsync(Guid courseId, FileUploadRequest request, CancellationToken cancellationToken = default);
 }

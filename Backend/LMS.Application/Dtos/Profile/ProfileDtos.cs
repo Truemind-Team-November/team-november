@@ -3,7 +3,9 @@ namespace LMS.Application.DTOs.Profile;
 public record UpdateProfileRequest(
     string FirstName,
     string LastName,
-    string? PhoneNumber
+    string? Email,
+    string? PhoneNumber,
+    string? Location
 );
 
 public record ProfileBadgeResponse(string Label);

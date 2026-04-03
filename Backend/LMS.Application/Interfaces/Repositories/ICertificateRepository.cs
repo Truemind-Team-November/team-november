@@ -6,4 +6,6 @@ public interface ICertificateRepository : IRepository<Certificate>
 {
     Task<List<Certificate>> GetByUserIdAsync(Guid userId);
     Task<Certificate?> GetByUserAndCourseAsync(Guid userId, Guid courseId);
+    Task<Certificate?> GetByCertificateNumberAsync(string certificateNumber);
+    Task<Certificate?> GetByVerificationCodeAsync(string verificationCode);
 }

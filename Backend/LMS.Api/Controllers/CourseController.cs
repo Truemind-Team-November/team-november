@@ -81,4 +81,25 @@ public class CourseController : ControllerBase
         var result = await _courseService.GetCourseDetailAsync(id);
         return result.Success ? Ok(result) : NotFound(result);
     }
+
+    [HttpGet("{id:guid}/reviews")]
+    [Authorize]
+    [ProducesResponseType(typeof(BaseResponse<IReadOnlyCollection<CourseReviewResponse>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BaseResponse<string>), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetReviews(Guid id)
+    {
+        var result = await _courseService.GetCourseReviewsAsync(id);
+        return result.Success ? Ok(result) : NotFound(result);
+    }
+
+    [HttpPost("{id:guid}/reviews")]
+    [Authorize(Roles = "Learner")]
+    [ProducesResponseType(typeof(BaseResponse<CourseReviewResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BaseResponse<string>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(BaseResponse<string>), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> CreateOrUpdateReview(Guid id, [FromBody] CreateCourseReviewRequest request)
+    {
+        var result = await _courseService.CreateOrUpdateReviewAsync(id, request);
+        return result.Success ? Ok(result) : result.Message.Contains("not found") ? NotFound(result) : BadRequest(result);
+    }
 }

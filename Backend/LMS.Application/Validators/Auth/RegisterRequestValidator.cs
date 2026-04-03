@@ -1,12 +1,17 @@
-﻿using FluentValidation;
-using LMS.Application.Common;
+using FluentValidation;
 using LMS.Application.DTOs.Auth;
+using LMS.Application.Interfaces.Repositories;
+
 namespace LMS.Application.Validators.Auth;
 
 public class RegisterRequestValidator : AbstractValidator<RegisterRequest>
 {
-    public RegisterRequestValidator()
+    public RegisterRequestValidator(IDisciplineRepository disciplineRepository)
     {
+        RuleFor(x => x)
+            .MustAsync(async (_, cancellationToken) => await disciplineRepository.HasAnyAsync())
+            .WithMessage("Registration is unavailable until an admin creates at least one discipline");
+
         RuleFor(x => x.FirstName)
             .NotEmpty().WithMessage("First name is required")
             .MaximumLength(100)
@@ -24,7 +29,9 @@ public class RegisterRequestValidator : AbstractValidator<RegisterRequest>
         RuleFor(x => x.Discipline)
             .NotEmpty().WithMessage("Discipline is required")
             .MaximumLength(100)
-            .Must(TeamCatalog.IsSupportedDiscipline)
+            .MustAsync(async (discipline, cancellationToken) =>
+                !await disciplineRepository.HasAnyAsync() ||
+                await disciplineRepository.GetByNameAsync(discipline) != null)
             .WithMessage("Please select a valid discipline");
 
         RuleFor(x => x.Password)

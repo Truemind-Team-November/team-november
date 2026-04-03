@@ -14,12 +14,48 @@ public class CertificateConfiguration : IEntityTypeConfiguration<Certificate>
                .IsRequired()
                .HasMaxLength(50);
 
+        builder.Property(x => x.VerificationCode)
+               .IsRequired()
+               .HasMaxLength(64);
+
+        builder.Property(x => x.RecipientFullName)
+               .IsRequired()
+               .HasMaxLength(200);
+
+        builder.Property(x => x.RecipientPublicId)
+               .IsRequired()
+               .HasMaxLength(32);
+
+        builder.Property(x => x.RecipientDiscipline)
+               .IsRequired()
+               .HasMaxLength(100);
+
+        builder.Property(x => x.RecipientCohortLabel)
+               .HasMaxLength(50);
+
+        builder.Property(x => x.CourseTitleSnapshot)
+               .IsRequired()
+               .HasMaxLength(200);
+
+        builder.Property(x => x.IssuedBy)
+               .IsRequired()
+               .HasMaxLength(150);
+
+        builder.Property(x => x.TemplateVersion)
+               .IsRequired()
+               .HasMaxLength(32);
+
+        builder.Property(x => x.DocumentUrl)
+               .HasMaxLength(1000);
+
         builder.Property(x => x.FinalScore)
                .IsRequired()
                .HasColumnType("decimal(5,2)");
 
         builder.Property(x => x.IssuedAt)
                .IsRequired();
+
+        builder.Property(x => x.CompletedAt);
 
         //  User relationship
         builder.HasOne(x => x.User)
@@ -39,6 +75,9 @@ public class CertificateConfiguration : IEntityTypeConfiguration<Certificate>
 
         //  Certificate number uniqueness
         builder.HasIndex(x => x.CertificateNumber)
+               .IsUnique();
+
+        builder.HasIndex(x => x.VerificationCode)
                .IsUnique();
 
         //  Performance indexes
