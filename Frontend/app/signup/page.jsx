@@ -5,9 +5,8 @@ import Image from "next/image";
 import client from "@/lib/client";
 
 export default function Signup() {
-
   useEffect(() => {
-    client.get('/health').catch(() => { });
+    client.get("/health").catch(() => {});
   }, []);
 
   const [formData, setFormData] = useState({
@@ -44,11 +43,13 @@ export default function Signup() {
 
     try {
       console.log("Sending data to backend:", formData);
-      const response = await client.post('/auth/register', formData);
+      const response = await client.post("/auth/register", formData);
       setMessage("Registration Successful!");
       console.log(response.data);
     } catch (error) {
-      setMessage(error.response?.data?.message || "Registration failed. Try again.");
+      setMessage(
+        error.response?.data?.message || "Registration failed. Try again.",
+      );
     } finally {
       setLoading(false);
     }
@@ -110,15 +111,17 @@ export default function Signup() {
         </div>
       </div>
       <div className="min-h-screen flex items-start justify-start p-6">
-        <form onSubmit={handleSubmit} className="w-full max-w-sm"> {/* Wrap in <form> */}
+        <form onSubmit={handleSubmit} className="w-full max-w-sm">
+          {" "}
+          {/* Wrap in <form> */}
           <h1 className="text-white text-3xl font-bold mb-1">Create Account</h1>
-
           {/* Status Message */}
           {message && <p className="text-sm my-2 text-blue-400">{message}</p>}
-
           <div className="flex gap-3 mb-4 mt-6">
             <div className="flex-1">
-              <label className="text-white text-sm font-semibold block mb-2">First Name</label>
+              <label className="text-white text-sm font-semibold block mb-2">
+                First Name
+              </label>
               <input
                 type="text"
                 name="firstName" // Add name attribute
@@ -130,7 +133,9 @@ export default function Signup() {
               />
             </div>
             <div className="flex-1">
-              <label className="text-white text-sm font-semibold block mb-2">Last Name</label>
+              <label className="text-white text-sm font-semibold block mb-2">
+                Last Name
+              </label>
               <input
                 type="text"
                 name="lastName"
@@ -142,9 +147,10 @@ export default function Signup() {
               />
             </div>
           </div>
-
           <div className="mb-4">
-            <label className="text-white text-sm font-semibold block mb-2">Email Address</label>
+            <label className="text-white text-sm font-semibold block mb-2">
+              Email Address
+            </label>
             <input
               type="email"
               name="email"
@@ -155,9 +161,10 @@ export default function Signup() {
               required
             />
           </div>
-
           <div className="mb-4">
-            <label className="text-white text-sm font-semibold block mb-2">Discipline</label>
+            <label className="text-white text-sm font-semibold block mb-2">
+              Discipline
+            </label>
             <div className="relative">
               <select
                 name="discipline"
@@ -165,28 +172,59 @@ export default function Signup() {
                 onChange={handleChange}
                 className="w-full border border-gray-300 bg-transparent text-white text-sm rounded-lg px-3 py-2.5 outline-none appearance-none cursor-pointer"
               >
-                <option value="UI/UX Design" className="text-black">UI/UX Design</option>
-                <option value="Front-end Engineering" className="text-black">Front-end Engineering</option>
-                <option value="Back-end Engineering" className="text-black">Back-end Engineering</option>
-                <option value="Mobile Development" className="text-black">Mobile Development</option>
-                <option value="Data Analysis" className="text-black">Data Analysis</option>
-                <option value="Product Management" className="text-black">Product Management</option>
-                <option value="Digital Marketing" className="text-black">Digital Marketing</option>
-                <option value="Content Strategy" className="text-black">Content Strategy</option>
-                <option value="DevOps" className="text-black">DevOps</option>
-                <option value="QA Engineering" className="text-black">QA Engineering</option>
+                <option value="UI/UX Design" className="text-black">
+                  UI/UX Design
+                </option>
+                <option value="Front-end Engineering" className="text-black">
+                  Front-end Engineering
+                </option>
+                <option value="Back-end Engineering" className="text-black">
+                  Back-end Engineering
+                </option>
+                <option value="Mobile Development" className="text-black">
+                  Mobile Development
+                </option>
+                <option value="Data Analysis" className="text-black">
+                  Data Analysis
+                </option>
+                <option value="Product Management" className="text-black">
+                  Product Management
+                </option>
+                <option value="Digital Marketing" className="text-black">
+                  Digital Marketing
+                </option>
+                <option value="Content Strategy" className="text-black">
+                  Content Strategy
+                </option>
+                <option value="DevOps" className="text-black">
+                  DevOps
+                </option>
+                <option value="QA Engineering" className="text-black">
+                  QA Engineering
+                </option>
               </select>
               {/* chevron */}
               <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-                <svg className="w-4 h-4 text-[#8b949e]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                <svg
+                  className="w-4 h-4 text-[#8b949e]"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M19 9l-7 7-7-7"
+                  />
                 </svg>
               </div>
             </div>
           </div>
-
           <div className="mb-4">
-            <label className="text-white text-sm font-semibold block mb-2">Password</label>
+            <label className="text-white text-sm font-semibold block mb-2">
+              Password
+            </label>
             <input
               type="password"
               name="password"
@@ -197,7 +235,7 @@ export default function Signup() {
               required
             />
           </div>
-        </div>
+        </form>
         <div className="mb-4">
           <label htmlFor="email" className="text-3xl ">
             Email Address
