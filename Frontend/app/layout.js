@@ -12,8 +12,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "TalentFlow | Team November",
-  description: "Developed by team November",
+  title: 'TalentFlow - Learning Management System',
+  description: 'Professional learning and development platform',
 };
 
 export default function RootLayout({ children }) {
