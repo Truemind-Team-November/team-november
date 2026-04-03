@@ -15,17 +15,9 @@ public class DisciplineConfiguration : IEntityTypeConfiguration<Discipline>
         builder.HasIndex(x => x.Name)
                .IsUnique();
 
-        builder.Property(x => x.TeamId)
-               .IsRequired();
-
         builder.Property(x => x.CreatedAt).IsRequired();
         builder.Property(x => x.UpdatedAt);
 
         builder.HasIndex(x => x.IsDeleted);
-
-        builder.HasOne(x => x.Team)
-               .WithMany(x => x.Disciplines)
-               .HasForeignKey(x => x.TeamId)
-               .OnDelete(DeleteBehavior.Restrict);
     }
 }

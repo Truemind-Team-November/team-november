@@ -181,23 +181,6 @@ using (var scope = app.Services.CreateScope())
 
         db.Database.Migrate();
 
-        var disciplinesByName = db.Disciplines
-            .Include(discipline => discipline.Team)
-            .ToDictionary(discipline => discipline.Name, StringComparer.OrdinalIgnoreCase);
-        var usersWithoutTeams = db.Users
-            .Where(user => user.TeamId == null && !string.IsNullOrWhiteSpace(user.Discipline))
-            .ToList();
-
-        foreach (var user in usersWithoutTeams)
-        {
-            if (!disciplinesByName.TryGetValue(user.Discipline.Trim(), out var discipline))
-                continue;
-
-            user.ChangeDiscipline(discipline.Name);
-            user.AssignToTeam(discipline.TeamId);
-        }
-
-        db.SaveChanges();
         SeedBootstrapAdmin(db, hasher, builder.Configuration);
     }
     catch (Exception ex)

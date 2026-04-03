@@ -71,6 +71,19 @@ public class TeamController : ControllerBase
     }
 
     /// <summary>
+    /// Get learners who are not yet assigned to any team (Admin only)
+    /// </summary>
+    [HttpGet("unassigned-learners")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(typeof(BaseResponse<IEnumerable<AllocatableLearnerResponse>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BaseResponse<string>), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> GetUnassignedLearners()
+    {
+        var result = await _teamService.GetUnassignedLearnersAsync();
+        return Ok(result);
+    }
+
+    /// <summary>
     /// Create a team
     /// </summary>
     [HttpPost]
@@ -106,6 +119,32 @@ public class TeamController : ControllerBase
     public async Task<IActionResult> DeleteTeam(Guid teamId)
     {
         var result = await _teamService.DeleteTeamAsync(teamId);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
+    /// <summary>
+    /// Assign or move a learner to a team
+    /// </summary>
+    [HttpPut("{teamId:guid}/members/{userId:guid}")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(typeof(BaseResponse<TeamMemberResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BaseResponse<string>), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> AssignUserToTeam(Guid teamId, Guid userId)
+    {
+        var result = await _teamService.AssignUserToTeamAsync(teamId, userId);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
+    /// <summary>
+    /// Remove a learner from their assigned team
+    /// </summary>
+    [HttpDelete("members/{userId:guid}")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(typeof(BaseResponse<string>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BaseResponse<string>), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> RemoveUserFromTeam(Guid userId)
+    {
+        var result = await _teamService.RemoveUserFromTeamAsync(userId);
         return result.Success ? Ok(result) : BadRequest(result);
     }
 

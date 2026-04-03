@@ -17,7 +17,6 @@ public class DisciplineRepository : IDisciplineRepository
     public async Task<Discipline?> GetByIdAsync(Guid id)
     {
         return await _context.Disciplines
-            .Include(discipline => discipline.Team)
             .FirstOrDefaultAsync(discipline => discipline.Id == id);
     }
 
@@ -31,14 +30,6 @@ public class DisciplineRepository : IDisciplineRepository
         return await _context.Disciplines.AnyAsync();
     }
 
-    public async Task<List<Discipline>> GetAllWithTeamAsync()
-    {
-        return await _context.Disciplines
-            .Include(discipline => discipline.Team)
-            .OrderBy(discipline => discipline.Name)
-            .ToListAsync();
-    }
-
     public async Task<Discipline?> GetByNameAsync(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
@@ -47,7 +38,6 @@ public class DisciplineRepository : IDisciplineRepository
         var normalizedName = name.Trim().ToLowerInvariant();
 
         return await _context.Disciplines
-            .Include(discipline => discipline.Team)
             .FirstOrDefaultAsync(discipline => discipline.Name.ToLower() == normalizedName);
     }
 
@@ -60,7 +50,6 @@ public class DisciplineRepository : IDisciplineRepository
 
         return await _context.Disciplines
             .IgnoreQueryFilters()
-            .Include(discipline => discipline.Team)
             .FirstOrDefaultAsync(discipline => discipline.Name.ToLower() == normalizedName);
     }
 

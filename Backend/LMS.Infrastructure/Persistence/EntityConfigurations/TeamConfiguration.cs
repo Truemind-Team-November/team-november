@@ -29,24 +29,12 @@ public class TeamConfiguration : IEntityTypeConfiguration<Team>
                .HasForeignKey(x => x.TeamId)
                .OnDelete(DeleteBehavior.SetNull);
 
-        builder.HasMany(x => x.Disciplines)
-               .WithOne(x => x.Team)
-               .HasForeignKey(x => x.TeamId)
-               .OnDelete(DeleteBehavior.Restrict);
-
         builder.Navigation(x => x.Members)
-               .UsePropertyAccessMode(PropertyAccessMode.Field);
-
-        builder.Navigation(x => x.Disciplines)
                .UsePropertyAccessMode(PropertyAccessMode.Field);
 
         builder.Metadata
                .FindNavigation(nameof(Team.Members))!
                .SetField("_members");
-
-        builder.Metadata
-               .FindNavigation(nameof(Team.Disciplines))!
-               .SetField("_disciplines");
 
         builder.Ignore(x => x.MemberCount);
     }

@@ -67,8 +67,6 @@ public class AuthService : IAuthService
         }
 
         var hashedPassword = _passwordHasher.HashPassword(request.Password);
-        var team = discipline.Team;
-
         var user = User.Create(
             request.FirstName,
             request.LastName,
@@ -76,7 +74,7 @@ public class AuthService : IAuthService
             discipline.Name,
             hashedPassword,
             UserRole.Learner,
-            discipline.TeamId,
+            null,
             LearnerProfileDefaults.CohortLabel,
             LearnerProfileDefaults.Location
         );
@@ -88,15 +86,15 @@ public class AuthService : IAuthService
             user.Id,
             LMS.Domain.Enums.NotificationType.System,
             "Welcome to TalentFlow",
-            "Your account is ready. Explore your courses, team, and upcoming tasks.",
+            "Your account is ready. Explore your courses and upcoming tasks.",
             "/dashboard"
         ));
 
         await _notificationService.NotifyUserAsync(new LMS.Application.DTOs.Notification.CreateNotificationRequest(
             user.Id,
-            LMS.Domain.Enums.NotificationType.TeamUpdate,
-            "Team Update",
-            $"You have been added to the {team.Name} cross-functional team.",
+            LMS.Domain.Enums.NotificationType.System,
+            "Team Allocation Pending",
+            "Your discipline has been recorded. An admin will assign you to a cross-functional team soon.",
             "/my-team"
         ));
 
@@ -110,7 +108,7 @@ public class AuthService : IAuthService
             user.Email,
             user.Discipline,
             user.TeamId,
-            team.Name,
+            null,
             user.Role,
             token
         );
@@ -195,7 +193,7 @@ public class AuthService : IAuthService
                 discipline.Name,
                 generatedPassword,
                 UserRole.Learner,
-                discipline.TeamId,
+                null,
                 LearnerProfileDefaults.CohortLabel,
                 LearnerProfileDefaults.Location
             );
@@ -210,15 +208,15 @@ public class AuthService : IAuthService
                 user.Id,
                 LMS.Domain.Enums.NotificationType.System,
                 "Welcome to TalentFlow",
-                "Your Google account has been linked successfully. Explore your courses, team, and upcoming tasks.",
+                "Your Google account has been linked successfully. Explore your courses and upcoming tasks.",
                 "/dashboard"
             ));
 
             await _notificationService.NotifyUserAsync(new LMS.Application.DTOs.Notification.CreateNotificationRequest(
                 user.Id,
-                LMS.Domain.Enums.NotificationType.TeamUpdate,
-                "Team Update",
-                $"You have been added to the {discipline.Team.Name} cross-functional team.",
+                LMS.Domain.Enums.NotificationType.System,
+                "Team Allocation Pending",
+                "Your discipline has been recorded. An admin will assign you to a cross-functional team soon.",
                 "/my-team"
             ));
         }
