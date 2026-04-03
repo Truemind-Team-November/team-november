@@ -38,6 +38,8 @@ public record CourseCatalogItemResponse(
     string? ThumbnailUrl,
     string InstructorName,
     int LessonCount,
+    decimal AverageRating,
+    int ReviewCount,
     bool IsEnrolled,
     bool IsCompleted,
     double ProgressPercentage
@@ -80,9 +82,24 @@ public record CourseDetailResponse(
     string? ThumbnailUrl,
     CourseInstructorResponse Instructor,
     double ProgressPercentage,
+    decimal AverageRating,
+    int ReviewCount,
     bool IsEnrolled,
     int LessonCount,
     CourseIncludesResponse Includes,
     IReadOnlyCollection<CourseModuleResponse> Modules,
     Guid? ResumeLessonId
+);
+
+public record CreateCourseReviewRequest(int Rating, string? Comment);
+
+public record CourseReviewResponse(
+    Guid Id,
+    Guid CourseId,
+    Guid UserId,
+    string UserFullName,
+    string UserPublicId,
+    int Rating,
+    string? Comment,
+    DateTime SubmittedAt
 );

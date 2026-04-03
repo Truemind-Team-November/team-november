@@ -184,6 +184,8 @@ public class LessonService : ILessonService
             lesson.Order,
             Math.Round(progressSummary?.Percentage ?? 0, 1),
             lessonProgress?.IsCompleted ?? false,
+            lessonProgress?.PlaybackPositionSeconds ?? 0,
+            lessonProgress?.PlaybackDurationSeconds,
             previousLessonId,
             nextLessonId,
             lesson.Contents
@@ -194,6 +196,39 @@ public class LessonService : ILessonService
         );
 
         return BaseResponse<LessonPlayerResponse>.Ok(response);
+    }
+
+    public async Task<BaseResponse<bool>> UpdateLessonPlaybackAsync(Guid lessonId, UpdateLessonPlaybackRequest request)
+    {
+        if (!_currentUserService.UserId.HasValue)
+            return BaseResponse<bool>.Fail("User is not authenticated");
+
+        var lesson = await _lessonRepository.GetByIdAsync(lessonId);
+        if (lesson == null)
+            return BaseResponse<bool>.Fail("Lesson not found");
+
+        var enrollment = await _enrollmentRepository.GetByUserAndCourseAsync(_currentUserService.UserId.Value, lesson.CourseId);
+        if (enrollment == null)
+            return BaseResponse<bool>.Fail("You must enroll in this course to access lessons");
+
+        var lessonProgress = await _lessonProgressRepository.GetByUserAndLessonAsync(_currentUserService.UserId.Value, lessonId);
+        if (lessonProgress == null)
+        {
+            lessonProgress = LessonProgress.Create(_currentUserService.UserId.Value, lessonId);
+            await _lessonProgressRepository.AddAsync(lessonProgress);
+        }
+
+        try
+        {
+            lessonProgress.RecordPlayback(request.PlaybackPositionSeconds, request.PlaybackDurationSeconds);
+            await _lessonProgressRepository.UpdateAsync(lessonProgress);
+        }
+        catch (ArgumentException ex)
+        {
+            return BaseResponse<bool>.Fail(ex.Message);
+        }
+
+        return BaseResponse<bool>.Ok(true, "Lesson playback updated successfully");
     }
 
     public async Task<BaseResponse<bool>> CompleteLessonAsync(Guid lessonId)

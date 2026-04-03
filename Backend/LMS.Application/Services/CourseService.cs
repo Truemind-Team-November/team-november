@@ -13,6 +13,8 @@ public class CourseService : ICourseService
 {
     private readonly ICourseRepository _courseRepository;
     private readonly ICourseBrowseRepository _courseBrowseRepository;
+    private readonly ICourseReviewRepository _courseReviewRepository;
+    private readonly IEnrollmentRepository _enrollmentRepository;
     private readonly ICurrentUserService _currentUserService;
     private readonly IFileStorageService _fileStorageService;
     private readonly FileStorageOptions _fileStorageOptions;
@@ -20,12 +22,16 @@ public class CourseService : ICourseService
     public CourseService(
         ICourseRepository courseRepository,
         ICourseBrowseRepository courseBrowseRepository,
+        ICourseReviewRepository courseReviewRepository,
+        IEnrollmentRepository enrollmentRepository,
         ICurrentUserService currentUserService,
         IFileStorageService fileStorageService,
         IOptions<FileStorageOptions> fileStorageOptions)
     {
         _courseRepository = courseRepository;
         _courseBrowseRepository = courseBrowseRepository;
+        _courseReviewRepository = courseReviewRepository;
+        _enrollmentRepository = enrollmentRepository;
         _currentUserService = currentUserService;
         _fileStorageService = fileStorageService;
         _fileStorageOptions = fileStorageOptions.Value;
@@ -92,6 +98,67 @@ public class CourseService : ICourseService
             return BaseResponse<CourseDetailResponse>.Fail("Course not found");
 
         return BaseResponse<CourseDetailResponse>.Ok(course);
+    }
+
+    public async Task<BaseResponse<IReadOnlyCollection<CourseReviewResponse>>> GetCourseReviewsAsync(Guid courseId)
+    {
+        var course = await _courseRepository.GetByIdAsync(courseId);
+        if (course == null)
+            return BaseResponse<IReadOnlyCollection<CourseReviewResponse>>.Fail("Course not found");
+
+        var reviews = await _courseBrowseRepository.GetCourseReviewsAsync(courseId);
+        return BaseResponse<IReadOnlyCollection<CourseReviewResponse>>.Ok(reviews);
+    }
+
+    public async Task<BaseResponse<CourseReviewResponse>> CreateOrUpdateReviewAsync(Guid courseId, CreateCourseReviewRequest request)
+    {
+        if (!_currentUserService.UserId.HasValue)
+            return BaseResponse<CourseReviewResponse>.Fail("Unauthorized");
+
+        var course = await _courseRepository.GetByIdAsync(courseId);
+        if (course == null)
+            return BaseResponse<CourseReviewResponse>.Fail("Course not found");
+
+        var enrollment = await _enrollmentRepository.GetByUserAndCourseAsync(_currentUserService.UserId.Value, courseId);
+        if (enrollment == null)
+            return BaseResponse<CourseReviewResponse>.Fail("You must enroll in this course before leaving a review");
+
+        if (!enrollment.IsCompleted)
+            return BaseResponse<CourseReviewResponse>.Fail("You can review this course after completing it");
+
+        var existingReview = await _courseReviewRepository.GetByUserAndCourseAsync(_currentUserService.UserId.Value, courseId);
+
+        try
+        {
+            if (existingReview == null)
+            {
+                existingReview = CourseReview.Create(courseId, _currentUserService.UserId.Value, request.Rating, request.Comment);
+                await _courseReviewRepository.AddAsync(existingReview);
+            }
+            else
+            {
+                existingReview.Update(request.Rating, request.Comment);
+                await _courseReviewRepository.UpdateAsync(existingReview);
+            }
+        }
+        catch (ArgumentException ex)
+        {
+            return BaseResponse<CourseReviewResponse>.Fail(ex.Message);
+        }
+
+        var persistedReview = await _courseReviewRepository.GetByUserAndCourseAsync(_currentUserService.UserId.Value, courseId) ?? existingReview;
+
+        return BaseResponse<CourseReviewResponse>.Ok(
+            new CourseReviewResponse(
+                persistedReview.Id,
+                persistedReview.CourseId,
+                persistedReview.UserId,
+                persistedReview.User?.FullName ?? "Unknown",
+                persistedReview.User?.PublicId ?? "Unknown",
+                persistedReview.Rating,
+                persistedReview.Comment,
+                persistedReview.UpdatedAt ?? persistedReview.CreatedAt),
+            "Course review saved successfully");
     }
 
     public async Task<BaseResponse<CourseResponse>> UploadThumbnailAsync(

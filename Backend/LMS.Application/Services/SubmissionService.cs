@@ -12,6 +12,14 @@ namespace LMS.Application.Services;
 
 public class SubmissionService : ISubmissionService
 {
+    private const long MaxAttachmentSizeBytes = 50L * 1024 * 1024;
+    private static readonly HashSet<string> AllowedAttachmentExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".pdf",
+        ".png",
+        ".zip"
+    };
+
     private readonly ISubmissionRepository _submissionRepository;
     private readonly IAssignmentRepository _assignmentRepository;
     private readonly IUnitOfWork _unitOfWork;
@@ -102,6 +110,10 @@ public class SubmissionService : ISubmissionService
 
         if (fileSizeBytes > 0)
         {
+            var validationError = ValidateAttachment(request.FileName, fileSizeBytes);
+            if (validationError != null)
+                return BaseResponse<SubmissionResponse>.Fail(validationError);
+
             FileUploadResult uploadResult;
             try
             {
@@ -120,6 +132,18 @@ public class SubmissionService : ISubmissionService
         await _unitOfWork.SaveChangesAsync();
 
         return BaseResponse<SubmissionResponse>.Ok(MapToResponse(submission));
+    }
+
+    private static string? ValidateAttachment(string fileName, long fileSizeBytes)
+    {
+        if (fileSizeBytes > MaxAttachmentSizeBytes)
+            return "Submission file must not exceed 50MB";
+
+        var extension = Path.GetExtension(fileName);
+        if (string.IsNullOrWhiteSpace(extension) || !AllowedAttachmentExtensions.Contains(extension))
+            return "Only PDF, PNG, and ZIP files are allowed";
+
+        return null;
     }
 
     public async Task<BaseResponse<SubmissionResponse>> GradeAsync(Guid submissionId, decimal score, string? feedback)

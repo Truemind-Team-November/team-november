@@ -31,6 +31,13 @@ public class LessonProgressConfiguration : IEntityTypeConfiguration<LessonProgre
         // 🔹 CompletedAt (nullable)
         builder.Property(x => x.CompletedAt);
 
+        builder.Property(x => x.PlaybackPositionSeconds)
+               .IsRequired();
+
+        builder.Property(x => x.PlaybackDurationSeconds);
+
+        builder.Property(x => x.LastAccessedAt);
+
         // 🔹 Audit fields
         builder.Property(x => x.CreatedAt)
                .IsRequired();

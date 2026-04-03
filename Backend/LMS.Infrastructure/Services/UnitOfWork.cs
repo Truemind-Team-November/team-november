@@ -26,6 +26,8 @@ public class UnitOfWork : IUnitOfWork
 
         await _context.SaveChangesAsync();
         await _transaction.CommitAsync();
+        await _transaction.DisposeAsync();
+        _transaction = null;
     }
 
     public async Task RollbackAsync()
@@ -34,6 +36,8 @@ public class UnitOfWork : IUnitOfWork
             throw new InvalidOperationException("No active transaction");
 
         await _transaction.RollbackAsync();
+        await _transaction.DisposeAsync();
+        _transaction = null;
     }
 
     public async Task SaveChangesAsync()

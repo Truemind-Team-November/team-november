@@ -45,6 +45,32 @@ public class CertificateRepository : ICertificateRepository
             .FirstOrDefaultAsync(c => c.UserId == userId && c.CourseId == courseId);
     }
 
+    public async Task<Certificate?> GetByCertificateNumberAsync(string certificateNumber)
+    {
+        if (string.IsNullOrWhiteSpace(certificateNumber))
+            return null;
+
+        var normalizedNumber = certificateNumber.Trim();
+
+        return await _context.Certificates
+            .Include(c => c.User)
+            .Include(c => c.Course)
+            .FirstOrDefaultAsync(c => c.CertificateNumber == normalizedNumber);
+    }
+
+    public async Task<Certificate?> GetByVerificationCodeAsync(string verificationCode)
+    {
+        if (string.IsNullOrWhiteSpace(verificationCode))
+            return null;
+
+        var normalizedCode = verificationCode.Trim();
+
+        return await _context.Certificates
+            .Include(c => c.User)
+            .Include(c => c.Course)
+            .FirstOrDefaultAsync(c => c.VerificationCode == normalizedCode);
+    }
+
     public async Task AddAsync(Certificate entity)
     {
         await _context.Certificates.AddAsync(entity);

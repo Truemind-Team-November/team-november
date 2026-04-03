@@ -53,14 +53,18 @@ public class User : BaseEntity
         if (!email.Contains("@") || !email.Contains("."))
             throw new ArgumentException("Invalid email format");
 
-        if (string.IsNullOrWhiteSpace(discipline))
-            throw new ArgumentException("Discipline is required");
-
         if (string.IsNullOrWhiteSpace(passwordHash))
             throw new ArgumentException("Password hash is required");
 
         if (!Enum.IsDefined(typeof(UserRole), role))
             throw new ArgumentException("Invalid role");
+
+        var normalizedDiscipline = string.IsNullOrWhiteSpace(discipline)
+            ? string.Empty
+            : discipline.Trim();
+
+        if (role == UserRole.Learner && string.IsNullOrWhiteSpace(normalizedDiscipline))
+            throw new ArgumentException("Discipline is required");
 
         var publicId = GeneratePublicId();
         return new User
@@ -69,7 +73,7 @@ public class User : BaseEntity
             FirstName = firstName.Trim(),
             LastName = lastName.Trim(),
             Email = email.Trim().ToLowerInvariant(),
-            Discipline = discipline.Trim(),
+            Discipline = normalizedDiscipline,
             CohortLabel = string.IsNullOrWhiteSpace(cohortLabel) ? null : cohortLabel.Trim(),
             Location = string.IsNullOrWhiteSpace(location) ? null : location.Trim(),
             TeamId = teamId,
@@ -78,7 +82,7 @@ public class User : BaseEntity
         };
     }
 
-    public void UpdateProfile(string firstName, string lastName, string? phoneNumber)
+    public void UpdateProfile(string firstName, string lastName, string email, string? phoneNumber, string? location)
     {
         if (string.IsNullOrWhiteSpace(firstName))
             throw new ArgumentException("First name is required");
@@ -86,9 +90,17 @@ public class User : BaseEntity
         if (string.IsNullOrWhiteSpace(lastName))
             throw new ArgumentException("Last name is required");
 
+        if (string.IsNullOrWhiteSpace(email))
+            throw new ArgumentException("Email is required");
+
+        if (!email.Contains("@") || !email.Contains("."))
+            throw new ArgumentException("Invalid email format");
+
         FirstName = firstName.Trim();
         LastName = lastName.Trim();
+        Email = email.Trim().ToLowerInvariant();
         PhoneNumber = string.IsNullOrWhiteSpace(phoneNumber) ? null : phoneNumber.Trim();
+        Location = string.IsNullOrWhiteSpace(location) ? null : location.Trim();
         SetUpdated();
     }
 

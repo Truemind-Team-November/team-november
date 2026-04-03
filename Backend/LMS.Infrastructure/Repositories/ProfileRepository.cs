@@ -61,7 +61,7 @@ public class ProfileRepository : IProfileRepository
                 user.FullName,
                 user.Email,
                 user.PhoneNumber,
-                user.Discipline,
+                GetDisciplineDisplayValue(user),
                 user.CohortLabel,
                 user.Location
             ),
@@ -72,10 +72,16 @@ public class ProfileRepository : IProfileRepository
 
     private static IReadOnlyCollection<ProfileBadgeResponse> BuildBadges(Domain.Entities.User user, int contributionCount)
     {
-        var badges = new List<ProfileBadgeResponse>
+        var badges = new List<ProfileBadgeResponse>();
+
+        if (!string.IsNullOrWhiteSpace(user.Discipline))
         {
-            new(user.Discipline)
-        };
+            badges.Add(new ProfileBadgeResponse(user.Discipline));
+        }
+        else
+        {
+            badges.Add(new ProfileBadgeResponse(user.Role.ToString()));
+        }
 
         if (!string.IsNullOrWhiteSpace(user.CohortLabel))
             badges.Add(new ProfileBadgeResponse(user.CohortLabel));
@@ -172,10 +178,11 @@ public class ProfileRepository : IProfileRepository
 
     private static string BuildHeadline(Domain.Entities.User user)
     {
-        var headlineParts = new List<string>
-        {
-            $"{user.Discipline} Intern"
-        };
+        var primaryLabel = string.IsNullOrWhiteSpace(user.Discipline)
+            ? user.Role.ToString()
+            : $"{user.Discipline} Intern";
+
+        var headlineParts = new List<string> { primaryLabel };
 
         if (!string.IsNullOrWhiteSpace(user.CohortLabel))
             headlineParts.Add(user.CohortLabel);
@@ -184,5 +191,12 @@ public class ProfileRepository : IProfileRepository
             headlineParts.Add(user.Location);
 
         return string.Join(" - ", headlineParts);
+    }
+
+    private static string GetDisciplineDisplayValue(Domain.Entities.User user)
+    {
+        return string.IsNullOrWhiteSpace(user.Discipline)
+            ? "Not assigned"
+            : user.Discipline;
     }
 }

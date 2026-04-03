@@ -107,6 +107,16 @@ public class LessonController : ControllerBase
         return result.Success ? Ok(result) : result.Message.Contains("not found") ? NotFound(result) : BadRequest(result);
     }
 
+    [HttpPut("{lessonId:guid}/playback")]
+    [Authorize]
+    [ProducesResponseType(typeof(BaseResponse<bool>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BaseResponse<string>), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> UpdatePlayback(Guid lessonId, [FromBody] UpdateLessonPlaybackRequest request)
+    {
+        var result = await _lessonService.UpdateLessonPlaybackAsync(lessonId, request);
+        return result.Success ? Ok(result) : result.Message.Contains("not found") ? NotFound(result) : BadRequest(result);
+    }
+
     [HttpPut("{lessonId:guid}/note")]
     [Authorize]
     [ProducesResponseType(typeof(BaseResponse<LessonNoteResponse>), StatusCodes.Status200OK)]
