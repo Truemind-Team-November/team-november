@@ -11,7 +11,7 @@ const client = axios.create({
 // Request Interceptor
 client.interceptors.request.use(
   (config) => {
-    // In Web, we use localStorage
+    // Using localStorage
     const token = typeof window !== "undefined" ? localStorage.getItem('userToken') : null;
     
     if (token) {
@@ -30,7 +30,7 @@ client.interceptors.response.use(
       // Clear token and redirect to login
       if (typeof window !== "undefined") {
         localStorage.removeItem('userToken');
-        window.location.href = '/login'; 
+        window.location.href = '/login';
       }
     }
     return Promise.reject(error);
