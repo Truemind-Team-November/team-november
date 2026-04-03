@@ -124,6 +124,19 @@ export default function Signup() {
             className="w-full h-10 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4 mt-2"
           />
         </div>
+        <div className="mb-4">
+          <label htmlFor="Password" className="text-3xl ">
+            Password
+          </label>
+
+          <input
+            type="password"
+            id="Password"
+            placeholder="Minimum 8 characters"
+            required
+            className="w-full h-10 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4 mt-2"
+          />
+        </div>
         <button className="w-full h-10 bg-[#0950C3] text-white rounded-lg hover:bg-blue-600 transition-colors ">
           Get Started
         </button>
