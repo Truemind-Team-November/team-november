@@ -3,30 +3,7 @@
 import React, { useState } from 'react';
 import styles from './profile.module.css';
 
-interface UserProfile {
-  id: string;
-  fullName: string;
-  email: string;
-  phoneNumber: string;
-  userId: string;
-  role: string;
-  location: string;
-  tags: string[];
-  courses: number;
-  avgProgress: number;
-  certificates: number;
-  avgScore: number;
-  achievements: Achievement[];
-}
-
-interface Achievement {
-  id: string;
-  icon: string;
-  title: string;
-  description: string;
-}
-
-const defaultProfile: UserProfile = {
+const defaultProfile = {
   id: '1',
   fullName: 'Adeeze Okoro',
   email: 'adeeze@learntlm.org',
@@ -62,7 +39,7 @@ const defaultProfile: UserProfile = {
 };
 
 export default function ProfilePage() {
-  const [profile, setProfile] = useState<UserProfile>(defaultProfile);
+  const [profile, setProfile] = useState(defaultProfile);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     fullName: profile.fullName,
@@ -71,7 +48,7 @@ export default function ProfilePage() {
   });
   const [isSaving, setIsSaving] = useState(false);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -108,7 +85,7 @@ export default function ProfilePage() {
     setIsEditing(!isEditing);
   };
 
-  const getInitials = (name: string): string => {
+  const getInitials = (name) => {
     return name
       .split(' ')
       .map((n) => n[0])
