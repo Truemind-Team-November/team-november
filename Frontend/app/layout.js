@@ -20,7 +20,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} appBody h-full antialiased`}>
-        <main className="appMain">{children}</main>
+        <main className="appMain">
+          {children}
+        </main>
       </body>
     </html>
   );

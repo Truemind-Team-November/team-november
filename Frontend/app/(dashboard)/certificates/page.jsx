@@ -6,10 +6,9 @@ import { ThemeColors } from "@/components/ThemeColors";
 export default function CertificatesPage() {
   return (
     <main
-      className="flex min-h-screen font-sans text-white"
+      className="min-h-screen font-sans text-white"
       style={{ fontFamily: "var(--font-inter), 'Inter', sans-serif", backgroundColor: ThemeColors.bgBlue }}
     >
-      <Sidebar activeTab="Certificates" />
       <div
         className="flex-1 w-full flex flex-col min-h-screen"
         style={{ backgroundColor: ThemeColors.bgBlue }}
