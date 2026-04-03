@@ -13,6 +13,11 @@ public class LessonConfiguration : IEntityTypeConfiguration<Lesson>
                .IsRequired()
                .HasMaxLength(200);
 
+        builder.Property(x => x.Description)
+               .HasMaxLength(1000);
+
+        builder.Property(x => x.EstimatedMinutes);
+
         // Order
         builder.Property(x => x.Order)
                .IsRequired();

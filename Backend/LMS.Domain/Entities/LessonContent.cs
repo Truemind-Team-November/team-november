@@ -7,12 +7,13 @@ public class LessonContent : BaseEntity
 
     public ContentType ContentType { get; private set; }
 
+    public string? Title { get; private set; }
     public string? Url { get; private set; }
     public string? TextContent { get; private set; }
 
     private LessonContent() { } // For EF Core
 
-    public static LessonContent CreateVideo(Guid lessonId, string url)
+    public static LessonContent CreateVideo(Guid lessonId, string url, string? title = null)
     {
         if (lessonId == Guid.Empty)
             throw new ArgumentException("Lesson is required");
@@ -24,11 +25,12 @@ public class LessonContent : BaseEntity
         {
             LessonId = lessonId,
             ContentType = ContentType.Video,
+            Title = string.IsNullOrWhiteSpace(title) ? null : title.Trim(),
             Url = url.Trim()
         };
     }
 
-    public static LessonContent CreatePdf(Guid lessonId, string url)
+    public static LessonContent CreatePdf(Guid lessonId, string url, string? title = null)
     {
         if (lessonId == Guid.Empty)
             throw new ArgumentException("Lesson is required");
@@ -40,11 +42,12 @@ public class LessonContent : BaseEntity
         {
             LessonId = lessonId,
             ContentType = ContentType.Pdf,
+            Title = string.IsNullOrWhiteSpace(title) ? null : title.Trim(),
             Url = url.Trim()
         };
     }
 
-    public static LessonContent CreateText(Guid lessonId, string text)
+    public static LessonContent CreateText(Guid lessonId, string text, string? title = null)
     {
         if (lessonId == Guid.Empty)
             throw new ArgumentException("Lesson is required");
@@ -56,8 +59,15 @@ public class LessonContent : BaseEntity
         {
             LessonId = lessonId,
             ContentType = ContentType.Text,
+            Title = string.IsNullOrWhiteSpace(title) ? null : title.Trim(),
             TextContent = text
         };
+    }
+
+    public void UpdateTitle(string? title)
+    {
+        Title = string.IsNullOrWhiteSpace(title) ? null : title.Trim();
+        SetUpdated();
     }
 
     public void UpdateText(string text)

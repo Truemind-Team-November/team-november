@@ -12,13 +12,20 @@ public class CertificateService : ICertificateService
     private readonly ISubmissionRepository _submissionRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserService _currentUserService;
+    private readonly INotificationService _notificationService;
 
-    public CertificateService(ICertificateRepository certificateRepository, ISubmissionRepository submissionRepository, IUnitOfWork unitOfWork, ICurrentUserService currentUserService)
+    public CertificateService(
+        ICertificateRepository certificateRepository,
+        ISubmissionRepository submissionRepository,
+        IUnitOfWork unitOfWork,
+        ICurrentUserService currentUserService,
+        INotificationService notificationService)
     {
         _certificateRepository = certificateRepository;
         _submissionRepository = submissionRepository;
         _unitOfWork = unitOfWork;
         _currentUserService = currentUserService;
+        _notificationService = notificationService;
     }
 
     public async Task<BaseResponse<IEnumerable<CertificateResponse>>> GetMyCertificatesAsync()
@@ -30,7 +37,10 @@ public class CertificateService : ICertificateService
 
         var certificates = await _certificateRepository.GetByUserIdAsync(userId);
 
-        return BaseResponse<IEnumerable<CertificateResponse>>.Ok(certificates.Select(MapToResponse));
+        return BaseResponse<IEnumerable<CertificateResponse>>.Ok(
+            certificates
+                .OrderByDescending(item => item.IssuedAt)
+                .Select(MapToResponse));
     }
 
     public async Task<BaseResponse<CertificateResponse>> IssueCertificateAsync(Guid courseId)
@@ -57,6 +67,7 @@ public class CertificateService : ICertificateService
             return BaseResponse<CertificateResponse>.Fail("All assignments must be graded before issuing certificate");
 
         var finalScore = courseSubmissions.Average(s => s.Score!.Value);
+        var courseTitle = courseSubmissions.First().Assignment.Course?.Title ?? "your course";
 
         if (finalScore < 50)
             return BaseResponse<CertificateResponse>.Fail("Minimum score not reached for certification");
@@ -65,6 +76,13 @@ public class CertificateService : ICertificateService
 
         await _certificateRepository.AddAsync(certificate);
         await _unitOfWork.SaveChangesAsync();
+        await _notificationService.NotifyUserAsync(new LMS.Application.DTOs.Notification.CreateNotificationRequest(
+            userId,
+            LMS.Domain.Enums.NotificationType.CertificateMilestone,
+            "Certificate Milestone",
+            $"You earned a certificate for completing {courseTitle}.",
+            "/certificates"
+        ));
 
         return BaseResponse<CertificateResponse>.Ok(MapToResponse(certificate), "Certificate issued successfully");
     }
@@ -77,6 +95,9 @@ public class CertificateService : ICertificateService
             certificate.CourseId,
             certificate.Course?.Title ?? "Unknown",
             certificate.User?.FullName ?? "Unknown",
+            certificate.User?.PublicId ?? "Unknown",
+            certificate.User?.Discipline ?? "Unknown",
+            certificate.User?.CohortLabel,
             certificate.FinalScore,
             certificate.CertificateNumber,
             certificate.IssuedAt

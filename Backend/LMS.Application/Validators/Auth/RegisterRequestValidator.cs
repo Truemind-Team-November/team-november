@@ -1,6 +1,6 @@
 ﻿using FluentValidation;
+using LMS.Application.Common;
 using LMS.Application.DTOs.Auth;
-
 namespace LMS.Application.Validators.Auth;
 
 public class RegisterRequestValidator : AbstractValidator<RegisterRequest>
@@ -33,6 +33,12 @@ public class RegisterRequestValidator : AbstractValidator<RegisterRequest>
             .NotEmpty().WithMessage("Password is required")
             .MinimumLength(6).WithMessage("Password must be at least 6 characters long");
 =======
+
+        RuleFor(x => x.Discipline)
+            .NotEmpty().WithMessage("Discipline is required")
+            .MaximumLength(100)
+            .Must(TeamCatalog.IsSupportedDiscipline)
+            .WithMessage("Please select a valid discipline");
 
         RuleFor(x => x.Password)
             .NotEmpty().WithMessage("Password is required")

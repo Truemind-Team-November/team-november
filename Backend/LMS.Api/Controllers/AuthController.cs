@@ -42,6 +42,18 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
+    /// Sign in with Google using a frontend-issued ID token
+    /// </summary>
+    [HttpPost("google")]
+    [ProducesResponseType(typeof(BaseResponse<AuthResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BaseResponse<string>), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GoogleSignIn([FromBody] GoogleSignInRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _authService.GoogleSignInAsync(request, cancellationToken);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
+    /// <summary>
     /// Request password reset link
     /// </summary>
     [HttpPost("forgot-password")]

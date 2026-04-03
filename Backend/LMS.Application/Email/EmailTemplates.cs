@@ -27,4 +27,18 @@ public static class EmailTemplates
             <p>{title}</p>
         ";
     }
+
+    public static string Notification(string recipientName, string title, string message, string? actionUrl = null)
+    {
+        var actionMarkup = string.IsNullOrWhiteSpace(actionUrl)
+            ? string.Empty
+            : $"<p><a href='{actionUrl}'>Open notification</a></p>";
+
+        return $@"
+            <h2>Hello {recipientName},</h2>
+            <h3>{title}</h3>
+            <p>{message}</p>
+            {actionMarkup}
+        ";
+    }
 }
