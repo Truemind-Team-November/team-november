@@ -18,7 +18,6 @@ public class TeamRepository : ITeamRepository
     {
         return await _context.Teams
             .Include(team => team.Members)
-            .Include(team => team.Disciplines)
             .FirstOrDefaultAsync(team => team.Id == id);
     }
 
@@ -34,18 +33,9 @@ public class TeamRepository : ITeamRepository
             .ToListAsync();
     }
 
-    public async Task<List<Team>> GetAllWithMembersAndDisciplinesAsync()
-    {
-        return await _context.Teams
-            .Include(team => team.Members)
-            .Include(team => team.Disciplines)
-            .ToListAsync();
-    }
-
     public async Task<Team?> GetByNameAsync(string name)
     {
         return await _context.Teams
-            .Include(team => team.Disciplines)
             .FirstOrDefaultAsync(team => team.Name.ToLower() == name.Trim().ToLower());
     }
 
@@ -53,7 +43,6 @@ public class TeamRepository : ITeamRepository
     {
         return await _context.Teams
             .Include(team => team.Members)
-            .Include(team => team.Disciplines)
             .FirstOrDefaultAsync(team => team.Members.Any(member => member.Id == userId));
     }
 

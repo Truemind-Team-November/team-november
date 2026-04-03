@@ -13,25 +13,28 @@ public class TeamService : ITeamService
     private readonly IUserRepository _userRepository;
     private readonly ICurrentUserService _currentUserService;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly INotificationService _notificationService;
 
     public TeamService(
         ITeamRepository teamRepository,
         IDisciplineRepository disciplineRepository,
         IUserRepository userRepository,
         ICurrentUserService currentUserService,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        INotificationService notificationService)
     {
         _teamRepository = teamRepository;
         _disciplineRepository = disciplineRepository;
         _userRepository = userRepository;
         _currentUserService = currentUserService;
         _unitOfWork = unitOfWork;
+        _notificationService = notificationService;
     }
 
     public async Task<BaseResponse<IEnumerable<TeamResponse>>> GetTeamsAsync()
     {
         var currentUserId = _currentUserService.UserId;
-        var teams = await _teamRepository.GetAllWithMembersAndDisciplinesAsync();
+        var teams = await _teamRepository.GetAllWithMembersAsync();
 
         var response = teams
             .OrderBy(team => team.Name)
@@ -56,7 +59,7 @@ public class TeamService : ITeamService
 
     public async Task<BaseResponse<IEnumerable<TeamAllocationResponse>>> GetTeamAllocationAsync()
     {
-        var teams = await _teamRepository.GetAllWithMembersAndDisciplinesAsync();
+        var teams = await _teamRepository.GetAllWithMembersAsync();
 
         var response = teams
             .OrderBy(team => team.Name)
@@ -79,9 +82,23 @@ public class TeamService : ITeamService
         return BaseResponse<IEnumerable<TeamAllocationResponse>>.Ok(response);
     }
 
+    public async Task<BaseResponse<IEnumerable<AllocatableLearnerResponse>>> GetUnassignedLearnersAsync()
+    {
+        var users = await _userRepository.GetAllAsync();
+
+        var response = users
+            .Where(user => user.IsLearner() && user.TeamId == null)
+            .OrderBy(user => user.FirstName)
+            .ThenBy(user => user.LastName)
+            .Select(MapToAllocatableLearnerResponse)
+            .ToList();
+
+        return BaseResponse<IEnumerable<AllocatableLearnerResponse>>.Ok(response);
+    }
+
     public async Task<BaseResponse<IEnumerable<DisciplineResponse>>> GetDisciplinesAsync()
     {
-        var disciplines = await _disciplineRepository.GetAllWithTeamAsync();
+        var disciplines = await _disciplineRepository.GetAllAsync();
 
         var response = disciplines
             .OrderBy(discipline => discipline.Name)
@@ -133,11 +150,61 @@ public class TeamService : ITeamService
         if (team.Members.Any())
             return BaseResponse<string>.Fail("Cannot delete a team that still has members");
 
-        if (team.Disciplines.Any())
-            return BaseResponse<string>.Fail("Cannot delete a team that still has disciplines");
-
         await _teamRepository.DeleteAsync(team);
         return BaseResponse<string>.Ok("Team deleted successfully");
+    }
+
+    public async Task<BaseResponse<TeamMemberResponse>> AssignUserToTeamAsync(Guid teamId, Guid userId)
+    {
+        var team = await _teamRepository.GetByIdAsync(teamId);
+        if (team == null)
+            return BaseResponse<TeamMemberResponse>.Fail("Team not found");
+
+        var user = await _userRepository.GetByIdAsync(userId);
+        if (user == null)
+            return BaseResponse<TeamMemberResponse>.Fail("User not found");
+
+        if (!user.IsLearner())
+            return BaseResponse<TeamMemberResponse>.Fail("Only learners can be assigned to teams");
+
+        user.AssignToTeam(teamId);
+        await _userRepository.UpdateAsync(user);
+        await _notificationService.NotifyUserAsync(new LMS.Application.DTOs.Notification.CreateNotificationRequest(
+            user.Id,
+            LMS.Domain.Enums.NotificationType.TeamUpdate,
+            "Team Update",
+            $"You have been added to the {team.Name} cross-functional team.",
+            "/my-team"
+        ));
+
+        return BaseResponse<TeamMemberResponse>.Ok(
+            MapToTeamMemberResponse(user, _currentUserService.UserId),
+            "Learner assigned to team successfully");
+    }
+
+    public async Task<BaseResponse<string>> RemoveUserFromTeamAsync(Guid userId)
+    {
+        var user = await _userRepository.GetByIdAsync(userId);
+        if (user == null)
+            return BaseResponse<string>.Fail("User not found");
+
+        if (!user.IsLearner())
+            return BaseResponse<string>.Fail("Only learners can be assigned to teams");
+
+        if (user.TeamId == null)
+            return BaseResponse<string>.Fail("Learner is not assigned to a team");
+
+        user.RemoveFromTeam();
+        await _userRepository.UpdateAsync(user);
+        await _notificationService.NotifyUserAsync(new LMS.Application.DTOs.Notification.CreateNotificationRequest(
+            user.Id,
+            LMS.Domain.Enums.NotificationType.TeamUpdate,
+            "Team Update",
+            "Your team assignment has been cleared. An admin will assign you to another team soon.",
+            "/my-team"
+        ));
+
+        return BaseResponse<string>.Ok("Learner removed from team successfully");
     }
 
     public async Task<BaseResponse<DisciplineResponse>> CreateDisciplineAsync(CreateDisciplineRequest request)
@@ -145,11 +212,7 @@ public class TeamService : ITeamService
         if (await _disciplineRepository.ExistsByNameAsync(request.Name))
             return BaseResponse<DisciplineResponse>.Fail("A discipline with this name already exists");
 
-        var team = await _teamRepository.GetByIdAsync(request.TeamId);
-        if (team == null)
-            return BaseResponse<DisciplineResponse>.Fail("Team not found");
-
-        var discipline = Discipline.Create(request.Name, request.TeamId);
+        var discipline = Discipline.Create(request.Name);
         await _disciplineRepository.AddAsync(discipline);
 
         var createdDiscipline = await _disciplineRepository.GetByIdAsync(discipline.Id) ?? discipline;
@@ -167,16 +230,12 @@ public class TeamService : ITeamService
         if (await _disciplineRepository.ExistsByNameAsync(request.Name, disciplineId))
             return BaseResponse<DisciplineResponse>.Fail("A discipline with this name already exists");
 
-        var team = await _teamRepository.GetByIdAsync(request.TeamId);
-        if (team == null)
-            return BaseResponse<DisciplineResponse>.Fail("Team not found");
-
         var previousName = discipline.Name;
         await _unitOfWork.BeginTransactionAsync();
 
         try
         {
-            discipline.Update(request.Name, request.TeamId);
+            discipline.Update(request.Name);
             await _disciplineRepository.UpdateAsync(discipline);
 
             var users = await _userRepository.GetAllAsync();
@@ -187,7 +246,6 @@ public class TeamService : ITeamService
             foreach (var user in affectedUsers)
             {
                 user.ChangeDiscipline(discipline.Name);
-                user.AssignToTeam(discipline.TeamId);
                 await _userRepository.UpdateAsync(user);
             }
 
@@ -221,24 +279,10 @@ public class TeamService : ITeamService
 
     private static TeamResponse MapToResponse(Team team, Guid? currentUserId)
     {
-        var disciplines = team.Disciplines
-            .OrderBy(discipline => discipline.Name)
-            .Select(discipline => new DisciplineResponse(
-                discipline.Id,
-                discipline.Name,
-                discipline.TeamId,
-                team.Name))
-            .ToList();
-
         var members = team.Members
             .OrderBy(member => member.FirstName)
             .ThenBy(member => member.LastName)
-            .Select(member => new TeamMemberResponse(
-                member.Id,
-                member.PublicId,
-                member.FullName,
-                member.Discipline,
-                currentUserId.HasValue && member.Id == currentUserId.Value))
+            .Select(member => MapToTeamMemberResponse(member, currentUserId))
             .ToList();
 
         return new TeamResponse(
@@ -246,7 +290,7 @@ public class TeamService : ITeamService
             team.Name,
             team.Description,
             members.Count,
-            disciplines,
+            Array.Empty<DisciplineResponse>(),
             members);
     }
 
@@ -254,8 +298,27 @@ public class TeamService : ITeamService
     {
         return new DisciplineResponse(
             discipline.Id,
-            discipline.Name,
-            discipline.TeamId,
-            discipline.Team?.Name ?? string.Empty);
+            discipline.Name);
+    }
+
+    private static TeamMemberResponse MapToTeamMemberResponse(User user, Guid? currentUserId)
+    {
+        return new TeamMemberResponse(
+            user.Id,
+            user.PublicId,
+            user.FullName,
+            user.Discipline,
+            currentUserId.HasValue && user.Id == currentUserId.Value);
+    }
+
+    private static AllocatableLearnerResponse MapToAllocatableLearnerResponse(User user)
+    {
+        return new AllocatableLearnerResponse(
+            user.Id,
+            user.PublicId,
+            user.FullName,
+            user.Discipline,
+            user.TeamId,
+            user.Team?.Name);
     }
 }

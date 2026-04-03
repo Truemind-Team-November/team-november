@@ -38,9 +38,6 @@ public class CreateDisciplineRequestValidator : AbstractValidator<CreateDiscipli
         RuleFor(x => x.Name)
             .NotEmpty().WithMessage("Discipline name is required")
             .MaximumLength(100);
-
-        RuleFor(x => x.TeamId)
-            .NotEmpty().WithMessage("Team is required");
     }
 }
 
@@ -51,8 +48,5 @@ public class UpdateDisciplineRequestValidator : AbstractValidator<UpdateDiscipli
         RuleFor(x => x.Name)
             .NotEmpty().WithMessage("Discipline name is required")
             .MaximumLength(100);
-
-        RuleFor(x => x.TeamId)
-            .NotEmpty().WithMessage("Team is required");
     }
 }

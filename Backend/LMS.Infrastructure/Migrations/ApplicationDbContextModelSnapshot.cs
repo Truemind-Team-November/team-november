@@ -279,9 +279,6 @@ namespace LMS.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<Guid>("TeamId")
-                        .HasColumnType("uuid");
-
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -291,8 +288,6 @@ namespace LMS.Infrastructure.Migrations
 
                     b.HasIndex("Name")
                         .IsUnique();
-
-                    b.HasIndex("TeamId");
 
                     b.ToTable("Disciplines");
                 });
@@ -1074,17 +1069,6 @@ namespace LMS.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("LMS.Domain.Entities.Discipline", b =>
-                {
-                    b.HasOne("LMS.Domain.Entities.Team", "Team")
-                        .WithMany("Disciplines")
-                        .HasForeignKey("TeamId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Team");
-                });
-
             modelBuilder.Entity("LMS.Domain.Entities.DiscussionPost", b =>
                 {
                     b.HasOne("LMS.Domain.Entities.User", "User")
@@ -1334,8 +1318,6 @@ namespace LMS.Infrastructure.Migrations
 
             modelBuilder.Entity("LMS.Domain.Entities.Team", b =>
                 {
-                    b.Navigation("Disciplines");
-
                     b.Navigation("Members");
                 });
 
