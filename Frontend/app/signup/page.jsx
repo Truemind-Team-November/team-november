@@ -1,7 +1,6 @@
 
 "use client";
-import { useEffect, useState } from "react";
-import axios from "axios";
+import { useState } from "react";
 import Image from "next/image";
 import client from "@/lib/client";
 import Link from "next/link";
@@ -12,7 +11,7 @@ export default function Signup() {
     firstName: "",
     lastName: "",
     email: "",
-    discipline: "UI/UX Design", // default value matching your select
+    discipline: "UI/UX Design",
     password: "",
     confirmPassword: "",
   });
