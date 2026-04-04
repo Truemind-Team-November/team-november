@@ -1,5 +1,6 @@
 import CourseCard from "@/components/CourseCard";
 import { DarkSunIcon, LightningIcon, PaletteIcon } from "@/components/Icons";
+import Link from "next/link";
 
 export default function CourseCatalog() {
   const courses = [
@@ -160,7 +161,9 @@ export default function CourseCatalog() {
       {/* Course Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {courses.map((course, index) => (
-          <CourseCard key={index} course={course} />
+          <Link key={index}  href={"/lesson"}>
+            <CourseCard course={course} />
+          </Link>
         ))}
       </div>
     </main>

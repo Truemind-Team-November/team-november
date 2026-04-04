@@ -49,8 +49,9 @@ export default function Signup() {
     }
 
     try {
+      console.log(formData);      
       const response = await client.post('/auth/register', formData);
-      setMessage("Registration Successful! Redirecting...");
+      setMessage("Registration Successful! Redirecting in 2 seconds...");
       setErrors({});
 
       setFormData({
@@ -76,7 +77,7 @@ export default function Signup() {
   };
 
   return (
-    <section className="grid grid-cols-2 items-center min-h-dvh px-8">
+    <section className="grid grid-cols-2 items-center min-h-dvh p-6">
       <div className="h-full border-r border-gray-500 pt-8">
         <div>
           <Image src={"/logo.svg"} alt="logo" width={500} height={500} className="w-20 h-20 mb-5" />
@@ -97,14 +98,13 @@ export default function Signup() {
               <span className="text-white font-bold">Unique ID Assigned</span>
               <span className="text-[#7D7F82] mb-4">
                 {" "}
-                - every signup gets a permanent
+                - every signup gets a permanent identifier
               </span>
-              <br /> identifier
             </p>
           </div>
           <div className="flex flex-row mb-4 gap-2 items-center">
             <div className="p-2 bg-[#314568] rounded-xl">
-              <Image src="/fill.png" alt="Logo" width={20} height={20} />
+              <Image src="/fill.png" alt="Logo" width={100} height={100} className="w-5 h-5" />
             </div>
             <p>
               <span className="text-white font-bold">Team Placement</span>
@@ -204,8 +204,14 @@ export default function Signup() {
                 className={`w-full border ${errors.Discipline ? 'border-red-500' : 'border-gray-300'} bg-transparent text-white text-sm rounded-lg px-3 py-2.5 outline-none appearance-none cursor-pointer`}
               >
                 <option value="UI/UX Design" className="text-black">UI/UX Design</option>
-                <option value="Software Development" className="text-black">Software Development</option>
-                <option value="Product Management" className="text-black">Product Management</option>
+                <option value="Front-end Engineering" className="text-black">Front-end Engineering</option>
+                <option value="Back-end Engineering" className="text-black">Back-end Engineering</option>
+                <option value="Mobile Development" className="text-black">Mobile Development</option>
+                <option value="Data Analysis" className="text-black">Data Analysis</option>
+                <option value="Digital Marketing" className="text-black">Digital Marketing</option>
+                <option value="Content Strategy" className="text-black">Content Strategy</option>
+                <option value="DevOps" className="text-black">DevOps</option>
+                <option value="QA Engineering" className="text-black">QA Engineering</option>
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
                 <svg className="w-4 h-4 text-[#8b949e]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">

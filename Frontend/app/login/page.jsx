@@ -6,8 +6,6 @@ export default function LoginPage() {
     <div className="min-h-screen bg-[#0B1220] flex items-center justify-center p-6">
       <div className="w-full max-w-6xl grid md:grid-cols-2 rounded-2xl overflow-hidden">
         <div className="p-10 text-white border-r border-gray-500">
-
-
           <Image src={"/logo.svg"} alt="logo" width={500} height={500} className="w-20 h-20 mb-5" />
           <h1 className="text-4xl font-bold mb-3 text-white">
             Start Your

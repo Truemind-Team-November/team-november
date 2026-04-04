@@ -32,7 +32,7 @@ const navSections = [
 ];
 
 const Sidebar = ({ badges = {} }) => {
-  const pathname = usePathname(); 
+  const pathname = usePathname();
 
   return (
     <aside
@@ -41,10 +41,8 @@ const Sidebar = ({ badges = {} }) => {
       style={{ fontFamily: "var(--font-inter), 'Inter', sans-serif", backgroundColor: ThemeColors.bgBlue }}
     >
       <div className="flex flex-col items-start gap-[clamp(12px,3vh,34px)] w-full">
-        <div className="flex flex-row items-center px-[10px] py-[clamp(10px,2vh,24px)] gap-[36px] w-full">
-          <h1 className="text-[clamp(24px,2.08vw,40px)] font-bold leading-[125%] text-[#FAFCFF] flex-1 flex items-center">
-            Talent<span className="text-[#0950C3]">Flow</span>
-          </h1>
+        <div className="p-5 gap-[36px] w-full">
+          <Image src={"/logo.svg"} alt="logo" width={500} height={500} className="w-10 h-10" />
         </div>
 
         <nav className="flex flex-col items-start px-[20px] gap-[clamp(12px,2.5vh,30px)] w-full box-border">
@@ -58,7 +56,7 @@ const Sidebar = ({ badges = {} }) => {
                 {section.items.map((item) => {
                   const badgeCount = badges[item.label];
                   const showBadge = badgeCount != null && badgeCount > 0;
-                  
+
                   const isActive = pathname === item.href;
 
                   return (
