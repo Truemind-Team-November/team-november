@@ -179,7 +179,9 @@ using (var scope = app.Services.CreateScope())
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
 
+        EnsureLegacyDisciplineSchemaCompatibility(db);
         db.Database.Migrate();
+        EnsureLegacyDisciplineSchemaCompatibility(db);
 
         SeedBootstrapAdmin(db, hasher, builder.Configuration);
     }
@@ -231,4 +233,25 @@ static void SeedBootstrapAdmin(ApplicationDbContext db, IPasswordHasher hasher, 
 
     db.Users.Add(admin);
     db.SaveChanges();
+}
+
+static void EnsureLegacyDisciplineSchemaCompatibility(ApplicationDbContext db)
+{
+    db.Database.ExecuteSqlRaw("""
+        DO $$
+        BEGIN
+            IF EXISTS (
+                SELECT 1
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                  AND table_name = 'Disciplines'
+                  AND column_name = 'TeamId'
+            ) THEN
+                ALTER TABLE "Disciplines" DROP CONSTRAINT IF EXISTS "FK_Disciplines_Teams_TeamId";
+                DROP INDEX IF EXISTS "IX_Disciplines_TeamId";
+                ALTER TABLE "Disciplines" DROP COLUMN "TeamId";
+            END IF;
+        END
+        $$;
+        """);
 }
