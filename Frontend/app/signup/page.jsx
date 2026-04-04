@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import Image from "next/image";
 import client from "@/lib/client";
+import Link from "next/link";
 
 export default function Signup() {
   useEffect(() => {
@@ -20,13 +21,23 @@ export default function Signup() {
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
+    const errorKey = name.charAt(0).toUpperCase() + name.slice(1);
+    if (errors[errorKey]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[errorKey];
+        return newErrors;
+      });
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -34,9 +45,8 @@ export default function Signup() {
     setLoading(true);
     setMessage("");
 
-    // Simple client-side check
     if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match!");
+      setErrors({ ConfirmPassword: ["Passwords do not match!"] });
       setLoading(false);
       return;
     }
@@ -56,11 +66,17 @@ export default function Signup() {
   };
 
   return (
-    <section className="bg-[#101723] text-white flex flex-row items-center justify-center min-h-screen p-6 gap-30">
-      <div className="h-100 w-150">
+    <section className="grid grid-cols-2 items-center min-h-dvh p-6">
+      <div className="h-full border-r border-gray-500 pt-8">
         <div>
-          <h1 className="text-4xl font-bold mb-3">
-            Talent<span className="text-[#0950C3]">Flow</span> <br /> <br />{" "}
+          <Image
+            src={"/logo.svg"}
+            alt="logo"
+            width={500}
+            height={500}
+            className="w-20 h-20 mb-5"
+          />
+          <h1 className="text-4xl font-bold mb-3 text-white">
             Start Your
             <br /> <span className="text-[#0950C3]">Journey</span> Today
           </h1>
@@ -77,14 +93,19 @@ export default function Signup() {
               <span className="text-white font-bold">Unique ID Assigned</span>
               <span className="text-[#7D7F82] mb-4">
                 {" "}
-                - every signup gets a permanent
+                - every signup gets a permanent identifier
               </span>
-              <br /> identifier
             </p>
           </div>
           <div className="flex flex-row mb-4 gap-2 items-center">
             <div className="p-2 bg-[#314568] rounded-xl">
-              <Image src="/fill.png" alt="Logo" width={20} height={20} />
+              <Image
+                src="/fill.png"
+                alt="Logo"
+                width={100}
+                height={100}
+                className="w-5 h-5"
+              />
             </div>
             <p>
               <span className="text-white font-bold">Team Placement</span>
@@ -124,13 +145,18 @@ export default function Signup() {
               </label>
               <input
                 type="text"
-                name="firstName" // Add name attribute
-                value={formData.firstName} // Bind value
-                onChange={handleChange} // Bind handler
+                name="firstName"
+                value={formData.firstName}
+                onChange={handleChange}
                 placeholder="Adaeze"
-                className="w-full border border-gray-300 bg-transparent text-white text-sm rounded-lg px-3 py-2.5 outline-none"
+                className={`w-full border ${errors.FirstName ? "border-red-500" : "border-gray-300"} bg-transparent text-white text-sm rounded-lg px-3 py-2.5 outline-none`}
                 required
               />
+              {errors.FirstName && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.FirstName[0]}
+                </p>
+              )}
             </div>
             <div className="flex-1">
               <label className="text-white text-sm font-semibold block mb-2">
@@ -142,9 +168,14 @@ export default function Signup() {
                 value={formData.lastName}
                 onChange={handleChange}
                 placeholder="Okoro"
-                className="w-full border border-gray-300 bg-transparent text-white text-sm rounded-lg px-3 py-2.5 outline-none"
+                className={`w-full border ${errors.LastName ? "border-red-500" : "border-gray-300"} bg-transparent text-white text-sm rounded-lg px-3 py-2.5 outline-none`}
                 required
               />
+              {errors.LastName && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.LastName[0]}
+                </p>
+              )}
             </div>
           </div>
           <div className="mb-4">
@@ -157,9 +188,12 @@ export default function Signup() {
               value={formData.email}
               onChange={handleChange}
               placeholder="you@trueminds.ng"
-              className="w-full border border-gray-300 bg-transparent text-white text-sm rounded-lg px-3 py-2.5 outline-none"
+              className={`w-full border ${errors.Email ? "border-red-500" : "border-gray-300"} bg-transparent text-white text-sm rounded-lg px-3 py-2.5 outline-none`}
               required
             />
+            {errors.Email && (
+              <p className="text-red-500 text-xs mt-1">{errors.Email[0]}</p>
+            )}
           </div>
           <div className="mb-4">
             <label className="text-white text-sm font-semibold block mb-2">
@@ -170,7 +204,7 @@ export default function Signup() {
                 name="discipline"
                 value={formData.discipline}
                 onChange={handleChange}
-                className="w-full border border-gray-300 bg-transparent text-white text-sm rounded-lg px-3 py-2.5 outline-none appearance-none cursor-pointer"
+                className={`w-full border ${errors.Discipline ? "border-red-500" : "border-gray-300"} bg-transparent text-white text-sm rounded-lg px-3 py-2.5 outline-none appearance-none cursor-pointer`}
               >
                 <option value="UI/UX Design" className="text-black">
                   UI/UX Design
@@ -203,7 +237,6 @@ export default function Signup() {
                   QA Engineering
                 </option>
               </select>
-              {/* chevron */}
               <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
                 <svg
                   className="w-4 h-4 text-[#8b949e]"
@@ -220,6 +253,11 @@ export default function Signup() {
                 </svg>
               </div>
             </div>
+            {errors.Discipline && (
+              <p className="text-red-500 text-xs mt-1">
+                {errors.Discipline[0]}
+              </p>
+            )}
           </div>
           <div className="mb-4">
             <label className="text-white text-sm font-semibold block mb-2">
@@ -231,44 +269,35 @@ export default function Signup() {
               value={formData.password}
               onChange={handleChange}
               placeholder="Minimum 8 characters"
+              className={`w-full border ${errors.Password ? "border-red-500" : "border-gray-300"} bg-transparent text-white text-sm rounded-lg px-3 py-2.5 outline-none`}
+              required
+            />
+            {errors.Password && (
+              <p className="text-red-500 text-xs mt-1">{errors.Password[0]}</p>
+            )}
+          </div>
+          <div className="mb-6">
+            <label className="text-white text-sm font-semibold block mb-2">
+              Confirm Password
+            </label>
+            <input
+              type="password"
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              placeholder="Re-enter password"
               className="w-full border border-gray-300 bg-transparent text-white text-sm rounded-lg px-3 py-2.5 outline-none"
               required
             />
           </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-sm font-semibold py-3 rounded-lg transition-colors"
+          >
+            {loading ? "Registering..." : "Get Started"}
+          </button>
         </form>
-        <div className="mb-4">
-          <label htmlFor="email" className="text-3xl ">
-            Email Address
-          </label>
-
-          <input
-            type="email"
-            id="email"
-            placeholder="Enter your email address"
-            required
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mt-2"
-          />
-        </div>
-        <h2 className="text-3xl ">Discipline</h2>
-        <div className="w-full h-10 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mt-2 flex flex-row-reverse items-center mb-8 ">
-          <Image src="/dropdown.png" alt="Logo" width={40} height={40} />
-        </div>
-        <div className="mb-4">
-          <label htmlFor="Password" className="text-3xl ">
-            Password
-          </label>
-
-          <input
-            type="password"
-            id="Password"
-            placeholder="Minimum 8 characters"
-            required
-            className="w-full h-10 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4 mt-2"
-          />
-        </div>
-        <button className="w-full h-10 bg-[#0950C3] text-white rounded-lg hover:bg-blue-600 transition-colors ">
-          Get Started
-        </button>
       </div>
     </section>
   );

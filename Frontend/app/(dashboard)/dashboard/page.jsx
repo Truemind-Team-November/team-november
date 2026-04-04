@@ -1,4 +1,3 @@
-import Sidebar from '@/components/SideBar';
 import { ThemeColors } from '@/components/ThemeColors';
 
 export default function Dashboard() {

@@ -1,4 +1,6 @@
 using LMS.Application.Common;
+using LMS.Application.Common.Auth;
+using LMS.Application.Common.Options;
 using LMS.Application.DTOs.Auth;
 using LMS.Application.Email;
 using LMS.Application.Interfaces.Repositories;
@@ -12,33 +14,47 @@ namespace LMS.Application.Services;
 public class AuthService : IAuthService
 {
     private readonly IUserRepository _userRepository;
+    private readonly ITeamRepository _teamRepository;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtService _jwtService;
     private readonly IPasswordResetTokenRepository _tokenRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IEmailService _emailService;
+    private readonly INotificationService _notificationService;
     private readonly IConfiguration _config;
+    private readonly IGoogleTokenValidator _googleTokenValidator;
+    private readonly GoogleAuthOptions _googleAuthOptions;
 
     public AuthService(
         IUserRepository userRepository,
+        ITeamRepository teamRepository,
         IPasswordHasher passwordHasher,
         IJwtService jwtService,
         IPasswordResetTokenRepository tokenRepository,
         IUnitOfWork unitOfWork,
         IEmailService emailService,
-        IConfiguration config)
+        INotificationService notificationService,
+        IConfiguration config,
+        IGoogleTokenValidator googleTokenValidator,
+        Microsoft.Extensions.Options.IOptions<GoogleAuthOptions> googleAuthOptions)
     {
         _userRepository = userRepository;
+        _teamRepository = teamRepository;
         _passwordHasher = passwordHasher;
         _jwtService = jwtService;
         _tokenRepository = tokenRepository;
         _unitOfWork = unitOfWork;
         _emailService = emailService;
+        _notificationService = notificationService;
         _config = config;
+        _googleTokenValidator = googleTokenValidator;
+        _googleAuthOptions = googleAuthOptions.Value;
     }
     public async Task<BaseResponse<AuthResponse>> RegisterAsync(RegisterRequest request)
     {
         var email = request.Email.Trim().ToLowerInvariant();
+        var discipline = TeamCatalog.NormalizeDiscipline(request.Discipline);
+        var teamName = TeamCatalog.GetTeamNameForDiscipline(discipline);
 
         var existingUser = await _userRepository.GetByEmailAsync(email);
         if (existingUser != null && existingUser.IsActive)
@@ -47,29 +63,57 @@ public class AuthService : IAuthService
         }
 
         var hashedPassword = _passwordHasher.HashPassword(request.Password);
+        var team = await _teamRepository.GetByNameAsync(teamName);
+
+        if (team == null)
+        {
+            var teamDefinition = TeamCatalog.GetTeamDefinition(teamName);
+            team = Team.Create(teamDefinition.Name, teamDefinition.Description);
+            await _teamRepository.AddAsync(team);
+        }
 
         var user = User.Create(
             request.FirstName,
             request.LastName,
             email,
+            discipline,
             hashedPassword,
-            UserRole.Learner
+            UserRole.Learner,
+            team.Id,
+            LearnerProfileDefaults.CohortLabel,
+            LearnerProfileDefaults.Location
         );
 
         await _userRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
-        var html = EmailTemplates.Welcome($"{user.FirstName} {user.LastName}");
+        await _notificationService.NotifyUserAsync(new LMS.Application.DTOs.Notification.CreateNotificationRequest(
+            user.Id,
+            LMS.Domain.Enums.NotificationType.System,
+            "Welcome to TalentFlow",
+            "Your account is ready. Explore your courses, team, and upcoming tasks.",
+            "/dashboard"
+        ));
 
-        await _emailService.SendEmailAsync(user.Email, "Welcome to LMS", html);
+        await _notificationService.NotifyUserAsync(new LMS.Application.DTOs.Notification.CreateNotificationRequest(
+            user.Id,
+            LMS.Domain.Enums.NotificationType.TeamUpdate,
+            "Team Update",
+            $"You have been added to the {team.Name} cross-functional team.",
+            "/my-team"
+        ));
 
         var token = _jwtService.GenerateToken(user.Id, user.Email, user.Role.ToString());
 
         var response = new AuthResponse(
             user.Id,
+            user.PublicId,
             user.FirstName,
             user.LastName,
             user.Email,
+            user.Discipline,
+            user.TeamId,
+            team.Name,
             user.Role,
             token
         );
@@ -99,14 +143,113 @@ public class AuthService : IAuthService
 
         var response = new AuthResponse(
             user.Id,
+            user.PublicId,
             user.FirstName,
             user.LastName,
             user.Email,
+            user.Discipline,
+            user.TeamId,
+            user.Team?.Name,
             user.Role,
             token
         );
 
         return BaseResponse<AuthResponse>.Ok(response, "Login successful");
+    }
+
+    public async Task<BaseResponse<AuthResponse>> GoogleSignInAsync(GoogleSignInRequest request, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(request.IdToken))
+            return BaseResponse<AuthResponse>.Fail("Google ID token is required");
+
+        GoogleUserInfo googleUser;
+        try
+        {
+            googleUser = await _googleTokenValidator.ValidateIdTokenAsync(request.IdToken, cancellationToken);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BaseResponse<AuthResponse>.Fail(ex.Message);
+        }
+
+        var email = googleUser.Email.Trim().ToLowerInvariant();
+        var user = await _userRepository.GetByEmailAsync(email);
+
+        if (user == null)
+        {
+            if (!_googleAuthOptions.AllowJustInTimeRegistration)
+                return BaseResponse<AuthResponse>.Fail("No account was found for this Google user");
+
+            if (string.IsNullOrWhiteSpace(request.Discipline))
+                return BaseResponse<AuthResponse>.Fail("Discipline is required to create a new account with Google");
+
+            var discipline = TeamCatalog.NormalizeDiscipline(request.Discipline);
+            var teamName = TeamCatalog.GetTeamNameForDiscipline(discipline);
+            var team = await _teamRepository.GetByNameAsync(teamName);
+
+            if (team == null)
+            {
+                var teamDefinition = TeamCatalog.GetTeamDefinition(teamName);
+                team = Team.Create(teamDefinition.Name, teamDefinition.Description);
+                await _teamRepository.AddAsync(team);
+            }
+
+            var generatedPassword = _passwordHasher.HashPassword(Guid.NewGuid().ToString("N"));
+            user = User.Create(
+                googleUser.GivenName ?? "Google",
+                googleUser.FamilyName ?? "User",
+                email,
+                discipline,
+                generatedPassword,
+                UserRole.Learner,
+                team.Id,
+                LearnerProfileDefaults.CohortLabel,
+                LearnerProfileDefaults.Location
+            );
+
+            if (!string.IsNullOrWhiteSpace(googleUser.PictureUrl))
+                user.UpdateProfileImage(googleUser.PictureUrl);
+
+            await _userRepository.AddAsync(user);
+            await _unitOfWork.SaveChangesAsync();
+
+            await _notificationService.NotifyUserAsync(new LMS.Application.DTOs.Notification.CreateNotificationRequest(
+                user.Id,
+                LMS.Domain.Enums.NotificationType.System,
+                "Welcome to TalentFlow",
+                "Your Google account has been linked successfully. Explore your courses, team, and upcoming tasks.",
+                "/dashboard"
+            ));
+
+            await _notificationService.NotifyUserAsync(new LMS.Application.DTOs.Notification.CreateNotificationRequest(
+                user.Id,
+                LMS.Domain.Enums.NotificationType.TeamUpdate,
+                "Team Update",
+                $"You have been added to the {team.Name} cross-functional team.",
+                "/my-team"
+            ));
+        }
+        else if (!user.IsActive)
+        {
+            return BaseResponse<AuthResponse>.Fail("This account is inactive");
+        }
+
+        var token = _jwtService.GenerateToken(user.Id, user.Email, user.Role.ToString());
+
+        var response = new AuthResponse(
+            user.Id,
+            user.PublicId,
+            user.FirstName,
+            user.LastName,
+            user.Email,
+            user.Discipline,
+            user.TeamId,
+            user.Team?.Name,
+            user.Role,
+            token
+        );
+
+        return BaseResponse<AuthResponse>.Ok(response, "Google sign-in successful");
     }
 
     public async Task<BaseResponse<string>> ForgotPasswordAsync(ForgotPasswordRequest request)

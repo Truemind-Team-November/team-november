@@ -23,6 +23,31 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.HasIndex(x => x.Email)
                .IsUnique();
 
+        builder.Property(x => x.PublicId)
+               .IsRequired()
+               .HasMaxLength(32);
+
+        builder.HasIndex(x => x.PublicId)
+               .IsUnique();
+
+        builder.Property(x => x.Discipline)
+               .IsRequired()
+               .HasMaxLength(100);
+
+        builder.Property(x => x.PhoneNumber)
+               .HasMaxLength(20);
+
+        builder.Property(x => x.CohortLabel)
+               .HasMaxLength(50);
+
+        builder.Property(x => x.Location)
+               .HasMaxLength(150);
+
+        builder.Property(x => x.ProfileImageUrl)
+               .HasMaxLength(500);
+
+        builder.HasIndex(x => x.TeamId);
+
         builder.Property(x => x.PasswordHash)
                .IsRequired();
 
@@ -43,6 +68,11 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
                .WithOne(x => x.User)
                .HasForeignKey(x => x.UserId)
                .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(x => x.Team)
+               .WithMany(x => x.Members)
+               .HasForeignKey(x => x.TeamId)
+               .OnDelete(DeleteBehavior.SetNull);
 
         // Backing field
         builder.Navigation(x => x.Enrollments)

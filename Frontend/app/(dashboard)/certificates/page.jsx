@@ -1,5 +1,4 @@
 "use client";
-import Sidebar from "@/components/SideBar";
 import Image from "next/image";
 import { ThemeColors } from "@/components/ThemeColors";
 

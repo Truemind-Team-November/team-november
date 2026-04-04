@@ -1,3 +1,4 @@
+using LMS.Application.Common.Storage;
 using LMS.Application.DTOs.Assignment;
 using LMS.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -28,6 +29,29 @@ public class SubmissionController : ControllerBase
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
+    [HttpPost("upload")]
+    [Authorize(Roles = "Learner")]
+    public async Task<IActionResult> SubmitWithAttachment(
+        [FromForm] Guid assignmentId,
+        [FromForm] string? answer,
+        IFormFile? file,
+        CancellationToken cancellationToken)
+    {
+        if (file == null || file.Length == 0)
+            return BadRequest(new { success = false, message = "Submission file is required" });
+
+        await using var stream = file.OpenReadStream();
+        var request = new FileUploadRequest(
+            stream,
+            file.FileName,
+            file.ContentType,
+            string.Empty
+        );
+
+        var result = await _submissionService.SubmitWithAttachmentAsync(assignmentId, answer, request, file.Length, cancellationToken);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
     /// <summary>
     /// Grade a submission (Instructor/Admin only)
     /// </summary>
@@ -35,7 +59,7 @@ public class SubmissionController : ControllerBase
     [Authorize(Roles = "Admin,Instructor")]
     public async Task<IActionResult> Grade(Guid submissionId, [FromBody] GradeSubmissionRequest request)
     {
-        var result = await _submissionService.GradeAsync(submissionId, request.Score);
+        var result = await _submissionService.GradeAsync(submissionId, request.Score, request.Feedback);
 
         return result.Success ? Ok(result) : BadRequest(result);
     }

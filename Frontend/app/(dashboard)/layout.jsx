@@ -1,10 +1,10 @@
-import Sidebar from '@/components/SideBar';
+import Sidebar from '@/components/Sidebar';
 import { ThemeColors } from '@/components/ThemeColors';
 
 export default function DashboardLayout({ children }) {
   return (
     <main className="flex h-screen overflow-hidden gap-2">
-      <aside className="w-[250px] shrink-0 border-r border-zinc-800 h-full">
+      <aside className="w-62.5 shrink-0 border-r border-zinc-800 h-full">
         <Sidebar />
       </aside>
 

@@ -12,12 +12,20 @@ public class ApplicationDbContext : DbContext
     }
 
     public DbSet<User> Users => Set<User>();
+    public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<Team> Teams => Set<Team>();
     public DbSet<Course> Courses => Set<Course>();
     public DbSet<Lesson> Lessons => Set<Lesson>();
     public DbSet<LessonContent> LessonContents => Set<LessonContent>();
     public DbSet<Enrollment> Enrollments => Set<Enrollment>();
     public DbSet<Progress> Progresses => Set<Progress>();
     public DbSet<LessonProgress> LessonProgresses => Set<LessonProgress>();
+    public DbSet<LessonNote> LessonNotes => Set<LessonNote>();
+    public DbSet<DiscussionPost> DiscussionPosts => Set<DiscussionPost>();
+    public DbSet<DiscussionReply> DiscussionReplies => Set<DiscussionReply>();
+    public DbSet<DiscussionTag> DiscussionTags => Set<DiscussionTag>();
+    public DbSet<DiscussionPostTag> DiscussionPostTags => Set<DiscussionPostTag>();
+    public DbSet<InstructorRoleRequest> InstructorRoleRequests => Set<InstructorRoleRequest>();
     public DbSet<Assignment> Assignments => Set<Assignment>();
     public DbSet<Submission> Submissions => Set<Submission>();
     public DbSet<Certificate> Certificates => Set<Certificate>();

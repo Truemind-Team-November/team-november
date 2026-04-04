@@ -19,6 +19,7 @@ public class SubmissionRepository : ISubmissionRepository
         return await _context.Submissions
             .AsNoTracking()
             .Include(s => s.Assignment)
+                .ThenInclude(a => a.Course)
             .Include(s => s.User)
             .FirstOrDefaultAsync(s => s.Id == id);
     }
@@ -38,6 +39,8 @@ public class SubmissionRepository : ISubmissionRepository
         return await _context.Submissions
             .AsNoTracking()
             .Where(s => s.AssignmentId == assignmentId)
+            .Include(s => s.Assignment)
+                .ThenInclude(a => a.Course)
             .Include(s => s.User)
             .OrderByDescending(s => s.SubmittedAt)
             .ToListAsync();
@@ -49,6 +52,7 @@ public class SubmissionRepository : ISubmissionRepository
             .AsNoTracking()
             .Where(s => s.UserId == userId)
             .Include(s => s.Assignment)
+                .ThenInclude(a => a.Course)
             .OrderByDescending(s => s.SubmittedAt)
             .ToListAsync();
     }
@@ -57,6 +61,8 @@ public class SubmissionRepository : ISubmissionRepository
     {
         return await _context.Submissions
             .AsNoTracking()
+            .Include(s => s.Assignment)
+                .ThenInclude(a => a.Course)
             .FirstOrDefaultAsync(s => s.AssignmentId == assignmentId && s.UserId == userId);
     }
 

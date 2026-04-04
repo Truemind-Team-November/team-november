@@ -1,7 +1,7 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation"; 
+import { usePathname } from "next/navigation";
 import { ThemeColors } from "@/components/ThemeColors";
 
 const navSections = [
@@ -11,6 +11,7 @@ const navSections = [
       { icon: "/assets/sidebar/dashboard_icon.svg", label: "Dashboard", href: "/dashboard" },
       { icon: "/assets/sidebar/course_catalog_icon.svg", label: "Course Catalog", href: "/coursecatalog" },
       { icon: "/assets/sidebar/assignment_icon.svg", label: "Assignments", href: "/assignments" },
+      { icon: "/assets/sidebar/my_progress_icon.svg", label: "My Progress", href: "/progress" }, // Changed href to match label logic if needed
     ],
   },
   {
@@ -40,10 +41,8 @@ const Sidebar = ({ badges = {} }) => {
       style={{ fontFamily: "var(--font-inter), 'Inter', sans-serif", backgroundColor: ThemeColors.bgBlue }}
     >
       <div className="flex flex-col items-start gap-[clamp(12px,3vh,34px)] w-full">
-        <div className="flex flex-row items-center px-[10px] py-[clamp(10px,2vh,24px)] gap-[36px] w-full">
-          <h1 className="text-[clamp(24px,2.08vw,40px)] font-bold leading-[125%] text-[#FAFCFF] flex-1 flex items-center">
-            Talent<span className="text-[#0950C3]">Flow</span>
-          </h1>
+        <div className="p-5 gap-[36px] w-full">
+          <Image src={"/logo.svg"} alt="logo" width={500} height={500} className="w-10 h-10" />
         </div>
 
         <nav className="flex flex-col items-start px-[20px] gap-[clamp(12px,2.5vh,30px)] w-full box-border">
@@ -57,7 +56,7 @@ const Sidebar = ({ badges = {} }) => {
                 {section.items.map((item) => {
                   const badgeCount = badges[item.label];
                   const showBadge = badgeCount != null && badgeCount > 0;
-                  
+
                   const isActive = pathname === item.href;
 
                   return (
@@ -78,7 +77,7 @@ const Sidebar = ({ badges = {} }) => {
                             className="w-full h-full object-contain"
                           />
                         </div>
-                        <span className="text-sm font-bold leading-[125%] text-center text-[#CEE0FD] whitespace-nowrap">
+                        <span className="text-[clamp(12px,1.6vh,16px)] font-bold leading-[125%] text-center text-[#CEE0FD] whitespace-nowrap">
                           {item.label}
                         </span>
                       </div>
