@@ -13,73 +13,104 @@ namespace LMS.Infrastructure.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<DateTime>(
-                name: "CompletedAt",
-                table: "Certificates",
-                type: "timestamp with time zone",
-                nullable: true);
+            // Add certificate columns only if they don't already exist to avoid
+            // migration failures on databases where previous migrations or manual
+            // schema changes added the columns.
+            migrationBuilder.Sql("""
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1
+                        FROM information_schema.columns
+                        WHERE table_schema = 'public'
+                          AND table_name = 'Certificates'
+                          AND column_name = 'CompletedAt'
+                    ) THEN
+                        ALTER TABLE "Certificates" ADD COLUMN "CompletedAt" timestamp with time zone;
+                    END IF;
 
-            migrationBuilder.AddColumn<string>(
-                name: "CourseTitleSnapshot",
-                table: "Certificates",
-                type: "character varying(200)",
-                maxLength: 200,
-                nullable: false,
-                defaultValue: "");
+                    IF NOT EXISTS (
+                        SELECT 1
+                        FROM information_schema.columns
+                        WHERE table_schema = 'public'
+                          AND table_name = 'Certificates'
+                          AND column_name = 'CourseTitleSnapshot'
+                    ) THEN
+                        ALTER TABLE "Certificates" ADD COLUMN "CourseTitleSnapshot" character varying(200) NOT NULL DEFAULT '';
+                    END IF;
 
-            migrationBuilder.AddColumn<string>(
-                name: "DocumentUrl",
-                table: "Certificates",
-                type: "character varying(1000)",
-                maxLength: 1000,
-                nullable: true);
+                    IF NOT EXISTS (
+                        SELECT 1
+                        FROM information_schema.columns
+                        WHERE table_schema = 'public'
+                          AND table_name = 'Certificates'
+                          AND column_name = 'DocumentUrl'
+                    ) THEN
+                        ALTER TABLE "Certificates" ADD COLUMN "DocumentUrl" character varying(1000);
+                    END IF;
 
-            migrationBuilder.AddColumn<string>(
-                name: "IssuedBy",
-                table: "Certificates",
-                type: "character varying(150)",
-                maxLength: 150,
-                nullable: false,
-                defaultValue: "TalentFlow");
+                    IF NOT EXISTS (
+                        SELECT 1
+                        FROM information_schema.columns
+                        WHERE table_schema = 'public'
+                          AND table_name = 'Certificates'
+                          AND column_name = 'IssuedBy'
+                    ) THEN
+                        ALTER TABLE "Certificates" ADD COLUMN "IssuedBy" character varying(150) NOT NULL DEFAULT 'TalentFlow';
+                    END IF;
 
-            migrationBuilder.AddColumn<string>(
-                name: "RecipientCohortLabel",
-                table: "Certificates",
-                type: "character varying(50)",
-                maxLength: 50,
-                nullable: true);
+                    IF NOT EXISTS (
+                        SELECT 1
+                        FROM information_schema.columns
+                        WHERE table_schema = 'public'
+                          AND table_name = 'Certificates'
+                          AND column_name = 'RecipientCohortLabel'
+                    ) THEN
+                        ALTER TABLE "Certificates" ADD COLUMN "RecipientCohortLabel" character varying(50);
+                    END IF;
 
-            migrationBuilder.AddColumn<string>(
-                name: "RecipientDiscipline",
-                table: "Certificates",
-                type: "character varying(100)",
-                maxLength: 100,
-                nullable: false,
-                defaultValue: "");
+                    IF NOT EXISTS (
+                        SELECT 1
+                        FROM information_schema.columns
+                        WHERE table_schema = 'public'
+                          AND table_name = 'Certificates'
+                          AND column_name = 'RecipientDiscipline'
+                    ) THEN
+                        ALTER TABLE "Certificates" ADD COLUMN "RecipientDiscipline" character varying(100) NOT NULL DEFAULT '';
+                    END IF;
 
-            migrationBuilder.AddColumn<string>(
-                name: "RecipientFullName",
-                table: "Certificates",
-                type: "character varying(200)",
-                maxLength: 200,
-                nullable: false,
-                defaultValue: "");
+                    IF NOT EXISTS (
+                        SELECT 1
+                        FROM information_schema.columns
+                        WHERE table_schema = 'public'
+                          AND table_name = 'Certificates'
+                          AND column_name = 'RecipientFullName'
+                    ) THEN
+                        ALTER TABLE "Certificates" ADD COLUMN "RecipientFullName" character varying(200) NOT NULL DEFAULT '';
+                    END IF;
 
-            migrationBuilder.AddColumn<string>(
-                name: "RecipientPublicId",
-                table: "Certificates",
-                type: "character varying(32)",
-                maxLength: 32,
-                nullable: false,
-                defaultValue: "");
+                    IF NOT EXISTS (
+                        SELECT 1
+                        FROM information_schema.columns
+                        WHERE table_schema = 'public'
+                          AND table_name = 'Certificates'
+                          AND column_name = 'RecipientPublicId'
+                    ) THEN
+                        ALTER TABLE "Certificates" ADD COLUMN "RecipientPublicId" character varying(32) NOT NULL DEFAULT '';
+                    END IF;
 
-            migrationBuilder.AddColumn<string>(
-                name: "TemplateVersion",
-                table: "Certificates",
-                type: "character varying(32)",
-                maxLength: 32,
-                nullable: false,
-                defaultValue: "v1");
+                    IF NOT EXISTS (
+                        SELECT 1
+                        FROM information_schema.columns
+                        WHERE table_schema = 'public'
+                          AND table_name = 'Certificates'
+                          AND column_name = 'TemplateVersion'
+                    ) THEN
+                        ALTER TABLE "Certificates" ADD COLUMN "TemplateVersion" character varying(32) NOT NULL DEFAULT 'v1';
+                    END IF;
+                END
+                $$;
+                """);
 
             migrationBuilder.Sql("""
                 UPDATE "Certificates" AS c
@@ -100,41 +131,101 @@ namespace LMS.Infrastructure.Migrations
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "CompletedAt",
-                table: "Certificates");
+            migrationBuilder.Sql("""
+                DO $$
+                BEGIN
+                    IF EXISTS (
+                        SELECT 1
+                        FROM information_schema.columns
+                        WHERE table_schema = 'public'
+                          AND table_name = 'Certificates'
+                          AND column_name = 'CompletedAt'
+                    ) THEN
+                        ALTER TABLE "Certificates" DROP COLUMN "CompletedAt";
+                    END IF;
 
-            migrationBuilder.DropColumn(
-                name: "CourseTitleSnapshot",
-                table: "Certificates");
+                    IF EXISTS (
+                        SELECT 1
+                        FROM information_schema.columns
+                        WHERE table_schema = 'public'
+                          AND table_name = 'Certificates'
+                          AND column_name = 'CourseTitleSnapshot'
+                    ) THEN
+                        ALTER TABLE "Certificates" DROP COLUMN "CourseTitleSnapshot";
+                    END IF;
 
-            migrationBuilder.DropColumn(
-                name: "DocumentUrl",
-                table: "Certificates");
+                    IF EXISTS (
+                        SELECT 1
+                        FROM information_schema.columns
+                        WHERE table_schema = 'public'
+                          AND table_name = 'Certificates'
+                          AND column_name = 'DocumentUrl'
+                    ) THEN
+                        ALTER TABLE "Certificates" DROP COLUMN "DocumentUrl";
+                    END IF;
 
-            migrationBuilder.DropColumn(
-                name: "IssuedBy",
-                table: "Certificates");
+                    IF EXISTS (
+                        SELECT 1
+                        FROM information_schema.columns
+                        WHERE table_schema = 'public'
+                          AND table_name = 'Certificates'
+                          AND column_name = 'IssuedBy'
+                    ) THEN
+                        ALTER TABLE "Certificates" DROP COLUMN "IssuedBy";
+                    END IF;
 
-            migrationBuilder.DropColumn(
-                name: "RecipientCohortLabel",
-                table: "Certificates");
+                    IF EXISTS (
+                        SELECT 1
+                        FROM information_schema.columns
+                        WHERE table_schema = 'public'
+                          AND table_name = 'Certificates'
+                          AND column_name = 'RecipientCohortLabel'
+                    ) THEN
+                        ALTER TABLE "Certificates" DROP COLUMN "RecipientCohortLabel";
+                    END IF;
 
-            migrationBuilder.DropColumn(
-                name: "RecipientDiscipline",
-                table: "Certificates");
+                    IF EXISTS (
+                        SELECT 1
+                        FROM information_schema.columns
+                        WHERE table_schema = 'public'
+                          AND table_name = 'Certificates'
+                          AND column_name = 'RecipientDiscipline'
+                    ) THEN
+                        ALTER TABLE "Certificates" DROP COLUMN "RecipientDiscipline";
+                    END IF;
 
-            migrationBuilder.DropColumn(
-                name: "RecipientFullName",
-                table: "Certificates");
+                    IF EXISTS (
+                        SELECT 1
+                        FROM information_schema.columns
+                        WHERE table_schema = 'public'
+                          AND table_name = 'Certificates'
+                          AND column_name = 'RecipientFullName'
+                    ) THEN
+                        ALTER TABLE "Certificates" DROP COLUMN "RecipientFullName";
+                    END IF;
 
-            migrationBuilder.DropColumn(
-                name: "RecipientPublicId",
-                table: "Certificates");
+                    IF EXISTS (
+                        SELECT 1
+                        FROM information_schema.columns
+                        WHERE table_schema = 'public'
+                          AND table_name = 'Certificates'
+                          AND column_name = 'RecipientPublicId'
+                    ) THEN
+                        ALTER TABLE "Certificates" DROP COLUMN "RecipientPublicId";
+                    END IF;
 
-            migrationBuilder.DropColumn(
-                name: "TemplateVersion",
-                table: "Certificates");
+                    IF EXISTS (
+                        SELECT 1
+                        FROM information_schema.columns
+                        WHERE table_schema = 'public'
+                          AND table_name = 'Certificates'
+                          AND column_name = 'TemplateVersion'
+                    ) THEN
+                        ALTER TABLE "Certificates" DROP COLUMN "TemplateVersion";
+                    END IF;
+                END
+                $$;
+                """);
         }
     }
 }
