@@ -67,6 +67,26 @@ public class DisciplineRepository : IDisciplineRepository
 
     public async Task AddAsync(Discipline entity)
     {
+        // Ensure legacy TeamId column is removed to avoid NOT NULL constraint errors
+        // on deployments where the schema migration hasn't removed the column.
+        await _context.Database.ExecuteSqlRawAsync("""
+            DO $$
+            BEGIN
+                IF EXISTS (
+                    SELECT 1
+                    FROM information_schema.columns
+                    WHERE table_schema = 'public'
+                      AND table_name = 'Disciplines'
+                      AND column_name = 'TeamId'
+                ) THEN
+                    ALTER TABLE "Disciplines" DROP CONSTRAINT IF EXISTS "FK_Disciplines_Teams_TeamId";
+                    DROP INDEX IF EXISTS "IX_Disciplines_TeamId";
+                    ALTER TABLE "Disciplines" DROP COLUMN "TeamId";
+                END IF;
+            END
+            $$;
+            """);
+
         await _context.Disciplines.AddAsync(entity);
         await _context.SaveChangesAsync();
     }

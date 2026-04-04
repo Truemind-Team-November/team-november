@@ -13,40 +13,47 @@ namespace LMS.Infrastructure.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropForeignKey(
-                name: "FK_Disciplines_Teams_TeamId",
-                table: "Disciplines");
-
-            migrationBuilder.DropIndex(
-                name: "IX_Disciplines_TeamId",
-                table: "Disciplines");
-
-            migrationBuilder.DropColumn(
-                name: "TeamId",
-                table: "Disciplines");
+            migrationBuilder.Sql("""
+                DO $$
+                BEGIN
+                    IF EXISTS (
+                        SELECT 1
+                        FROM information_schema.columns
+                        WHERE table_schema = 'public'
+                          AND table_name = 'Disciplines'
+                          AND column_name = 'TeamId'
+                    ) THEN
+                        ALTER TABLE "Disciplines" DROP CONSTRAINT IF EXISTS "FK_Disciplines_Teams_TeamId";
+                        DROP INDEX IF EXISTS "IX_Disciplines_TeamId";
+                        ALTER TABLE "Disciplines" DROP COLUMN "TeamId";
+                    END IF;
+                END
+                $$;
+                """);
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<Guid>(
-                name: "TeamId",
-                table: "Disciplines",
-                type: "uuid",
-                nullable: false,
-                defaultValue: Guid.Empty);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Disciplines_TeamId",
-                table: "Disciplines",
-                column: "TeamId");
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_Disciplines_Teams_TeamId",
-                table: "Disciplines",
-                column: "TeamId",
-                principalTable: "Teams",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.Restrict);
+            migrationBuilder.Sql("""
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1
+                        FROM information_schema.columns
+                        WHERE table_schema = 'public'
+                          AND table_name = 'Disciplines'
+                          AND column_name = 'TeamId'
+                    ) THEN
+                        ALTER TABLE "Disciplines" ADD COLUMN "TeamId" uuid NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000';
+                        CREATE INDEX "IX_Disciplines_TeamId" ON "Disciplines" ("TeamId");
+                        ALTER TABLE "Disciplines"
+                            ADD CONSTRAINT "FK_Disciplines_Teams_TeamId"
+                            FOREIGN KEY ("TeamId") REFERENCES "Teams" ("Id")
+                            ON DELETE RESTRICT;
+                    END IF;
+                END
+                $$;
+                """);
         }
     }
 }
