@@ -1,10 +1,14 @@
 using System;
+using LMS.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace LMS.Infrastructure.Migrations
 {
+    [DbContext(typeof(ApplicationDbContext))]
+    [Migration("20260403183000_EnhanceCertificatesWithDocuments")]
     public partial class EnhanceCertificatesWithDocuments : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
