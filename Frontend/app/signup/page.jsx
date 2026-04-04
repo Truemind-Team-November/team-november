@@ -1,6 +1,67 @@
 import Image from "next/image";
 
 export default function Signup() {
+  useEffect(() => {
+    client.get("/health").catch(() => {});
+  }, []);
+
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    discipline: "UI/UX Design", // default value matching your select
+    password: "",
+    confirmPassword: "",
+  });
+
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage("");
+
+    // Simple client-side check
+    if (formData.password !== formData.confirmPassword) {
+      alert("Passwords do not match!");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      console.log(formData);
+      const response = await client.post("/auth/register", formData);
+      setMessage("Registration Successful! Redirecting in 2 seconds...");
+      setErrors({});
+
+      setFormData({
+        firstName: "",
+        lastName: "",
+        email: "",
+        discipline: "UI/UX Design",
+        password: "",
+        confirmPassword: "",
+      });
+
+      setTimeout(() => (window.location.href = "/login"), 2000);
+    } catch (error) {
+      setMessage(
+        error.response?.data?.message || "Registration failed. Try again.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <section className="bg-[#101723] text-white flex flex-row items-center justify-center min-h-screen p-6 gap-30">
       <div className="h-100 w-150">
