@@ -1,9 +1,13 @@
+using LMS.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace LMS.Infrastructure.Migrations
 {
+    [DbContext(typeof(ApplicationDbContext))]
+    [Migration("20260403195500_AddCertificateVerificationCode")]
     public partial class AddCertificateVerificationCode : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
