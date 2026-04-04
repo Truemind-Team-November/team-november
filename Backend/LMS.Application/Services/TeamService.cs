@@ -114,7 +114,15 @@ public class TeamService : ITeamService
             return BaseResponse<TeamResponse>.Fail("A team with this name already exists");
 
         var team = Team.Create(request.Name, request.Description);
-        await _teamRepository.AddAsync(team);
+
+        try
+        {
+            await _teamRepository.AddAsync(team);
+        }
+        catch (Exception ex) when (IsUniqueConstraintViolation(ex))
+        {
+            return BaseResponse<TeamResponse>.Fail("A team with this name already exists");
+        }
 
         var createdTeam = await _teamRepository.GetByIdAsync(team.Id) ?? team;
         return BaseResponse<TeamResponse>.Ok(
@@ -209,11 +217,19 @@ public class TeamService : ITeamService
 
     public async Task<BaseResponse<DisciplineResponse>> CreateDisciplineAsync(CreateDisciplineRequest request)
     {
-        if (await _disciplineRepository.ExistsByNameAsync(request.Name))
+        if (await _disciplineRepository.GetByNameIncludingDeletedAsync(request.Name) != null)
             return BaseResponse<DisciplineResponse>.Fail("A discipline with this name already exists");
 
         var discipline = Discipline.Create(request.Name);
-        await _disciplineRepository.AddAsync(discipline);
+
+        try
+        {
+            await _disciplineRepository.AddAsync(discipline);
+        }
+        catch (Exception ex) when (IsUniqueConstraintViolation(ex))
+        {
+            return BaseResponse<DisciplineResponse>.Fail("A discipline with this name already exists");
+        }
 
         var createdDiscipline = await _disciplineRepository.GetByIdAsync(discipline.Id) ?? discipline;
         return BaseResponse<DisciplineResponse>.Ok(
@@ -320,5 +336,19 @@ public class TeamService : ITeamService
             user.Discipline,
             user.TeamId,
             user.Team?.Name);
+    }
+
+    private static bool IsUniqueConstraintViolation(Exception exception)
+    {
+        const string uniqueViolationCode = "23505";
+
+        if (exception.GetType().FullName == "Microsoft.EntityFrameworkCore.DbUpdateException"
+            && exception.InnerException?.GetType().FullName == "Npgsql.PostgresException")
+        {
+            var sqlState = exception.InnerException.GetType().GetProperty("SqlState")?.GetValue(exception.InnerException) as string;
+            return string.Equals(sqlState, uniqueViolationCode, StringComparison.Ordinal);
+        }
+
+        return false;
     }
 }
