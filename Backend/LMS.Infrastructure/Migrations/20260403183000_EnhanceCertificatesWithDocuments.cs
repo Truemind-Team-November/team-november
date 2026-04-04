@@ -113,6 +113,9 @@ namespace LMS.Infrastructure.Migrations
                 """);
 
             migrationBuilder.Sql("""
+                -- Use a WHERE clause to join to the target table instead of
+                -- referencing the target alias inside the FROM/JOIN, which is
+                -- not allowed by PostgreSQL's planner for UPDATE...FROM.
                 UPDATE "Certificates" AS c
                 SET
                     "RecipientFullName" = TRIM(COALESCE(u."FirstName", '') || ' ' || COALESCE(u."LastName", '')),
@@ -123,9 +126,8 @@ namespace LMS.Infrastructure.Migrations
                     "CompletedAt" = c."IssuedAt",
                     "IssuedBy" = 'TalentFlow',
                     "TemplateVersion" = 'v1'
-                FROM "Users" AS u
-                INNER JOIN "Courses" AS cr ON cr."Id" = c."CourseId"
-                WHERE u."Id" = c."UserId";
+                FROM "Users" AS u, "Courses" AS cr
+                WHERE u."Id" = c."UserId" AND cr."Id" = c."CourseId";
                 """);
         }
 
