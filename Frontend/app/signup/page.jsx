@@ -1,82 +1,12 @@
-"use client";
-import { useEffect, useState } from "react";
-import axios from "axios";
 import Image from "next/image";
-import client from "@/lib/client";
-import Link from "next/link";
 
 export default function Signup() {
-  useEffect(() => {
-    client.get("/health").catch(() => {});
-  }, []);
-
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    discipline: "UI/UX Design", // default value matching your select
-    password: "",
-    confirmPassword: "",
-  });
-
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
-  const [errors, setErrors] = useState({});
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-    const errorKey = name.charAt(0).toUpperCase() + name.slice(1);
-    if (errors[errorKey]) {
-      setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[errorKey];
-        return newErrors;
-      });
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setMessage("");
-
-    if (formData.password !== formData.confirmPassword) {
-      setErrors({ ConfirmPassword: ["Passwords do not match!"] });
-      setLoading(false);
-      return;
-    }
-
-    try {
-      console.log("Sending data to backend:", formData);
-      const response = await client.post("/auth/register", formData);
-      setMessage("Registration Successful!");
-      console.log(response.data);
-    } catch (error) {
-      setMessage(
-        error.response?.data?.message || "Registration failed. Try again.",
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
-    <section className="grid grid-cols-2 items-center min-h-dvh p-6">
-      <div className="h-full border-r border-gray-500 pt-8">
+    <section className="bg-[#101723] text-white flex flex-row items-center justify-center min-h-screen p-6 gap-30">
+      <div className="h-100 w-150">
         <div>
-          <Image
-            src={"/logo.svg"}
-            alt="logo"
-            width={500}
-            height={500}
-            className="w-20 h-20 mb-5"
-          />
-          <h1 className="text-4xl font-bold mb-3 text-white">
+          <h1 className="text-4xl font-bold mb-3">
+            Talent<span className="text-[#0950C3]">Flow</span> <br /> <br />{" "}
             Start Your
             <br /> <span className="text-[#0950C3]">Journey</span> Today
           </h1>
@@ -93,19 +23,14 @@ export default function Signup() {
               <span className="text-white font-bold">Unique ID Assigned</span>
               <span className="text-[#7D7F82] mb-4">
                 {" "}
-                - every signup gets a permanent identifier
+                - every signup gets a permanent
               </span>
+              <br /> identifier
             </p>
           </div>
           <div className="flex flex-row mb-4 gap-2 items-center">
             <div className="p-2 bg-[#314568] rounded-xl">
-              <Image
-                src="/fill.png"
-                alt="Logo"
-                width={100}
-                height={100}
-                className="w-5 h-5"
-              />
+              <Image src="/fill.png" alt="Logo" width={20} height={20} />
             </div>
             <p>
               <span className="text-white font-bold">Team Placement</span>
@@ -131,173 +56,90 @@ export default function Signup() {
           </div>
         </div>
       </div>
-      <div className="min-h-screen flex items-start justify-start p-6">
-        <form onSubmit={handleSubmit} className="w-full max-w-sm">
-          {" "}
-          {/* Wrap in <form> */}
-          <h1 className="text-white text-3xl font-bold mb-1">Create Account</h1>
-          {/* Status Message */}
-          {message && <p className="text-sm my-2 text-blue-400">{message}</p>}
-          <div className="flex gap-3 mb-4 mt-6">
-            <div className="flex-1">
-              <label className="text-white text-sm font-semibold block mb-2">
-                First Name
-              </label>
-              <input
-                type="text"
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleChange}
-                placeholder="Adaeze"
-                className={`w-full border ${errors.FirstName ? "border-red-500" : "border-gray-300"} bg-transparent text-white text-sm rounded-lg px-3 py-2.5 outline-none`}
-                required
-              />
-              {errors.FirstName && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.FirstName[0]}
-                </p>
-              )}
-            </div>
-            <div className="flex-1">
-              <label className="text-white text-sm font-semibold block mb-2">
-                Last Name
-              </label>
-              <input
-                type="text"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleChange}
-                placeholder="Okoro"
-                className={`w-full border ${errors.LastName ? "border-red-500" : "border-gray-300"} bg-transparent text-white text-sm rounded-lg px-3 py-2.5 outline-none`}
-                required
-              />
-              {errors.LastName && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.LastName[0]}
-                </p>
-              )}
-            </div>
-          </div>
-          <div className="mb-4">
-            <label className="text-white text-sm font-semibold block mb-2">
-              Email Address
+      <div className="h-150 w-120">
+        <h1 className="text-4xl font-bold">Create Account</h1>
+        <div className="flex flex-row gap-2">
+          <h2 className="text-[#ADC7EB] font-thin text-lg">Sign In</h2>
+          <h3 className="text-[#0950C3] font-black text-lg">Log In</h3>
+        </div>
+        <div className="flex flex-row gap-4 mb-4 mt-6 ">
+          <div>
+            <label htmlFor="first-name" className="text-3xl mb-2">
+              First Name
             </label>
+
+            <br />
+
             <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="you@trueminds.ng"
-              className={`w-full border ${errors.Email ? "border-red-500" : "border-gray-300"} bg-transparent text-white text-sm rounded-lg px-3 py-2.5 outline-none`}
+              name="first-name"
+              type="text"
+              id="first-name"
+              placeholder="Enter your first name"
               required
-            />
-            {errors.Email && (
-              <p className="text-red-500 text-xs mt-1">{errors.Email[0]}</p>
-            )}
-          </div>
-          <div className="mb-4">
-            <label className="text-white text-sm font-semibold block mb-2">
-              Discipline
-            </label>
-            <div className="relative">
-              <select
-                name="discipline"
-                value={formData.discipline}
-                onChange={handleChange}
-                className={`w-full border ${errors.Discipline ? "border-red-500" : "border-gray-300"} bg-transparent text-white text-sm rounded-lg px-3 py-2.5 outline-none appearance-none cursor-pointer`}
-              >
-                <option value="UI/UX Design" className="text-black">
-                  UI/UX Design
-                </option>
-                <option value="Front-end Engineering" className="text-black">
-                  Front-end Engineering
-                </option>
-                <option value="Back-end Engineering" className="text-black">
-                  Back-end Engineering
-                </option>
-                <option value="Mobile Development" className="text-black">
-                  Mobile Development
-                </option>
-                <option value="Data Analysis" className="text-black">
-                  Data Analysis
-                </option>
-                <option value="Product Management" className="text-black">
-                  Product Management
-                </option>
-                <option value="Digital Marketing" className="text-black">
-                  Digital Marketing
-                </option>
-                <option value="Content Strategy" className="text-black">
-                  Content Strategy
-                </option>
-                <option value="DevOps" className="text-black">
-                  DevOps
-                </option>
-                <option value="QA Engineering" className="text-black">
-                  QA Engineering
-                </option>
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-                <svg
-                  className="w-4 h-4 text-[#8b949e]"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
-              </div>
-            </div>
-            {errors.Discipline && (
-              <p className="text-red-500 text-xs mt-1">
-                {errors.Discipline[0]}
-              </p>
-            )}
-          </div>
-          <div className="mb-4">
-            <label className="text-white text-sm font-semibold block mb-2">
-              Password
-            </label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="Minimum 8 characters"
-              className={`w-full border ${errors.Password ? "border-red-500" : "border-gray-300"} bg-transparent text-white text-sm rounded-lg px-3 py-2.5 outline-none`}
-              required
-            />
-            {errors.Password && (
-              <p className="text-red-500 text-xs mt-1">{errors.Password[0]}</p>
-            )}
-          </div>
-          <div className="mb-6">
-            <label className="text-white text-sm font-semibold block mb-2">
-              Confirm Password
-            </label>
-            <input
-              type="password"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              placeholder="Re-enter password"
-              className="w-full border border-gray-300 bg-transparent text-white text-sm rounded-lg px-3 py-2.5 outline-none"
-              required
+              className="w-full h-10 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mt-2"
             />
           </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-sm font-semibold py-3 rounded-lg transition-colors"
-          >
-            {loading ? "Registering..." : "Get Started"}
-          </button>
-        </form>
+          <div>
+            <label htmlFor="last-name" className="text-3xl ">
+              Last Name
+            </label>
+            <br />
+            <input
+              name="last-name"
+              type="text"
+              id="last-name"
+              placeholder="Enter your last name"
+              required
+              className="w-full h-10 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mt-2"
+            />
+          </div>
+        </div>
+        <div className="mb-4">
+          <label htmlFor="email" className="text-3xl ">
+            Email Address
+          </label>
+
+          <input
+            type="email"
+            id="email"
+            placeholder="Enter your email address"
+            required
+            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mt-2"
+          />
+        </div>
+        <h2 className="text-3xl ">Discipline</h2>
+        <div className="w-full h-10 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mt-2 flex flex-row-reverse items-center mb-8 ">
+          <Image src="/dropdown.png" alt="Logo" width={40} height={40} />
+        </div>
+        <div className="mb-4">
+          <label htmlFor="Password" className="text-3xl ">
+            Password
+          </label>
+
+          <input
+            type="password"
+            id="Password"
+            placeholder="Minimum 8 characters"
+            required
+            className="w-full h-10 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4 mt-2"
+          />
+        </div>
+        <div className="mb-4">
+          <label htmlFor="Password" className="text-3xl ">
+            Password
+          </label>
+
+          <input
+            type="password"
+            id="Password"
+            placeholder="Minimum 8 characters"
+            required
+            className="w-full h-10 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4 mt-2"
+          />
+        </div>
+        <button className="w-full h-10 bg-[#0950C3] text-white rounded-lg hover:bg-blue-600 transition-colors ">
+          Get Started
+        </button>
       </div>
     </section>
   );
