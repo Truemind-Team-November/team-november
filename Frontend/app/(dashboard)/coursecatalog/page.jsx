@@ -3,6 +3,7 @@ import { DarkSunIcon, LightningIcon, PaletteIcon } from "@/components/Icons";
 import Link from "next/link";
 
 export default function CourseCatalog() {
+  
   const courses = [
     {
       title: "UI/UX Fundamentals",

@@ -1,8 +1,11 @@
 "use client";
+
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ThemeColors } from "@/components/ThemeColors";
+import client from "@/lib/client";
 
 const navSections = [
   {
@@ -11,7 +14,7 @@ const navSections = [
       { icon: "/assets/sidebar/dashboard_icon.svg", label: "Dashboard", href: "/dashboard" },
       { icon: "/assets/sidebar/course_catalog_icon.svg", label: "Course Catalog", href: "/coursecatalog" },
       { icon: "/assets/sidebar/assignment_icon.svg", label: "Assignments", href: "/assignments" },
-      { icon: "/assets/sidebar/my_progress_icon.svg", label: "My Progress", href: "/progress" }, // Changed href to match label logic if needed
+      { icon: "/assets/sidebar/my_progress_icon.svg", label: "My Progress", href: "/progress" },
     ],
   },
   {
@@ -33,6 +36,54 @@ const navSections = [
 
 const Sidebar = ({ badges = {} }) => {
   const pathname = usePathname();
+  const [userData, setUserData] = useState({
+    name: "User",
+    initials: "U",
+    publicId: "TMI-047", 
+    discipline: "UI/UX Intern" 
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await client.get("/Profile/me");
+        if (response.data.success) {
+          const profile = response.data.data;
+          const fullName = profile.fullName || "User";
+          
+          const initials = fullName
+            .split(' ')
+            .map(n => n[0])
+            .join('')
+            .toUpperCase()
+            .substring(0, 2);
+
+          setUserData({
+            name: fullName,
+            initials: initials,
+            publicId: profile.publicId || "TMI-047",
+            discipline: profile.personalInformation?.discipline || "UI/UX Intern"
+          });
+        }
+      } catch (err) {
+        console.error("Sidebar fetch error:", err);
+        const storedUser = localStorage.getItem("user");
+        if (storedUser) {
+          const user = JSON.parse(storedUser);
+          setUserData(prev => ({
+            ...prev,
+            name: user.fullName || "User",
+            publicId: user.publicId || "TMI-047"
+          }));
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, []);
 
   return (
     <aside
@@ -56,7 +107,6 @@ const Sidebar = ({ badges = {} }) => {
                 {section.items.map((item) => {
                   const badgeCount = badges[item.label];
                   const showBadge = badgeCount != null && badgeCount > 0;
-
                   const isActive = pathname === item.href;
 
                   return (
@@ -100,14 +150,16 @@ const Sidebar = ({ badges = {} }) => {
 
       <div className="flex flex-row items-center px-[10px] py-[clamp(8px,1vh,16px)] gap-[10px] w-full border-t-[0.75px] border-[#7D7F82] box-border mt-auto relative">
         <div className="w-[clamp(32px,3vh,48px)] h-[clamp(32px,3vh,48px)] bg-[#0950C3] rounded-full flex items-center justify-center shrink-0">
-          <span className="text-[clamp(14px,1.5vh,20px)] font-bold leading-[125%] text-[#FAFCFF]">AO</span>
+          <span className="text-[clamp(14px,1.5vh,20px)] font-bold leading-[125%] text-[#FAFCFF]">
+            {loading ? ".." : userData.initials}
+          </span>
         </div>
         <div className="flex flex-col items-start gap-[4px] flex-1 min-w-0">
           <p className="text-[clamp(14px,1.5vh,20px)] font-bold leading-[125%] text-[#FAFCFF] m-0 whitespace-nowrap overflow-hidden text-ellipsis w-full">
-            Adeeze okoro
+            {loading ? "Loading..." : userData.name}
           </p>
           <p className="text-[clamp(11px,1.2vh,14px)] font-normal leading-[125%] text-[#FAFCFF] m-0 whitespace-nowrap overflow-hidden text-ellipsis w-full">
-            UI/UX Intern-TMI-047
+            {userData.discipline}-{userData.publicId}
           </p>
         </div>
         <button className="absolute top-[12px] right-[12px] w-[16px] h-[16px] flex items-center justify-center bg-transparent border-none p-0">

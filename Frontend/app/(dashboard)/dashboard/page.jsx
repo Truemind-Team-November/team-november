@@ -1,7 +1,14 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import { ThemeColors } from '@/components/ThemeColors';
+import client from "@/lib/client";
 
 export default function Dashboard() {
+    const [userName, setUserName] = useState("User");
+    const [loading, setLoading] = useState(true);
 
+    // Static data for the UI
     const stats = [
         { icon: "📚", title: 'Courses Enrolled', value: '4', statIcon: "↑", statText: '1 this week', statColor: 'text-blue-500' },
         { icon: "✅", title: 'Avg Completion', value: '68%', statIcon: "↑", statText: '12% this month', statColor: 'text-blue-500' },
@@ -28,22 +35,59 @@ export default function Dashboard() {
         { text: 'You joined the <span class="font-semibold text-white">Design & Engineering</span> cross-functional team', time: '3 days ago', dot: "🟣" },
     ];
 
+    useEffect(() => {
+        const fetchUserData = async () => {
+            try {
+                // Fetching the signed-in user's profile
+                const response = await client.get("/Profile/me");
+                // console.log(response);            
+                if (response.data.success) {
+                    // Updating state with the real name from the database
+                    const name = response.data.data.fullName || response.data.data.userName;
+                    setUserName(name);
+                }
+            } catch (err) {
+                console.error("Dashboard fetch error:", err);
+                // Fallback: Try to get name from local storage if the API fails
+                const storedUser = localStorage.getItem("user");
+                if (storedUser) {
+                    const user = JSON.parse(storedUser);
+                    setUserName(user.fullName || "User");
+                }
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchUserData();
+    }, []);
+
+    // Helper to get initials for the avatar bubble
+    const getInitials = (name) => {
+        return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+    };
+
     return (
         <main className=''>            
             <section style={{ backgroundColor: ThemeColors.bgBlue }} className="flex-1 min-h-screen text-zinc-300 font-sans p-4 md:p-8 overflow-y-auto">
 
-                {/* Header */}
+                {/* Header with Dynamic Name */}
                 <div className="flex md:items-center justify-between mb-5 px-2 max-md:flex-col max-md:gap-5">
                     <div>
                         <h1 className="text-[22px] font-bold text-white leading-tight">Good morning,</h1>
-                        <h2 className="text-[22px] font-bold text-white leading-tight">Adaeze</h2>
+                        <h2 className="text-[22px] font-bold text-white leading-tight">
+                            {loading ? "..." : userName}
+                        </h2>
                     </div>
                     <div className="flex items-center gap-3 ">
                         <span className="text-[18px] font-semibold text-white">Cohort 3. Week 6</span>
                         <button className="flex items-center justify-center w-8 h-8 bg-[#161b22] border border-slate-400 rounded-md text-[14px]">🔔</button>
-                        <div className="flex items-center justify-center w-8.5 h-8.5 rounded-full bg-blue-600 text-white font-bold text-[14px]">AO</div>
+                        <div className="flex items-center justify-center w-9 h-9 rounded-full bg-blue-600 text-white font-bold text-[14px]">
+                            {getInitials(userName)}
+                        </div>
                     </div>
                 </div>
+
                 {/* Stats Section */}
                 <div className="grid md:grid-cols-4 grid-cols-2 gap-3 mb-5">
                     {stats.map((s, i) => (
@@ -52,9 +96,7 @@ export default function Dashboard() {
                             <div className="text-[26px] font-bold text-white mb-0.5">{s.value}</div>
                             <div className="text-[11px] text-zinc-400 font-medium mb-2">{s.title}</div>
                             <div className={`flex items-center gap-1 ${s.statColor} text-[10px] font-medium`}>
-                                {
-                                    s.statIcon && <span className="text-[8px]">{s.statIcon}</span>
-                                }
+                                {s.statIcon && <span className="text-[8px]">{s.statIcon}</span>}
                                 {s.statText}
                             </div>
                         </div>
@@ -66,22 +108,19 @@ export default function Dashboard() {
 
                     {/* LEFT COLUMN */}
                     <div className="flex flex-col gap-4">
-
-
-                        {/* Continue Learning */}
                         <section className=" border border-slate-400 rounded-xl md:p-4 p-2">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-[14px] font-bold text-white">Continue Learning</h3>
-                                <button className="px-5 py-2  text-white text-[11px] rounded-lg font-semibold bg-stone-600/80">View all</button>
+                                <button className="px-5 py-2 text-white text-[11px] rounded-lg font-semibold bg-stone-600/80">View all</button>
                             </div>
                             <div className="space-y-2.5">
                                 {learningCourses.map((c, i) => (
                                     <div key={i} className="border border-slate-400 rounded-xl p-3.5 flex items-center justify-between max-md:flex-col max-md:gap-3">
-                                        <div className="flex items-center gap-3.5">
-                                            <div className="w-23 h-23 bg-gray-200 rounded-xl flex items-center justify-center text-[22px]">
+                                        <div className="flex items-center gap-3.5 w-full">
+                                            <div className="min-w-[60px] h-[60px] bg-gray-200 rounded-xl flex items-center justify-center text-[22px]">
                                                 {c.emoji}
                                             </div>
-                                            <div className=''>
+                                            <div className='w-full'>
                                                 <h4 className="text-base font-bold text-white mb-0.5">{c.title}</h4>
                                                 <p className="text-sm text-zinc-400 mb-1.5">{c.lesson}</p>
                                                 <div className='flex items-center justify-between'>
@@ -91,16 +130,16 @@ export default function Dashboard() {
                                                 <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden mt-2">
                                                     <div className="h-full bg-blue-300" style={{ width: c.progress }}></div>
                                                 </div>
-
                                             </div>
                                         </div>
-                                        <button className="px-4.5 py-2 bg-stone-600/80 text-white text-[11px] rounded-lg font-semibold max-md:w-full">{c.btn}</button>
+                                        <button className="px-4.5 py-2 bg-stone-600/80 text-white text-[11px] rounded-lg font-semibold max-md:w-full ml-4">
+                                            {c.btn}
+                                        </button>
                                     </div>
                                 ))}
                             </div>
                         </section>
 
-                        {/* Recent Activity */}
                         <section className=" border border-slate-400 rounded-xl p-4">
                             <h3 className="text-[14px] font-bold text-white mb-4">Recent Activity</h3>
                             <div className="space-y-3.5 relative pl-2.5">
@@ -119,24 +158,22 @@ export default function Dashboard() {
 
                     {/* RIGHT COLUMN */}
                     <div className="flex flex-col gap-4">
-
-                        {/* Upcoming Deadlines */}
                         <section className=" border border-slate-400 rounded-xl p-4">
                             <div className="flex items-center gap-2 mb-4">
                                 <span className="text-2xl">⏱️</span>
-                                <h3 className="text-2xl font-bold text-white">Upcoming Deadlines</h3>
+                                <h3 className="text-xl font-bold text-white">Upcoming Deadlines</h3>
                             </div>
                             <div className="space-y-2.5">
                                 {deadlines.map((d, i) => (
-                                    <div key={i} className="flex items-center justify-between border-b border-gray-600 py-3">
+                                    <div key={i} className="flex items-center justify-between border-b border-gray-600 py-3 last:border-0">
                                         <div className="flex items-center gap-3">
-                                            <div className="bg-blue-300 rounded-lg p-1.5 text-center min-w-11">
+                                            <div className="bg-blue-300 rounded-lg p-1.5 text-center min-w-[50px]">
                                                 <p className="text-sm font-bold text-white leading-none">{d.date.split(' ')[0]}</p>
-                                                <p className="text-xs text-blue-700 mt-1">{d.date.split(' ')[1]}</p>
+                                                <p className="text-[10px] text-blue-700 mt-1 uppercase">{d.date.split(' ')[1]}</p>
                                             </div>
                                             <div>
-                                                <p className="text-base font-bold text-white mb-1">{d.title}</p>
-                                                <p className="text-base text-zinc-400">{d.course}</p>
+                                                <p className="text-sm font-bold text-white mb-1">{d.title}</p>
+                                                <p className="text-xs text-zinc-400">{d.course}</p>
                                             </div>
                                         </div>
                                         <span className="text-[9px] text-white font-bold bg-red-500 px-2 py-0.75 rounded-md">{d.status}</span>
@@ -145,47 +182,32 @@ export default function Dashboard() {
                             </div>
                         </section>
 
-                        {/* My Team */}
                         <section className=" border border-slate-400 rounded-xl p-4">
                             <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-xl font-bold text-white">My Team</h3>
-                                <button className="text-white text-[11px] font-bold bg-[#30363d] px-3 py-1.25 rounded-lg border border-zinc-700 flex items-center gap-1">
-                                    View
-                                </button>
+                                <h3 className="text-lg font-bold text-white">My Team</h3>
+                                <button className="text-white text-[11px] font-bold bg-[#30363d] px-3 py-1.25 rounded-lg border border-zinc-700">View</button>
                             </div>
-                            <div className="bg-blue-300/50 w-fit rounded-xl p-3 mb-3">
-                                <p className="text-sm font-bold text-white">Design & Engineering</p>
+                            <div className="bg-blue-300/20 w-fit rounded-lg px-3 py-1.5 mb-3 border border-blue-300/30">
+                                <p className="text-xs font-bold text-blue-300">Design & Engineering</p>
                             </div>
                             <div className="space-y-3 px-1">
-                                <div className="flex items-center justify-between text-[11px] text-zinc-400">
-                                    <div className="flex items-center gap-2">
-                                        <div className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-600 text-white font-bold text-xs">AO</div>
-                                        <p>Adaeze okoro (You)</p>
+                                {["Adaeze Okoro (You)", "Kolade Ige", "Fatima Aliu"].map((name, i) => (
+                                    <div key={i} className="flex items-center gap-2 text-[11px] text-zinc-400">
+                                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white font-bold text-[10px] ${i === 0 ? 'bg-blue-600' : i === 1 ? 'bg-green-500' : 'bg-purple-500'}`}>
+                                            {name.split(' ').map(n => n[0]).join('')}
+                                        </div>
+                                        <p>{i === 0 ? userName + " (You)" : name}</p>
                                     </div>
-                                </div>
-                                <div className="flex items-center justify-between text-[11px] text-zinc-400">
-                                    <div className="flex items-center gap-2">
-                                        <div className="flex items-center justify-center w-6 h-6 rounded-full bg-green-500 text-white font-bold text-xs">KI</div>
-                                        <p>Kolade Ige</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center justify-between text-[11px] text-zinc-400">
-                                    <div className="flex items-center gap-2">
-                                        <div className="flex items-center justify-center w-6 h-6 rounded-full bg-purple-500 text-white font-bold text-xs">FA</div>
-                                        <p>Fatima Aliu</p>
-                                    </div>
-                                </div>
+                                ))}
                             </div>
                         </section>
 
-                        {/* ID Card Section */}
-                        <section className="border border-slate-400 rounded-xl p-6 text-center">
-                            <p className="text-base font-bold text-slate-100 tracking-[1px] mb-2.5">TRUEMINDS INNOVATION</p>
-                            <p className="text-2xl font-black text-blue-500 tracking-tight mb-1.5">TMI-2025-047</p>
-                            <p className="text-2xl font-bold text-white mb-1">Adaeze Okoro</p>
-                            <p className="text-base text-zinc-500">UI/UX Design Cohort 3</p>
+                        <section className="border border-slate-400 rounded-xl p-6 text-center bg-white/5">
+                            <p className="text-[10px] font-bold text-slate-400 tracking-[2px] mb-2.5 uppercase">TrueMinds Innovation</p>
+                            <p className="text-xl font-black text-blue-500 tracking-tight mb-1.5">TMI-2025-047</p>
+                            <p className="text-lg font-bold text-white mb-1">{userName}</p>
+                            <p className="text-xs text-zinc-500">UI/UX Design Cohort 3</p>
                         </section>
-
                     </div>
                 </div>
             </section>
