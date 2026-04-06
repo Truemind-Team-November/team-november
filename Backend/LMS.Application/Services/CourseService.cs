@@ -49,7 +49,10 @@ public class CourseService : ICourseService
         );
         await _courseRepository.AddAsync(course);
 
-        var response = MapToResponse(course);
+        // Reload the course with related instructor so the response includes the
+        // instructor's full name instead of "Unknown".
+        var createdCourse = await _courseRepository.GetByIdAsync(course.Id) ?? course;
+        var response = MapToResponse(createdCourse);
         return BaseResponse<CourseResponse>.Ok(response, "Course created successfully");
     }
 
