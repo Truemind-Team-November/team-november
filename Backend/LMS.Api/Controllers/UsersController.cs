@@ -1,7 +1,6 @@
 using LMS.Application.Common;
 using LMS.Application.Interfaces.Repositories;
 using LMS.Application.DTOs.User;
-using LMS.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -37,7 +36,7 @@ public class UsersController : ControllerBase
             u.PhoneNumber,
             u.CohortLabel,
             u.Location,
-            u.ProfileImageUrl,
+            u.ProfileImageUrl,       
             u.TeamId,
             u.Team?.Name,
             u.Role.ToString()

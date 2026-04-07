@@ -1,5 +1,3 @@
-using System;
-
 namespace LMS.Application.DTOs.User;
 
 public record UserResponse(
