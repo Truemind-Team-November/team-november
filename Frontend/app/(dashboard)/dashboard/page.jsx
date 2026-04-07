@@ -44,23 +44,36 @@ export default function Dashboard() {
     useEffect(() => {
         const fetchUserData = async () => {
             try {
-                const response = await client.get('/Dashboard/me');
-                const payload = response.data?.data;
+                const profileResponse = await client.get('/Profile/me');
+                const profile = profileResponse.data?.data;
 
-                if (payload) {
-                    const name = payload.fullName || 'User';
+                if (profile) {
+                    const name = profile.fullName || 'User';
                     setUserName(name);
 
-                    if (payload.metrics) {
-                        setStats([
-                            { icon: '📚', title: 'Courses Enrolled', value: String(payload.metrics.enrolledCourses ?? 0), statIcon: '↑', statText: 'Active courses', statColor: 'text-blue-500' },
-                            { icon: '✅', title: 'Avg Completion', value: `${Math.round(payload.metrics.averageCompletionPercentage ?? 0)}%`, statIcon: '↑', statText: 'Progress updated', statColor: 'text-blue-500' },
-                            { icon: '🗒️', title: 'Pending Tasks', value: String(payload.metrics.pendingTasks ?? 0), statText: 'Due this week', statColor: 'text-red-500' },
-                            { icon: '🏆', title: 'Certificates', value: String(payload.metrics.certificates ?? 0), statText: 'Completed courses', statColor: 'text-blue-500' },
-                        ]);
-                    }
+                    const personalInformation = profile.personalInformation || {};
+                    const learningSummary = profile.learningSummary || {};
 
-                    if (Array.isArray(payload.continueLearning) && payload.continueLearning.length) {
+                    setStats([
+                        { icon: '📚', title: 'Courses Enrolled', value: String(learningSummary.courses ?? 0), statIcon: '↑', statText: 'Active courses', statColor: 'text-blue-500' },
+                        { icon: '✅', title: 'Avg Completion', value: `${Math.round(learningSummary.averageProgress ?? 0)}%`, statIcon: '↑', statText: 'Progress updated', statColor: 'text-blue-500' },
+                        { icon: '🗒️', title: 'Pending Tasks', value: '3', statText: 'Due this week', statColor: 'text-red-500' },
+                        { icon: '🏆', title: 'Certificates', value: String(learningSummary.certificates ?? 0), statText: 'Completed courses', statColor: 'text-blue-500' },
+                    ]);
+
+                    const discipline = personalInformation.discipline || 'UI/UX Design';
+                    const cohortLabel = personalInformation.cohortLabel || 'Cohort 3';
+                    setIdentityCard({
+                        fullName: profile.fullName || name,
+                        publicId: profile.publicId || 'TMI-2025-047',
+                        discipline,
+                        cohortLabel,
+                    });
+
+                    const tryDashboardResponse = await client.get('/Dashboard/me').catch(() => null);
+                    const payload = tryDashboardResponse?.data?.data;
+
+                    if (payload?.continueLearning && Array.isArray(payload.continueLearning) && payload.continueLearning.length) {
                         setLearningCourses(payload.continueLearning.slice(0, 3).map((course, index) => ({
                             emoji: index % 3 === 0 ? '⏰' : index % 3 === 1 ? '🖥️' : '📊',
                             title: course.courseTitle,
@@ -73,7 +86,7 @@ export default function Dashboard() {
                         })));
                     }
 
-                    if (Array.isArray(payload.upcomingDeadlines) && payload.upcomingDeadlines.length) {
+                    if (payload?.upcomingDeadlines && Array.isArray(payload.upcomingDeadlines) && payload.upcomingDeadlines.length) {
                         setDeadlines(payload.upcomingDeadlines.slice(0, 3).map((item) => {
                             const due = item.dueDate ? new Date(item.dueDate) : null;
                             return {
@@ -87,7 +100,7 @@ export default function Dashboard() {
                         }));
                     }
 
-                    if (Array.isArray(payload.recentActivity) && payload.recentActivity.length) {
+                    if (payload?.recentActivity && Array.isArray(payload.recentActivity) && payload.recentActivity.length) {
                         const dots = ['🟢', '🔵', '🟠', '🟣'];
                         setActivity(payload.recentActivity.slice(0, 4).map((item, index) => ({
                             text: item.description,
@@ -96,24 +109,15 @@ export default function Dashboard() {
                         })));
                     }
 
-                    if (payload.myTeam?.teamName) {
+                    if (payload?.myTeam?.teamName) {
                         setTeamName(payload.myTeam.teamName);
                     }
 
-                    if (Array.isArray(payload.myTeam?.members) && payload.myTeam.members.length) {
+                    if (Array.isArray(payload?.myTeam?.members) && payload.myTeam.members.length) {
                         setTeamMembers(payload.myTeam.members.slice(0, 4).map((member) => ({
                             fullName: member.fullName,
                             isCurrentUser: member.isCurrentUser,
                         })));
-                    }
-
-                    if (payload.identityCard) {
-                        setIdentityCard({
-                            fullName: payload.identityCard.fullName || name,
-                            publicId: payload.identityCard.publicId || 'TMI-2025-047',
-                            discipline: payload.identityCard.discipline || 'Learner',
-                            cohortLabel: payload.identityCard.cohortLabel || 'Cohort',
-                        });
                     }
                 }
             } catch (err) {
