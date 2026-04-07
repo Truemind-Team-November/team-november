@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import client from '@/lib/client';
 
 const defaultProfile = {
   id: '1',
@@ -45,7 +46,67 @@ export default function ProfilePage() {
     email: profile.email,
     phoneNumber: profile.phoneNumber,
   });
+  const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    const hydrateProfile = async () => {
+      try {
+        const response = await client.get('/Profile/me');
+        const payload = response.data?.data;
+
+        if (!payload) {
+          return;
+        }
+
+        const personal = payload.personalInformation || {};
+        const summary = payload.learningSummary || {};
+        const tags = Array.isArray(payload.badges) && payload.badges.length
+          ? payload.badges.map((badge) => badge.label)
+          : [personal.discipline || 'Learner'];
+
+        const achievements = Array.isArray(payload.achievements) && payload.achievements.length
+          ? payload.achievements.map((item, index) => ({
+              id: String(index + 1),
+              icon: index % 3 === 0 ? '🔥' : index % 3 === 1 ? '⭐' : '🏅',
+              title: item.title,
+              description: item.description,
+            }))
+          : defaultProfile.achievements;
+
+        const nextProfile = {
+          id: String(payload.userId || '1'),
+          fullName: payload.fullName || defaultProfile.fullName,
+          email: personal.email || defaultProfile.email,
+          phoneNumber: personal.phoneNumber || '',
+          userId: payload.publicId || defaultProfile.userId,
+          role: payload.headline || personal.discipline || defaultProfile.role,
+          location: personal.location || personal.cohortLabel || defaultProfile.location,
+          tags,
+          courses: summary.courses ?? defaultProfile.courses,
+          avgProgress: Math.round(summary.averageProgress ?? defaultProfile.avgProgress),
+          certificates: summary.certificates ?? defaultProfile.certificates,
+          avgScore: Number(summary.averageScore ?? defaultProfile.avgScore),
+          achievements,
+        };
+
+        setProfile(nextProfile);
+        setFormData({
+          fullName: nextProfile.fullName,
+          email: nextProfile.email,
+          phoneNumber: nextProfile.phoneNumber,
+        });
+      } catch (error) {
+        console.error('Error loading profile:', error);
+        setMessage('Unable to load profile from server. Showing saved layout values.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    hydrateProfile();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -57,17 +118,41 @@ export default function ProfilePage() {
 
   const handleSaveChanges = async () => {
     setIsSaving(true);
+    setMessage('');
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      const trimmed = formData.fullName.trim();
+      const parts = trimmed.split(/\s+/).filter(Boolean);
+      const firstName = parts[0] || '';
+      const lastName = parts.slice(1).join(' ') || firstName;
+
+      const response = await client.put('/Profile/me', {
+        firstName,
+        lastName,
+        phoneNumber: formData.phoneNumber || null,
+      });
+
+      const payload = response.data?.data;
+      const personal = payload?.personalInformation || {};
+
       setProfile((prev) => ({
         ...prev,
-        ...formData,
+        fullName: payload?.fullName || formData.fullName,
+        email: personal.email || prev.email,
+        phoneNumber: personal.phoneNumber || formData.phoneNumber,
       }));
+
+      setFormData((prev) => ({
+        ...prev,
+        fullName: payload?.fullName || prev.fullName,
+        email: personal.email || prev.email,
+        phoneNumber: personal.phoneNumber || prev.phoneNumber,
+      }));
+
       setIsEditing(false);
-      alert('Profile updated successfully!');
+      setMessage('Profile updated successfully.');
     } catch (error) {
       console.error('Error saving profile:', error);
-      alert('Failed to save profile. Please try again.');
+      setMessage('Failed to save profile. Please try again.');
     } finally {
       setIsSaving(false);
     }
@@ -106,6 +191,18 @@ export default function ProfilePage() {
             {isEditing ? 'Cancel Edit' : 'Edit Profile'}
           </button>
         </div>
+
+        {message && (
+          <div className="mb-4 rounded-lg border border-[#4B4C4E] bg-[#0D1522] px-4 py-3 text-sm text-[#CEE0FD]">
+            {message}
+          </div>
+        )}
+
+        {loading && (
+          <div className="mb-4 rounded-lg border border-[#4B4C4E] bg-[#0D1522] px-4 py-3 text-sm text-[#CEE0FD]">
+            Loading profile...
+          </div>
+        )}
 
         <div className="mb-10">
           <div className="rounded-2xl border border-[#D6E3F5] bg-[#101723] p-6">

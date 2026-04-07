@@ -76,8 +76,8 @@ export default function Signup() {
   };
 
   return (
-    <section className="grid grid-cols-2 items-center min-h-dvh p-6">
-      <div className="h-full border-r border-gray-500 pt-8">
+    <section className="grid min-h-dvh grid-cols-1 items-stretch p-4 md:grid-cols-2 md:p-6">
+      <div className="h-full border-b border-gray-500 pb-6 pt-8 md:border-b-0 md:border-r md:pb-0 md:pr-6">
         <div>
           <Image src={"/logo.svg"} alt="logo" width={500} height={500} className="w-20 h-20 mb-5" />
           <h1 className="text-4xl font-bold mb-3 text-white">
@@ -88,7 +88,7 @@ export default function Signup() {
             Join hundreds of interns building real world skills on TalentFlow
           </p>
         </div>
-        <div className="w-125">
+        <div className="w-full max-w-[520px]">
           <div className="flex flex-row mb-4 gap-2 items-center">
             <div className="p-2 bg-[#314568] rounded-xl">
               <Image src="/Group.png" alt="Logo" width={20} height={20} />
@@ -129,7 +129,7 @@ export default function Signup() {
           </div>
         </div>
       </div>
-      <div className="min-h-screen flex items-start justify-center p-6">
+      <div className="flex items-start justify-center p-4 md:min-h-screen md:p-6">
         <form onSubmit={handleSubmit} className="w-full max-w-sm">
           <h1 className="text-white text-3xl font-bold mb-1">Create Account</h1>
 

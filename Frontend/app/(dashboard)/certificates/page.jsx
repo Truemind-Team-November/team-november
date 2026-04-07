@@ -1,8 +1,52 @@
 "use client";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { ThemeColors } from "@/components/ThemeColors";
+import client from "@/lib/client";
 
 export default function CertificatesPage() {
+  const [certificates, setCertificates] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    const loadCertificates = async () => {
+      try {
+        const response = await client.get("/Certificate/me");
+        const items = response.data?.data;
+
+        if (Array.isArray(items)) {
+          setCertificates(items);
+        }
+      } catch (error) {
+        console.error("Certificate fetch error:", error);
+        setMessage("Unable to load certificates right now. Showing current layout preview.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadCertificates();
+  }, []);
+
+  const activeCertificate = useMemo(() => {
+    if (!certificates.length) {
+      return null;
+    }
+
+    return certificates[0];
+  }, [certificates]);
+
+  const completionValue = useMemo(() => {
+    if (!activeCertificate) {
+      return 72;
+    }
+
+    return Math.max(0, Math.min(100, Math.round(Number(activeCertificate.finalScore || 0))));
+  }, [activeCertificate]);
+
+  const completionRemaining = 100 - completionValue;
+
   return (
     <main
       className="min-h-screen font-sans text-white"
@@ -37,6 +81,18 @@ export default function CertificatesPage() {
 
         {/* Content */}
         <div className="flex flex-col gap-5 p-7 flex-1">
+          {loading && (
+            <div className="rounded-lg border border-[#4B4C4E] bg-[#0D1522] px-4 py-3 text-sm text-[#CEE0FD]">
+              Loading certificates...
+            </div>
+          )}
+
+          {message && (
+            <div className="rounded-lg border border-[#4B4C4E] bg-[#0D1522] px-4 py-3 text-sm text-[#CEE0FD]">
+              {message}
+            </div>
+          )}
+
           {/* Progress Banner */}
           <div
             className="flex flex-wrap items-center gap-6 px-6 py-7 rounded-2xl"
@@ -52,13 +108,15 @@ export default function CertificatesPage() {
             <div className="flex-1 min-w-48">
               <div>
                 <h2 className="text-white font-bold text-xl mb-1">
-                  You're 28% away from your next certificate!
+                  You are {completionRemaining}% away from your next certificate!
                 </h2>
                 <p
                   className="text-sm"
                   style={{ color: "rgba(255,255,255,0.7)" }}
                 >
-                  Complete UI/UX Fundamentals to earn your certificate.
+                  {activeCertificate
+                    ? `Latest earned: ${activeCertificate.courseTitle}. Keep progressing to unlock more.`
+                    : "Complete your current course to earn your first certificate."}
                 </p>
               </div>
 
@@ -73,7 +131,7 @@ export default function CertificatesPage() {
                   <div
                     className="h-full rounded-full"
                     style={{
-                      width: "72%",
+                      width: `${completionValue}%`,
                       background:
                         "linear-gradient(90deg, #627185 0%, #ADC7EB 100%)",
                     }}
@@ -168,7 +226,7 @@ export default function CertificatesPage() {
                 className="font-bold text-3xl md:text-5xl m-0 mt-2 md:mt-4"
                 style={{ color: "#0950C3" }}
               >
-                Adaeze Okoro
+                {activeCertificate?.userFullName || 'Adeeze Okoro'}
               </p>
 
               {/* Horizontal Divider at the bottom of the name */}
@@ -177,14 +235,14 @@ export default function CertificatesPage() {
                 className="text-sm md:text-base font-medium"
                 style={{ color: "rgba(255,255,255,0.9)" }}
               >
-                has successfully completed Product Thinking
+                has successfully completed {activeCertificate?.courseTitle || 'Product Thinking'}
               </span>
 
               <span
                 className="text-sm md:text-base font-medium mt-1 mb-8"
                 style={{ color: "rgba(255,255,255,0.9)" }}
               >
-                with a final score of 92/100
+                with a final score of {activeCertificate?.finalScore ?? 92}/100
               </span>
               <div className="flex w-full items-center gap-2.5 my-4 md:my-6">
                 <div
@@ -230,10 +288,10 @@ export default function CertificatesPage() {
               {/* Certificate Meta — bottom right */}
               <div className="flex flex-col items-center sm:items-end text-center sm:text-right">
                 <p className="text-sm mb-1.5 m-0" style={{ color: "#ADC7EB" }}>
-                  Issued: March 15, 2025
+                  Issued: {activeCertificate?.issuedAt ? new Date(activeCertificate.issuedAt).toLocaleDateString() : 'March 15, 2025'}
                 </p>
                 <p className="text-sm mb-1.5 m-0" style={{ color: "#ADC7EB" }}>
-                  ID: TMI-CERT-2025-0031
+                  ID: {activeCertificate?.certificateNumber || 'TMI-CERT-2025-0031'}
                 </p>
                 <p
                   className="text-sm m-0 font-medium"
