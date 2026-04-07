@@ -1,20 +1,22 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import { ThemeColors } from '@/components/ThemeColors';
 import client from "@/lib/client";
 
 export default function Dashboard() {
-    const [userName, setUserName] = useState("User");
+    const [userData, setUserData] = useState({
+        fullName: "User",
+        publicId: "TMI-2025-047",
+        discipline: "UI/UX Design",
+        cohort: "Cohort 3",
+        stats: {
+            courses: 0,
+            progress: 0,
+            certificates: 0,
+            tasks: 0 
+        }
+    });
     const [loading, setLoading] = useState(true);
-
-    // Static data for the UI
-    const stats = [
-        { icon: "📚", title: 'Courses Enrolled', value: '4', statIcon: "↑", statText: '1 this week', statColor: 'text-blue-500' },
-        { icon: "✅", title: 'Avg Completion', value: '68%', statIcon: "↑", statText: '12% this month', statColor: 'text-blue-500' },
-        { icon: "🗒️", title: 'Pending Tasks', value: '3', statText: 'Due this week', statColor: 'text-red-500' },
-        { icon: "🏆", title: 'Certificates', value: '2', statText: '1 near complete', statColor: 'text-blue-500' },
-    ];
 
     const learningCourses = [
         { emoji: "⏰", title: 'UI/UX Fundamentals', lesson: 'Lesson 6 of 12, Design System', access: 'Last accessed, 12 hours ago', progress: '72%', btn: 'Resume' },
@@ -28,32 +30,27 @@ export default function Dashboard() {
         { date: '05 APR', title: 'Print Retrospective', course: 'Agile & Scrum', status: '10d left' },
     ];
 
-    const activity = [
-        { text: 'You completed <span class="font-semibold text-white">Lesson 5: Color Theory</span> in UI/UX Fundamentals', time: '2 hours ago', dot: "🟢" },
-        { text: 'Mentor <span class="font-semibold text-white">Emeka Obi</span> graded your Research Report - 88%', time: 'Yesterday 4:15 PM', dot: "🔵" },
-        { text: 'New assignment: <span class="font-semibold text-white">Wireframe Challenge #3</span> added to UI/UX Fundamentals', time: '2 days ago', dot: "🟠" },
-        { text: 'You joined the <span class="font-semibold text-white">Design & Engineering</span> cross-functional team', time: '3 days ago', dot: "🟣" },
-    ];
-
     useEffect(() => {
         const fetchUserData = async () => {
             try {
-                // Fetching the signed-in user's profile
                 const response = await client.get("/Profile/me");
-                // console.log(response);            
                 if (response.data.success) {
-                    // Updating state with the real name from the database
-                    const name = response.data.data.fullName || response.data.data.userName;
-                    setUserName(name);
+                    const d = response.data.data;
+                    setUserData({
+                        fullName: d.fullName || "User",
+                        publicId: d.publicId || "TMI-2025-047",
+                        discipline: d.personalInformation?.discipline || "UI/UX Design",
+                        cohort: d.personalInformation?.cohortLabel || "Cohort 3",
+                        stats: {
+                            courses: d.learningSummary?.courses || 0,
+                            progress: d.learningSummary?.averageProgress || 0,
+                            certificates: d.learningSummary?.certificates || 0,
+                            tasks: 3
+                        }
+                    });
                 }
             } catch (err) {
                 console.error("Dashboard fetch error:", err);
-                // Fallback: Try to get name from local storage if the API fails
-                const storedUser = localStorage.getItem("user");
-                if (storedUser) {
-                    const user = JSON.parse(storedUser);
-                    setUserName(user.fullName || "User");
-                }
             } finally {
                 setLoading(false);
             }
@@ -62,35 +59,41 @@ export default function Dashboard() {
         fetchUserData();
     }, []);
 
-    // Helper to get initials for the avatar bubble
     const getInitials = (name) => {
         return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
     };
 
+    const statsCards = [
+        { icon: "📚", title: 'Courses Enrolled', value: userData.stats.courses, statIcon: "↑", statText: 'Overall', statColor: 'text-blue-500' },
+        { icon: "✅", title: 'Avg Completion', value: `${userData.stats.progress}%`, statIcon: "↑", statText: 'Progress', statColor: 'text-blue-500' },
+        { icon: "🗒️", title: 'Pending Tasks', value: userData.stats.tasks, statText: 'Due this week', statColor: 'text-red-500' },
+        { icon: "🏆", title: 'Certificates', value: userData.stats.certificates, statText: 'Earned', statColor: 'text-blue-500' },
+    ];
+
     return (
-        <main className=''>            
+        <main>            
             <section style={{ backgroundColor: ThemeColors.bgBlue }} className="flex-1 min-h-screen text-zinc-300 font-sans p-4 md:p-8 overflow-y-auto">
 
-                {/* Header with Dynamic Name */}
+                {/* Header */}
                 <div className="flex md:items-center justify-between mb-5 px-2 max-md:flex-col max-md:gap-5">
                     <div>
                         <h1 className="text-[22px] font-bold text-white leading-tight">Good morning,</h1>
                         <h2 className="text-[22px] font-bold text-white leading-tight">
-                            {loading ? "..." : userName}
+                            {loading ? "..." : userData.fullName}
                         </h2>
                     </div>
-                    <div className="flex items-center gap-3 ">
-                        <span className="text-[18px] font-semibold text-white">Cohort 3. Week 6</span>
+                    <div className="flex items-center gap-3">
+                        <span className="text-[18px] font-semibold text-white">{userData.cohort}. Week 6</span>
                         <button className="flex items-center justify-center w-8 h-8 bg-[#161b22] border border-slate-400 rounded-md text-[14px]">🔔</button>
                         <div className="flex items-center justify-center w-9 h-9 rounded-full bg-blue-600 text-white font-bold text-[14px]">
-                            {getInitials(userName)}
+                            {getInitials(userData.fullName)}
                         </div>
                     </div>
                 </div>
 
                 {/* Stats Section */}
                 <div className="grid md:grid-cols-4 grid-cols-2 gap-3 mb-5">
-                    {stats.map((s, i) => (
+                    {statsCards.map((s, i) => (
                         <div key={i} className="border border-slate-400 rounded-xl p-3.5">
                             <div className="text-sm mb-2 p-1 rounded-sm bg-gray-200/30 w-fit">{s.icon}</div>
                             <div className="text-[26px] font-bold text-white mb-0.5">{s.value}</div>
@@ -103,12 +106,10 @@ export default function Dashboard() {
                     ))}
                 </div>
 
-                {/* Grid Layout */}
                 <div className="grid md:grid-cols-[1.6fr_1fr] gap-4">
-
                     {/* LEFT COLUMN */}
                     <div className="flex flex-col gap-4">
-                        <section className=" border border-slate-400 rounded-xl md:p-4 p-2">
+                        <section className="border border-slate-400 rounded-xl md:p-4 p-2">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-[14px] font-bold text-white">Continue Learning</h3>
                                 <button className="px-5 py-2 text-white text-[11px] rounded-lg font-semibold bg-stone-600/80">View all</button>
@@ -117,9 +118,7 @@ export default function Dashboard() {
                                 {learningCourses.map((c, i) => (
                                     <div key={i} className="border border-slate-400 rounded-xl p-3.5 flex items-center justify-between max-md:flex-col max-md:gap-3">
                                         <div className="flex items-center gap-3.5 w-full">
-                                            <div className="min-w-[60px] h-[60px] bg-gray-200 rounded-xl flex items-center justify-center text-[22px]">
-                                                {c.emoji}
-                                            </div>
+                                            <div className="min-w-[60px] h-[60px] bg-gray-200 rounded-xl flex items-center justify-center text-[22px]">{c.emoji}</div>
                                             <div className='w-full'>
                                                 <h4 className="text-base font-bold text-white mb-0.5">{c.title}</h4>
                                                 <p className="text-sm text-zinc-400 mb-1.5">{c.lesson}</p>
@@ -132,24 +131,7 @@ export default function Dashboard() {
                                                 </div>
                                             </div>
                                         </div>
-                                        <button className="px-4.5 py-2 bg-stone-600/80 text-white text-[11px] rounded-lg font-semibold max-md:w-full ml-4">
-                                            {c.btn}
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        </section>
-
-                        <section className=" border border-slate-400 rounded-xl p-4">
-                            <h3 className="text-[14px] font-bold text-white mb-4">Recent Activity</h3>
-                            <div className="space-y-3.5 relative pl-2.5">
-                                {activity.map((a, i) => (
-                                    <div key={i} className="flex gap-3 relative z-10 border-b border-gray-600 pb-3">
-                                        <span className="text-[12px] -ml-1.5">{a.dot}</span>
-                                        <div>
-                                            <p className="text-[11px] text-zinc-400 leading-normal" dangerouslySetInnerHTML={{ __html: a.text }} />
-                                            <p className="text-[10px] text-zinc-500 mt-0.5">{a.time}</p>
-                                        </div>
+                                        <button className="px-4.5 py-2 bg-stone-600/80 text-white text-[11px] rounded-lg font-semibold max-md:w-full ml-4">{c.btn}</button>
                                     </div>
                                 ))}
                             </div>
@@ -158,7 +140,7 @@ export default function Dashboard() {
 
                     {/* RIGHT COLUMN */}
                     <div className="flex flex-col gap-4">
-                        <section className=" border border-slate-400 rounded-xl p-4">
+                        <section className="border border-slate-400 rounded-xl p-4">
                             <div className="flex items-center gap-2 mb-4">
                                 <span className="text-2xl">⏱️</span>
                                 <h3 className="text-xl font-bold text-white">Upcoming Deadlines</h3>
@@ -182,31 +164,12 @@ export default function Dashboard() {
                             </div>
                         </section>
 
-                        <section className=" border border-slate-400 rounded-xl p-4">
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-lg font-bold text-white">My Team</h3>
-                                <button className="text-white text-[11px] font-bold bg-[#30363d] px-3 py-1.25 rounded-lg border border-zinc-700">View</button>
-                            </div>
-                            <div className="bg-blue-300/20 w-fit rounded-lg px-3 py-1.5 mb-3 border border-blue-300/30">
-                                <p className="text-xs font-bold text-blue-300">Design & Engineering</p>
-                            </div>
-                            <div className="space-y-3 px-1">
-                                {["Adaeze Okoro (You)", "Kolade Ige", "Fatima Aliu"].map((name, i) => (
-                                    <div key={i} className="flex items-center gap-2 text-[11px] text-zinc-400">
-                                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white font-bold text-[10px] ${i === 0 ? 'bg-blue-600' : i === 1 ? 'bg-green-500' : 'bg-purple-500'}`}>
-                                            {name.split(' ').map(n => n[0]).join('')}
-                                        </div>
-                                        <p>{i === 0 ? userName + " (You)" : name}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        </section>
-
+                        {/* ID Card Section */}
                         <section className="border border-slate-400 rounded-xl p-6 text-center bg-white/5">
                             <p className="text-[10px] font-bold text-slate-400 tracking-[2px] mb-2.5 uppercase">TrueMinds Innovation</p>
-                            <p className="text-xl font-black text-blue-500 tracking-tight mb-1.5">TMI-2025-047</p>
-                            <p className="text-lg font-bold text-white mb-1">{userName}</p>
-                            <p className="text-xs text-zinc-500">UI/UX Design Cohort 3</p>
+                            <p className="text-xl font-black text-blue-500 tracking-tight mb-1.5">{userData.publicId}</p>
+                            <p className="text-lg font-bold text-white mb-1">{userData.fullName}</p>
+                            <p className="text-xs text-zinc-500">{userData.discipline} {userData.cohort}</p>
                         </section>
                     </div>
                 </div>

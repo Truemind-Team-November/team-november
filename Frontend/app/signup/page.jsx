@@ -208,10 +208,10 @@ export default function Signup() {
                 <option value="Mobile Development" className="text-black">Mobile Development</option>
                 <option value="Data Analysis" className="text-black">Data Analysis</option>
                 <option value="Digital Marketing" className="text-black">Digital Marketing</option>
-                {/* <option value="Content Strategy" className="text-black">Content Strategy</option>
+                <option value="Content Strategy" className="text-black">Content Strategy</option>
                 <option value="DevOps" className="text-black">DevOps</option>
                 <option value="QA Engineering" className="text-black">QA Engineering</option>
-                <option value="Design" className="text-black">Design</option> */}
+                <option value="Design" className="text-black">Design</option>
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
                 <svg className="w-4 h-4 text-[#8b949e]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
