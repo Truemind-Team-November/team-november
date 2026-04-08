@@ -88,7 +88,7 @@ const Sidebar = ({ badges = {} }) => {
   return (
     <aside
       id="sidebar-nav"
-      className="flex flex-col items-start w-full min-w-[250px] border-r-[0.75px] border-[#7D7F82] h-screen sticky top-0 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']"
+      className="flex flex-col items-start w-full min-w-[250px] border-r-[0.75px] border-[#7D7F82] h-full overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']"
       style={{ fontFamily: "var(--font-inter), 'Inter', sans-serif", backgroundColor: ThemeColors.bgBlue }}
     >
       <div className="flex flex-col items-start gap-[clamp(12px,3vh,34px)] w-full">
