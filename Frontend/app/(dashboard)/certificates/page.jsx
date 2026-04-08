@@ -41,7 +41,7 @@ export default function CertificatesPage() {
 
   const completionValue = useMemo(() => {
     if (!activeCertificate) {
-      return 72;
+      return 0;
     }
 
     return Math.max(0, Math.min(100, Math.round(Number(activeCertificate.finalScore || 0))));
@@ -95,63 +95,52 @@ export default function CertificatesPage() {
             </div>
           )}
 
-          {/* Progress Banner */}
-          <div
-            className="flex flex-wrap items-center gap-6 px-6 py-7 rounded-2xl"
-            style={{ backgroundColor: ThemeColors.bgBlue, border: "1px solid #0950C3" }}
-          >
-            <Image
-              src="/assets/certificates/certficates-page-icon.svg"
-              width={32}
-              height={32}
-              alt="certificate-page-icon"
-              className="w-auto h-auto"
-            />{" "}
-            <div className="flex-1 min-w-48">
-              <div>
-                <h2 className="text-white font-bold text-xl mb-1">
-                  You are {completionRemaining}% away from your next certificate!
-                </h2>
-                <p
-                  className="text-sm"
-                  style={{ color: "rgba(255,255,255,0.7)" }}
-                >
-                  {activeCertificate
-                    ? `Latest earned: ${activeCertificate.courseTitle}. Keep progressing to unlock more.`
-                    : "Complete your current course to earn your first certificate."}
-                </p>
-              </div>
-
-              <div
-                className="flex flex-col gap-1.5"
-                style={{ minWidth: "180px", flex: "0 0 220px" }}
-              >
-                <div
-                  className="w-full h-2.5 rounded-full overflow-hidden"
-                  style={{ background: "rgba(125,127,130,0.4)" }}
-                >
-                  <div
-                    className="h-full rounded-full"
-                    style={{
-                      width: `${completionValue}%`,
-                      background:
-                        "linear-gradient(90deg, #627185 0%, #ADC7EB 100%)",
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-            <button className="flex bg-[#0950C3] text-[#FAFCFF] border-none items-center gap-2 px-4 py-2.5 rounded-lg font-bold text-sm shrink-0 transition-colors duration-200">
-              Continue{" "}
+          {activeCertificate && (
+            <div
+              className="flex flex-wrap items-center gap-6 px-6 py-7 rounded-2xl"
+              style={{ backgroundColor: ThemeColors.bgBlue, border: "1px solid #0950C3" }}
+            >
               <Image
-                src="/assets/certificates/arrow-right.svg"
-                width={18}
-                height={14}
-                alt="arrow-right"
+                src="/assets/certificates/certficates-page-icon.svg"
+                width={32}
+                height={32}
+                alt="certificate-page-icon"
                 className="w-auto h-auto"
               />
-            </button>
-          </div>
+              <div className="flex-1 min-w-48">
+                <div>
+                  <h2 className="text-white font-bold text-xl mb-1">
+                    You are {completionRemaining}% away from your next certificate!
+                  </h2>
+                  <p className="text-sm" style={{ color: "rgba(255,255,255,0.7)" }}>
+                    Latest earned: {activeCertificate.courseTitle}. Keep progressing to unlock more.
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-1.5" style={{ minWidth: "180px", flex: "0 0 220px" }}>
+                  <div className="w-full h-2.5 rounded-full overflow-hidden" style={{ background: "rgba(125,127,130,0.4)" }}>
+                    <div
+                      className="h-full rounded-full"
+                      style={{
+                        width: `${completionValue}%`,
+                        background: "linear-gradient(90deg, #627185 0%, #ADC7EB 100%)",
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+              <button className="flex bg-[#0950C3] text-[#FAFCFF] border-none items-center gap-2 px-4 py-2.5 rounded-lg font-bold text-sm shrink-0 transition-colors duration-200">
+                Continue
+                <Image
+                  src="/assets/certificates/arrow-right.svg"
+                  width={18}
+                  height={14}
+                  alt="arrow-right"
+                  className="w-auto h-auto"
+                />
+              </button>
+            </div>
+          )}
 
           {/* Certificate Card or Empty State */}
           {!activeCertificate && hasFetched && !loading ? (
@@ -241,7 +230,7 @@ export default function CertificatesPage() {
                   className="font-bold text-3xl md:text-5xl m-0 mt-2 md:mt-4"
                   style={{ color: "#0950C3" }}
                 >
-                  {activeCertificate?.userFullName || 'Adeeze Okoro'}
+                  {activeCertificate?.userFullName}
                 </p>
 
                 {/* Horizontal Divider at the bottom of the name */}
@@ -250,14 +239,14 @@ export default function CertificatesPage() {
                   className="text-sm md:text-base font-medium"
                   style={{ color: "rgba(255,255,255,0.9)" }}
                 >
-                  has successfully completed {activeCertificate?.courseTitle || 'Product Thinking'}
+                  has successfully completed {activeCertificate?.courseTitle}
                 </span>
 
                 <span
                   className="text-sm md:text-base font-medium mt-1 mb-8"
                   style={{ color: "rgba(255,255,255,0.9)" }}
                 >
-                  with a final score of {activeCertificate?.finalScore ?? 92}/100
+                  with a final score of {activeCertificate?.finalScore}/100
                 </span>
                 <div className="flex w-full items-center gap-2.5 my-4 md:my-6">
                   <div
@@ -303,10 +292,10 @@ export default function CertificatesPage() {
                 {/* Certificate Meta — bottom right */}
                 <div className="flex flex-col items-center sm:items-end text-center sm:text-right">
                   <p className="text-sm mb-1.5 m-0" style={{ color: "#ADC7EB" }}>
-                    Issued: {activeCertificate?.issuedAt ? new Date(activeCertificate.issuedAt).toLocaleDateString() : 'March 15, 2025'}
+                    Issued: {activeCertificate?.issuedAt ? new Date(activeCertificate.issuedAt).toLocaleDateString() : '-'}
                   </p>
                   <p className="text-sm mb-1.5 m-0" style={{ color: "#ADC7EB" }}>
-                    ID: {activeCertificate?.certificateNumber || 'TMI-CERT-2025-0031'}
+                    ID: {activeCertificate?.certificateNumber || '-'}
                   </p>
                   <p
                     className="text-sm m-0 font-medium"

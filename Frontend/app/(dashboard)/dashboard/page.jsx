@@ -4,41 +4,19 @@ import { ThemeColors } from '@/components/ThemeColors';
 import client from "@/lib/client";
 
 export default function Dashboard() {
-    const [userName, setUserName] = useState("User");
+    const [userName, setUserName] = useState("");
     const [loading, setLoading] = useState(true);
-    const [stats, setStats] = useState([
-        { icon: "📚", title: 'Courses Enrolled', value: '4', statIcon: "↑", statText: '1 this week', statColor: 'text-blue-500' },
-        { icon: "✅", title: 'Avg Completion', value: '68%', statIcon: "↑", statText: '12% this month', statColor: 'text-blue-500' },
-        { icon: "🗒️", title: 'Pending Tasks', value: '3', statText: 'Due this week', statColor: 'text-red-500' },
-        { icon: "🏆", title: 'Certificates', value: '2', statText: '1 near complete', statColor: 'text-blue-500' },
-    ]);
-    const [learningCourses, setLearningCourses] = useState([
-        { emoji: "⏰", title: 'UI/UX Fundamentals', lesson: 'Lesson 6 of 12, Design System', access: 'Last accessed, 12 hours ago', progress: '72%', btn: 'Resume' },
-        { emoji: "🖥️", title: 'Product Thinking', lesson: 'Lesson 3 of 8, User Research', access: 'Last accessed, yesterday', progress: '64%', btn: 'Continue' },
-        { emoji: "📊", title: 'Product Thinking', lesson: 'Lesson 3 of 8, User Research', access: 'Last accessed, 1 week ago', progress: '30%', btn: 'Continue' },
-    ]);
-    const [deadlines, setDeadlines] = useState([
-        { date: '28 MAR', title: 'Wireframe Challenge #3', course: 'UI/UX Fundamentals', status: '2d left' },
-        { date: '01 APR', title: 'User Journey Map', course: 'Product Thinking', status: '4d left' },
-        { date: '05 APR', title: 'Print Retrospective', course: 'Agile & Scrum', status: '10d left' },
-    ]);
-    const [activity, setActivity] = useState([
-        { text: 'You completed Lesson 5: Color Theory in UI/UX Fundamentals', time: '2 hours ago', dot: "🟢" },
-        { text: 'Mentor Emeka Obi graded your Research Report - 88%', time: 'Yesterday 4:15 PM', dot: "🔵" },
-        { text: 'New assignment: Wireframe Challenge #3 added to UI/UX Fundamentals', time: '2 days ago', dot: "🟠" },
-        { text: 'You joined the Design & Engineering cross-functional team', time: '3 days ago', dot: "🟣" },
-    ]);
-    const [teamMembers, setTeamMembers] = useState([
-        { fullName: 'Adaeze Okoro', isCurrentUser: true },
-        { fullName: 'Kolade Ige', isCurrentUser: false },
-        { fullName: 'Fatima Aliu', isCurrentUser: false },
-    ]);
-    const [teamName, setTeamName] = useState('Design & Engineering');
+    const [stats, setStats] = useState([]);
+    const [learningCourses, setLearningCourses] = useState([]);
+    const [deadlines, setDeadlines] = useState([]);
+    const [activity, setActivity] = useState([]);
+    const [teamMembers, setTeamMembers] = useState([]);
+    const [teamName, setTeamName] = useState('');
     const [identityCard, setIdentityCard] = useState({
-        fullName: 'Adeeze Okoro',
-        publicId: 'TMI-2025-047',
-        discipline: 'UI/UX Design',
-        cohortLabel: 'Cohort 3',
+        fullName: '',
+        publicId: '',
+        discipline: '',
+        cohortLabel: '',
     });
 
     useEffect(() => {
@@ -57,15 +35,15 @@ export default function Dashboard() {
                     setStats([
                         { icon: '📚', title: 'Courses Enrolled', value: String(learningSummary.courses ?? 0), statIcon: '↑', statText: 'Active courses', statColor: 'text-blue-500' },
                         { icon: '✅', title: 'Avg Completion', value: `${Math.round(learningSummary.averageProgress ?? 0)}%`, statIcon: '↑', statText: 'Progress updated', statColor: 'text-blue-500' },
-                        { icon: '🗒️', title: 'Pending Tasks', value: '3', statText: 'Due this week', statColor: 'text-red-500' },
+                        { icon: '🗒️', title: 'Pending Tasks', value: String(learningSummary.pendingTasks ?? 0), statText: 'Due this week', statColor: 'text-red-500' },
                         { icon: '🏆', title: 'Certificates', value: String(learningSummary.certificates ?? 0), statText: 'Completed courses', statColor: 'text-blue-500' },
                     ]);
 
-                    const discipline = personalInformation.discipline || 'UI/UX Design';
-                    const cohortLabel = personalInformation.cohortLabel || 'Cohort 3';
+                    const discipline = personalInformation.discipline || '';
+                    const cohortLabel = personalInformation.cohortLabel || '';
                     setIdentityCard({
                         fullName: profile.fullName || name,
-                        publicId: profile.publicId || 'TMI-2025-047',
+                        publicId: profile.publicId || '',
                         discipline,
                         cohortLabel,
                     });
@@ -125,7 +103,7 @@ export default function Dashboard() {
                 const storedUser = localStorage.getItem("user");
                 if (storedUser) {
                     const user = JSON.parse(storedUser);
-                    setUserName(user.fullName || "User");
+                    setUserName(user.fullName || "");
                 }
             } finally {
                 setLoading(false);
@@ -148,7 +126,7 @@ export default function Dashboard() {
                     <div>
                         <h1 className="text-[22px] font-bold text-white leading-tight">Good morning,</h1>
                         <h2 className="text-[22px] font-bold text-white leading-tight">
-                            {loading ? "..." : userName}
+                            {loading ? "Loading..." : (userName || "Welcome")}
                         </h2>
                     </div>
                     <div className="flex items-center gap-3 ">
@@ -162,7 +140,11 @@ export default function Dashboard() {
 
                 {/* Stats Section */}
                 <div className="grid md:grid-cols-4 grid-cols-2 gap-3 mb-5">
-                    {stats.map((s, i) => (
+                    {loading ? (
+                        <div className="col-span-full rounded-xl border border-slate-400 p-4 text-sm text-zinc-400">Loading dashboard data...</div>
+                    ) : stats.length === 0 ? (
+                        <div className="col-span-full rounded-xl border border-slate-400 p-4 text-sm text-zinc-400">No summary data available.</div>
+                    ) : stats.map((s, i) => (
                         <div key={i} className="border border-slate-400 rounded-xl p-3.5">
                             <div className="text-sm mb-2 p-1 rounded-sm bg-gray-200/30 w-fit">{s.icon}</div>
                             <div className="text-[26px] font-bold text-white mb-0.5">{s.value}</div>
@@ -184,10 +166,12 @@ export default function Dashboard() {
                                 <button className="px-5 py-2 text-white text-[11px] rounded-lg font-semibold bg-stone-600/80">View all</button>
                             </div>
                             <div className="space-y-2.5">
-                                {learningCourses.map((c, i) => (
+                                {!loading && learningCourses.length === 0 ? (
+                                    <p className="text-sm text-zinc-400">No courses to continue yet.</p>
+                                ) : learningCourses.map((c, i) => (
                                     <div key={i} className="border border-slate-400 rounded-xl p-3.5 flex items-center justify-between max-md:flex-col max-md:gap-3">
                                         <div className="flex items-center gap-3.5 w-full">
-                                            <div className="min-w-[60px] h-[60px] bg-gray-200 rounded-xl flex items-center justify-center text-[22px]">{c.emoji}</div>
+                                            <div className="min-w-15 h-15 bg-gray-200 rounded-xl flex items-center justify-center text-[22px]">{c.emoji}</div>
                                             <div className='w-full'>
                                                 <h4 className="text-base font-bold text-white mb-0.5">{c.title}</h4>
                                                 <p className="text-sm text-zinc-400 mb-1.5">{c.lesson}</p>
@@ -211,7 +195,9 @@ export default function Dashboard() {
                         <section className=" border border-slate-400 rounded-xl p-4">
                             <h3 className="text-[14px] font-bold text-white mb-4">Recent Activity</h3>
                             <div className="space-y-3.5 relative pl-2.5">
-                                {activity.map((a, i) => (
+                                {!loading && activity.length === 0 ? (
+                                    <p className="text-sm text-zinc-400">No recent activity yet.</p>
+                                ) : activity.map((a, i) => (
                                     <div key={i} className="flex gap-3 relative z-10 border-b border-gray-600 pb-3">
                                         <span className="text-[12px] -ml-1.5">{a.dot}</span>
                                         <div>
@@ -232,10 +218,12 @@ export default function Dashboard() {
                                 <h3 className="text-xl font-bold text-white">Upcoming Deadlines</h3>
                             </div>
                             <div className="space-y-2.5">
-                                {deadlines.map((d, i) => (
+                                {!loading && deadlines.length === 0 ? (
+                                    <p className="text-sm text-zinc-400">No upcoming deadlines.</p>
+                                ) : deadlines.map((d, i) => (
                                     <div key={i} className="flex items-center justify-between border-b border-gray-600 py-3 last:border-0">
                                         <div className="flex items-center gap-3">
-                                            <div className="bg-blue-300 rounded-lg p-1.5 text-center min-w-[50px]">
+                                            <div className="bg-blue-300 rounded-lg p-1.5 text-center min-w-12.5">
                                                 <p className="text-sm font-bold text-white leading-none">{d.date.split(' ')[0]}</p>
                                                 <p className="text-[10px] text-blue-700 mt-1 uppercase">{d.date.split(' ')[1]}</p>
                                             </div>
@@ -256,10 +244,12 @@ export default function Dashboard() {
                                 <button className="text-white text-[11px] font-bold bg-[#30363d] px-3 py-1.25 rounded-lg border border-zinc-700">View</button>
                             </div>
                             <div className="bg-blue-300/20 w-fit rounded-lg px-3 py-1.5 mb-3 border border-blue-300/30">
-                                <p className="text-xs font-bold text-blue-300">{teamName}</p>
+                                <p className="text-xs font-bold text-blue-300">{teamName || 'No team assigned yet'}</p>
                             </div>
                             <div className="space-y-3 px-1">
-                                {teamMembers.map((member, i) => (
+                                {!loading && teamMembers.length === 0 ? (
+                                    <p className="text-sm text-zinc-400">No team members available.</p>
+                                ) : teamMembers.map((member, i) => (
                                     <div key={`${member.fullName}-${i}`} className="flex items-center gap-2 text-[11px] text-zinc-400">
                                         <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white font-bold text-[10px] ${member.isCurrentUser ? 'bg-blue-600' : i % 2 ? 'bg-green-500' : 'bg-purple-500'}`}>
                                             {member.fullName.split(' ').map(n => n[0]).join('').slice(0, 2)}
@@ -272,9 +262,9 @@ export default function Dashboard() {
 
                         <section className="border border-slate-400 rounded-xl p-6 text-center bg-white/5">
                             <p className="text-[10px] font-bold text-slate-400 tracking-[2px] mb-2.5 uppercase">TrueMinds Innovation</p>
-                            <p className="text-xl font-black text-blue-500 tracking-tight mb-1.5">{identityCard.publicId}</p>
-                            <p className="text-lg font-bold text-white mb-1">{identityCard.fullName || userName}</p>
-                            <p className="text-xs text-zinc-500">{identityCard.discipline} {identityCard.cohortLabel}</p>
+                            <p className="text-xl font-black text-blue-500 tracking-tight mb-1.5">{identityCard.publicId || '-'}</p>
+                            <p className="text-lg font-bold text-white mb-1">{identityCard.fullName || userName || '-'}</p>
+                            <p className="text-xs text-zinc-500">{[identityCard.discipline, identityCard.cohortLabel].filter(Boolean).join(' ') || '-'}</p>
                         </section>
                     </div>
                 </div>

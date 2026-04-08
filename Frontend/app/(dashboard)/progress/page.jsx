@@ -3,27 +3,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import client from '@/lib/client';
 
-const fallbackCards = [
-  { title: 'UI/UX Fundamentals', value: 72, color: '#00D4AA' },
-  { title: 'Product Thinking', value: 45, color: '#0950C3' },
-  { title: 'Agile & Scrum', value: 12, color: '#8B61E8' },
-  { title: 'Overall Progress', value: 70, color: '#EF9807' },
-];
-
-const fallbackSkills = [
-  { name: 'Visual Design', value: 82 },
-  { name: 'User Research', value: 68 },
-  { name: 'Prototyping', value: 55 },
-  { name: 'Collaboration', value: 90 },
-  { name: 'Communication', value: 75 },
-];
-
-const fallbackActivities = [
-  { title: 'Sprint Retrospective', subtitle: 'Agile & Scrum - Mar 15', score: 88, color: '#0950C3' },
-  { title: 'User Research Report', subtitle: 'Product Thinking - Mar 10', score: 92, color: '#00D4AA' },
-  { title: 'Color Palette Project', subtitle: 'UI/UX Fundamentals - Mar 5', score: 79, color: '#8B61E8' },
-];
-
 export default function ProgressPage() {
   const [cards, setCards] = useState([]);
   const [skills, setSkills] = useState([]);
@@ -112,8 +91,15 @@ export default function ProgressPage() {
         </div>
       )}
 
+      {!loading && !error && cards.length === 0 && skills.length === 0 && activities.length === 0 && (
+        <div className="mt-12 text-center py-16">
+          <p className="text-xl text-[#CEE0FD] mb-2 font-semibold">No progress yet</p>
+          <p className="text-sm text-[#7D7F82]">Start learning courses to see your progress tracked here</p>
+        </div>
+      )}
+
       <section className="mt-10 grid gap-6 xl:grid-cols-4 md:grid-cols-2 grid-cols-1">
-        {visibleCards.map((card) => (
+        {(visibleCards.length > 0 ? visibleCards.map((card) => (
           <article
             key={card.title}
             className="relative flex min-h-52 flex-col items-center justify-center rounded-2xl border border-[#D6E3F5] bg-[#101723] px-4 py-8"
@@ -129,11 +115,11 @@ export default function ProgressPage() {
             <p className="mt-3 text-center text-base text-[#D6E3F5]">{card.title}</p>
             <span className="absolute -right-5 -top-7 h-24 w-20 rounded-full bg-[#415C8B]/50" />
           </article>
-        ))}
+        )) : null)}
       </section>
 
       <section className="mt-16 grid gap-16 xl:grid-cols-2 grid-cols-1">
-        <article className="rounded-xl border border-[#7D7F82] bg-[#101723] px-6 pb-8 pt-6">
+        {skills.length > 0 && <article className="rounded-xl border border-[#7D7F82] bg-[#101723] px-6 pb-8 pt-6">
           <h2 className="text-[33px] font-bold leading-tight">Skill Breakdown</h2>
           <div className="mt-7 space-y-4">
             {skills.map((skill) => (
@@ -150,9 +136,9 @@ export default function ProgressPage() {
               </div>
             ))}
           </div>
-        </article>
+        </article>}
 
-        <article className="rounded-xl border border-[#7D7F82] bg-[#101723] p-6">
+        {activities.length > 0 && <article className="rounded-xl border border-[#7D7F82] bg-[#101723] p-6">
           <h2 className="sr-only">Recent Scores</h2>
           <div className="space-y-7">
             {activities.map((activity) => (
@@ -170,7 +156,7 @@ export default function ProgressPage() {
               </div>
             ))}
           </div>
-        </article>
+        </article>}
       </section>
     </div>
   );
