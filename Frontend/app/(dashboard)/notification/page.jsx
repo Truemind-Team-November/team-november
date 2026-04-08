@@ -1,6 +1,9 @@
 "use client";
+
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { ThemeColors } from "@/components/ThemeColors";
+import client from "@/lib/client";
 
 const iconMap = {
   assignment_due: "/assets/notifications/assignment-due.svg",
@@ -192,15 +195,48 @@ function NotificationItem({ notif, index }) {
   );
 }
 
+async function fetchNotifications() {
+  const token = localStorage.getItem("token");
+
+  const response = await fetch(`${client.defaults.baseURL}/Notification`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token && { Authorization: `Bearer ${token}` }),
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch notifications (${response.status})`);
+  }
+
+  const data = await response.json();
+  return data.data ?? data;
+}
+
 export default function NotificationsPage() {
-  const newCount = notifications.filter((n) => !n.isRead).length;
+  const [notificationList, setNotificationList] = useState(notifications);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetchNotifications()
+      .then(setNotificationList)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const newCount = notificationList.filter((n) => !n.isRead).length;
 
   return (
     <main
       className=""
       style={{ fontFamily: "var(--font-inter), 'Inter', sans-serif" }}
     >
-      <div className="min-h-screen w-full" style={{ backgroundColor: ThemeColors.bgBlue }}>
+      <div
+        className="min-h-screen w-full"
+        style={{ backgroundColor: ThemeColors.bgBlue }}
+      >
         {/* Main container — max 1436px, full width on tablet */}
         <div
           className="mx-auto w-full"
@@ -246,9 +282,33 @@ export default function NotificationsPage() {
 
           {/* ── Notification list ── */}
           <div className="flex flex-col" style={{ borderLeft: "none" }}>
-            {notifications.map((notif, i) => (
-              <NotificationItem key={notif.id} notif={notif} index={i} />
-            ))}
+            {loading && (
+              <div className="flex items-center justify-center py-20">
+                <span className="text-[#7D7F82] text-base">
+                  Loading notifications...
+                </span>
+              </div>
+            )}
+
+            {error && (
+              <div className="flex items-center justify-center py-20">
+                <span className="text-red-400 text-base">{error}</span>
+              </div>
+            )}
+
+            {!loading && !error && notificationList.length === 0 && (
+              <div className="flex items-center justify-center py-20">
+                <span className="text-[#7D7F82] text-base">
+                  No notifications yet.
+                </span>
+              </div>
+            )}
+
+            {!loading &&
+              !error &&
+              notificationList.map((notif, i) => (
+                <NotificationItem key={notif.id} notif={notif} index={i} />
+              ))}
           </div>
         </div>
       </div>
