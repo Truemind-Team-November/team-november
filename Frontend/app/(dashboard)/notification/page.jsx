@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { ThemeColors } from "@/components/ThemeColors";
+import Spinner from "@/components/Spinner";
 import client from "@/lib/client";
 
 const iconMap = {
@@ -214,16 +215,69 @@ async function fetchNotifications() {
   return data.data ?? data;
 }
 
+// async function fetchUnreadNotificationsCount() {
+//   const token = localStorage.getItem("token");
+//
+//   const response = await fetch(
+//     `${client.defaults.baseURL}/Notification/unread-count`,
+//     {
+//       method: "GET",
+//       headers: {
+//         "Content-Type": "application/json",
+//         ...(token && { Authorization: `Bearer ${token}` }),
+//       },
+//     },
+//   );
+//
+//   if (!response.ok) {
+//     throw new Error(`Failed to fetch notifications (${response.status})`);
+//   }
+//
+//   const data = await response.json();
+//   return data.data ?? data;
+// }
+
+async function markAllNotificationsRead() {
+  const token = localStorage.getItem("token");
+
+  const response = await fetch(
+    `${client.defaults.baseURL}/Notification/read-all`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to mark notifications as read (${response.status})`,
+    );
+  }
+
+  return response.json();
+}
+
 export default function NotificationsPage() {
   const [notificationList, setNotificationList] = useState(notifications);
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
+  function loadNotifications() {
+    setLoading(true);
+    setError(null);
+
     fetchNotifications()
       .then(setNotificationList)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
+  }
+
+  useEffect(() => {
+    loadNotifications();
   }, []);
 
   const newCount = notificationList.filter((n) => !n.isRead).length;
@@ -262,44 +316,73 @@ export default function NotificationsPage() {
               Notifications
             </h1>
 
-            {/* Mark all read button */}
-            <button
-              className="flex items-center justify-center font-bold text-white rounded-lg transition-colors duration-150 hover:bg-[#5a5b5d] cursor-pointer"
-              style={{
-                padding: "0 16px",
-                height: 40,
-                minWidth: 120,
-                background: "#4B4C4E",
-                border: "1px solid #D6E3F5",
-                borderRadius: 8,
-                fontSize: 14,
-                whiteSpace: "nowrap",
-              }}
-            >
-              Mark all read
-            </button>
+            {/* Mark all read button — hidden while loading or when empty */}
+            {!loading && notificationList.length > 0 && (
+              <button
+                onClick={async () => {
+                  try {
+                    await markAllNotificationsRead();
+                    setNotificationList((prev) =>
+                      prev.map((n) => ({ ...n, isRead: true })),
+                    );
+                  } catch (err) {
+                    setError(err.message);
+                  }
+                }}
+                className="flex items-center justify-center font-bold text-white rounded-lg transition-colors duration-150 hover:bg-[#5a5b5d] cursor-pointer"
+                style={{
+                  padding: "0 16px",
+                  height: 40,
+                  minWidth: 120,
+                  background: "#4B4C4E",
+                  border: "1px solid #D6E3F5",
+                  borderRadius: 8,
+                  fontSize: 14,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Mark all read
+              </button>
+            )}
           </div>
 
           {/* ── Notification list ── */}
           <div className="flex flex-col" style={{ borderLeft: "none" }}>
-            {loading && (
-              <div className="flex items-center justify-center py-20">
-                <span className="text-[#7D7F82] text-base">
-                  Loading notifications...
-                </span>
-              </div>
-            )}
+            {loading && <Spinner message="Loading notifications..." />}
 
             {error && (
-              <div className="flex items-center justify-center py-20">
-                <span className="text-red-400 text-base">{error}</span>
+              <div className="flex flex-col items-center justify-center min-h-[calc(100vh-98px)] gap-4">
+                <span className="text-[#7D7F82] text-base font-medium">
+                  Something went wrong while loading your notifications.
+                </span>
+                <button
+                  onClick={loadNotifications}
+                  className="flex items-center justify-center font-bold text-white rounded-lg transition-colors duration-150 hover:bg-[#0950C3]/80 cursor-pointer"
+                  style={{
+                    padding: "0 20px",
+                    height: 40,
+                    background: "#0950C3",
+                    borderRadius: 8,
+                    fontSize: 14,
+                    border: "none",
+                  }}
+                >
+                  Retry
+                </button>
               </div>
             )}
 
             {!loading && !error && notificationList.length === 0 && (
-              <div className="flex items-center justify-center py-20">
-                <span className="text-[#7D7F82] text-base">
-                  No notifications yet.
+              <div className="flex flex-col items-center justify-center py-24 gap-4">
+                <Image
+                  src="/assets/notifications/notification_icon.svg"
+                  alt="No notifications"
+                  width={48}
+                  height={48}
+                  className="opacity-40"
+                />
+                <span className="text-[#7D7F82] text-base font-medium">
+                  You're all caught up — no notifications right now.
                 </span>
               </div>
             )}
