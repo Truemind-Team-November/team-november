@@ -3,48 +3,30 @@
 import React, { useEffect, useState } from 'react';
 import client from '@/lib/client';
 
-const defaultProfile = {
-  id: '1',
-  fullName: 'Adeeze Okoro',
-  email: 'adeeze@learntlm.org',
-  phoneNumber: '+2342324456789',
-  userId: 'TMI-2025-047',
-  role: 'UI/UX Design Intern',
-  location: 'Cohort 3 - Lagos, Nigeria',
-  tags: ['UI/UX Design', 'Week 6', 'Top Contributor'],
-  courses: 4,
-  avgProgress: 68,
-  certificates: 2,
-  avgScore: 88,
-  achievements: [
-    {
-      id: '1',
-      icon: '🔥',
-      title: '7-Day Streak',
-      description: 'Logged in 7 days in a row',
-    },
-    {
-      id: '2',
-      icon: '⚪',
-      title: 'Top Contributor',
-      description: '31 discussion posts',
-    },
-    {
-      id: '3',
-      icon: '⭐',
-      title: 'High Scorer',
-      description: 'Achieved top scores in assessments',
-    },
-  ],
-};
+const createEmptyProfile = () => ({
+  id: '',
+  fullName: '',
+  email: '',
+  phoneNumber: '',
+  userId: '',
+  role: '',
+  location: '',
+  tags: [],
+  courses: 0,
+  avgProgress: 0,
+  certificates: 0,
+  avgScore: 0,
+  achievements: [],
+});
 
 export default function ProfilePage() {
-  const [profile, setProfile] = useState(defaultProfile);
+  const emptyProfile = createEmptyProfile();
+  const [profile, setProfile] = useState(emptyProfile);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    fullName: profile.fullName,
-    email: profile.email,
-    phoneNumber: profile.phoneNumber,
+    fullName: '',
+    email: '',
+    phoneNumber: '',
   });
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -73,21 +55,21 @@ export default function ProfilePage() {
               title: item.title,
               description: item.description,
             }))
-          : defaultProfile.achievements;
+          : [];
 
         const nextProfile = {
-          id: String(payload.userId || '1'),
-          fullName: payload.fullName || defaultProfile.fullName,
-          email: personal.email || defaultProfile.email,
+          id: String(payload.userId || ''),
+          fullName: payload.fullName || '',
+          email: personal.email || '',
           phoneNumber: personal.phoneNumber || '',
-          userId: payload.publicId || defaultProfile.userId,
-          role: payload.headline || personal.discipline || defaultProfile.role,
-          location: personal.location || personal.cohortLabel || defaultProfile.location,
+          userId: payload.publicId || '',
+          role: payload.headline || personal.discipline || '',
+          location: personal.location || personal.cohortLabel || '',
           tags,
-          courses: summary.courses ?? defaultProfile.courses,
-          avgProgress: Math.round(summary.averageProgress ?? defaultProfile.avgProgress),
-          certificates: summary.certificates ?? defaultProfile.certificates,
-          avgScore: Number(summary.averageScore ?? defaultProfile.avgScore),
+          courses: summary.courses ?? 0,
+          avgProgress: Math.round(summary.averageProgress ?? 0),
+          certificates: summary.certificates ?? 0,
+          avgScore: Number(summary.averageScore ?? 0),
           achievements,
         };
 

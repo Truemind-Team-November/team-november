@@ -8,6 +8,7 @@ export default function CertificatesPage() {
   const [certificates, setCertificates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
+  const [hasFetched, setHasFetched] = useState(false);
 
   useEffect(() => {
     const loadCertificates = async () => {
@@ -20,9 +21,10 @@ export default function CertificatesPage() {
         }
       } catch (error) {
         console.error("Certificate fetch error:", error);
-        setMessage("Unable to load certificates right now. Showing current layout preview.");
+        setMessage("Unable to load certificates. Please try again later.");
       } finally {
         setLoading(false);
+        setHasFetched(true);
       }
     };
 
@@ -151,157 +153,171 @@ export default function CertificatesPage() {
             </button>
           </div>
 
-          {/* Certificate Card */}
-          <div
-            className="relative flex-1 rounded-2xl overflow-hidden flex flex-col justify-between p-8 md:p-14 lg:p-20"
-            style={{
-              background:
-                `linear-gradient(180deg, ${ThemeColors.bgBlue} 0%, #2D3D58 48%, #051838 80%)`,
-              border: "1px solid #0950C3",
-              minHeight: "560px",
-            }}
-          >
-            {/* Corner Stars */}
-            <div className="absolute top-8 left-8">
-              <Image
-                src="/assets/certificates/star.svg"
-                width={30}
-                height={30}
-                alt="star"
-                className="w-auto h-auto opacity-50"
-              />
+          {/* Certificate Card or Empty State */}
+          {!activeCertificate && hasFetched && !loading ? (
+            <div className="flex-1 rounded-2xl border border-[#4B4C4E] bg-[#0D1522] px-8 py-12 flex items-center justify-center text-center">
+              <div>
+                <p className="text-2xl font-bold text-white mb-3">No Certificates Yet</p>
+                <p className="text-sm text-[#CEE0FD] mb-5">
+                  Complete your courses to earn certificates and showcase your achievements.
+                </p>
+                <a href="/coursecatalog" className="inline-block bg-[#0950C3] text-white px-6 py-2 rounded-lg font-semibold hover:bg-[#0a61e9] transition">
+                  Browse Courses
+                </a>
+              </div>
             </div>
-            <div className="absolute top-8 right-8">
-              <Image
-                src="/assets/certificates/star.svg"
-                width={30}
-                height={30}
-                alt="star"
-                className="w-auto h-auto opacity-50"
-              />
-            </div>
-            <div className="absolute bottom-8 left-8">
-              <Image
-                src="/assets/certificates/star.svg"
-                width={30}
-                height={30}
-                alt="star"
-                className="w-auto h-auto opacity-50"
-              />
-            </div>
-            <div className="absolute bottom-8 right-8">
-              <Image
-                src="/assets/certificates/star.svg"
-                width={30}
-                height={30}
-                alt="star"
-                className="w-auto h-auto opacity-50"
-              />
-            </div>
-
-            {/* Certificate Body */}
-            <div className="flex flex-col items-center gap-2.5 z-10 w-full max-w-2xl mx-auto text-center mt-6">
-              <span
-                className="font-bold text-xs tracking-widest uppercase"
-                style={{ color: "#DCE3EF" }}
-              >
-                Certificate of Completion
-              </span>
-
-              <p
-                className="font-bold text-2xl md:text-3xl m-0 mt-4 md:mt-8"
-                style={{ color: "#DCE3EF" }}
-              >
-                TrueMinds Innovation
-              </p>
-
-              <span
-                className="text-sm mt-1"
-                style={{ color: "rgba(255,255,255,0.7)" }}
-              >
-                This is to certify that
-              </span>
-
-              <p
-                className="font-bold text-3xl md:text-5xl m-0 mt-2 md:mt-4"
-                style={{ color: "#0950C3" }}
-              >
-                {activeCertificate?.userFullName || 'Adeeze Okoro'}
-              </p>
-
-              {/* Horizontal Divider at the bottom of the name */}
-
-              <span
-                className="text-sm md:text-base font-medium"
-                style={{ color: "rgba(255,255,255,0.9)" }}
-              >
-                has successfully completed {activeCertificate?.courseTitle || 'Product Thinking'}
-              </span>
-
-              <span
-                className="text-sm md:text-base font-medium mt-1 mb-8"
-                style={{ color: "rgba(255,255,255,0.9)" }}
-              >
-                with a final score of {activeCertificate?.finalScore ?? 92}/100
-              </span>
-              <div className="flex w-full items-center gap-2.5 my-4 md:my-6">
-                <div
-                  className="flex-1 h-px"
-                  style={{ background: "#0950C3" }}
-                />
+          ) : (
+            <div
+              className="relative flex-1 rounded-2xl overflow-hidden flex flex-col justify-between p-8 md:p-14 lg:p-20"
+              style={{
+                background:
+                  `linear-gradient(180deg, ${ThemeColors.bgBlue} 0%, #2D3D58 48%, #051838 80%)`,
+                border: "1px solid #0950C3",
+                minHeight: "560px",
+              }}
+            >
+              {/* Corner Stars */}
+              <div className="absolute top-8 left-8">
                 <Image
-                  src="/assets/certificates/blue-star.svg"
-                  width={15}
-                  height={15}
-                  alt="blue-star"
-                  className="w-auto h-auto"
-                />
-                <div
-                  className="flex-1 h-px"
-                  style={{ background: "#0950C3" }}
+                  src="/assets/certificates/star.svg"
+                  width={30}
+                  height={30}
+                  alt="star"
+                  className="w-auto h-auto opacity-50"
                 />
               </div>
-            </div>
-
-            {/* Footer Elements */}
-            <div className="flex flex-col sm:flex-row justify-between items-center sm:items-end w-full z-10 gap-8 mt-auto px-4 md:px-8">
-              {/* Instructor Signature — bottom left */}
-              <div className="flex flex-col items-center sm:items-start text-center sm:text-left">
-                <p className="font-bold text-xl md:text-2xl text-white m-0">
-                  Chioma Adeyemi
-                </p>
-                <div
-                  className="my-2 h-px"
-                  style={{
-                    width: "200px",
-                    background: "rgba(255,255,255,0.2)",
-                  }}
+              <div className="absolute top-8 right-8">
+                <Image
+                  src="/assets/certificates/star.svg"
+                  width={30}
+                  height={30}
+                  alt="star"
+                  className="w-auto h-auto opacity-50"
                 />
-                <p className="font-bold text-base md:text-lg text-white m-0">
-                  Chioma Adeyemi
-                </p>
-                <p className="text-xs mt-1 m-0" style={{ color: "#D6E3F5" }}>
-                  Instructor — TrueMinds Innovation
-                </p>
+              </div>
+              <div className="absolute bottom-8 left-8">
+                <Image
+                  src="/assets/certificates/star.svg"
+                  width={30}
+                  height={30}
+                  alt="star"
+                  className="w-auto h-auto opacity-50"
+                />
+              </div>
+              <div className="absolute bottom-8 right-8">
+                <Image
+                  src="/assets/certificates/star.svg"
+                  width={30}
+                  height={30}
+                  alt="star"
+                  className="w-auto h-auto opacity-50"
+                />
               </div>
 
-              {/* Certificate Meta — bottom right */}
-              <div className="flex flex-col items-center sm:items-end text-center sm:text-right">
-                <p className="text-sm mb-1.5 m-0" style={{ color: "#ADC7EB" }}>
-                  Issued: {activeCertificate?.issuedAt ? new Date(activeCertificate.issuedAt).toLocaleDateString() : 'March 15, 2025'}
-                </p>
-                <p className="text-sm mb-1.5 m-0" style={{ color: "#ADC7EB" }}>
-                  ID: {activeCertificate?.certificateNumber || 'TMI-CERT-2025-0031'}
-                </p>
+              {/* Certificate Body */}
+              <div className="flex flex-col items-center gap-2.5 z-10 w-full max-w-2xl mx-auto text-center mt-6">
+                <span
+                  className="font-bold text-xs tracking-widest uppercase"
+                  style={{ color: "#DCE3EF" }}
+                >
+                  Certificate of Completion
+                </span>
+
                 <p
-                  className="text-sm m-0 font-medium"
+                  className="font-bold text-2xl md:text-3xl m-0 mt-4 md:mt-8"
+                  style={{ color: "#DCE3EF" }}
+                >
+                  TrueMinds Innovation
+                </p>
+
+                <span
+                  className="text-sm mt-1"
+                  style={{ color: "rgba(255,255,255,0.7)" }}
+                >
+                  This is to certify that
+                </span>
+
+                <p
+                  className="font-bold text-3xl md:text-5xl m-0 mt-2 md:mt-4"
                   style={{ color: "#0950C3" }}
                 >
-                  Verify at trueminds.ng/cert
+                  {activeCertificate?.userFullName || 'Adeeze Okoro'}
                 </p>
+
+                {/* Horizontal Divider at the bottom of the name */}
+
+                <span
+                  className="text-sm md:text-base font-medium"
+                  style={{ color: "rgba(255,255,255,0.9)" }}
+                >
+                  has successfully completed {activeCertificate?.courseTitle || 'Product Thinking'}
+                </span>
+
+                <span
+                  className="text-sm md:text-base font-medium mt-1 mb-8"
+                  style={{ color: "rgba(255,255,255,0.9)" }}
+                >
+                  with a final score of {activeCertificate?.finalScore ?? 92}/100
+                </span>
+                <div className="flex w-full items-center gap-2.5 my-4 md:my-6">
+                  <div
+                    className="flex-1 h-px"
+                    style={{ background: "#0950C3" }}
+                  />
+                  <Image
+                    src="/assets/certificates/blue-star.svg"
+                    width={15}
+                    height={15}
+                    alt="blue-star"
+                    className="w-auto h-auto"
+                  />
+                  <div
+                    className="flex-1 h-px"
+                    style={{ background: "#0950C3" }}
+                  />
+                </div>
+              </div>
+
+              {/* Footer Elements */}
+              <div className="flex flex-col sm:flex-row justify-between items-center sm:items-end w-full z-10 gap-8 mt-auto px-4 md:px-8">
+                {/* Instructor Signature — bottom left */}
+                <div className="flex flex-col items-center sm:items-start text-center sm:text-left">
+                  <p className="font-bold text-xl md:text-2xl text-white m-0">
+                    Chioma Adeyemi
+                  </p>
+                  <div
+                    className="my-2 h-px"
+                    style={{
+                      width: "200px",
+                      background: "rgba(255,255,255,0.2)",
+                    }}
+                  />
+                  <p className="font-bold text-base md:text-lg text-white m-0">
+                    Chioma Adeyemi
+                  </p>
+                  <p className="text-xs mt-1 m-0" style={{ color: "#D6E3F5" }}>
+                    Instructor — TrueMinds Innovation
+                  </p>
+                </div>
+
+                {/* Certificate Meta — bottom right */}
+                <div className="flex flex-col items-center sm:items-end text-center sm:text-right">
+                  <p className="text-sm mb-1.5 m-0" style={{ color: "#ADC7EB" }}>
+                    Issued: {activeCertificate?.issuedAt ? new Date(activeCertificate.issuedAt).toLocaleDateString() : 'March 15, 2025'}
+                  </p>
+                  <p className="text-sm mb-1.5 m-0" style={{ color: "#ADC7EB" }}>
+                    ID: {activeCertificate?.certificateNumber || 'TMI-CERT-2025-0031'}
+                  </p>
+                  <p
+                    className="text-sm m-0 font-medium"
+                    style={{ color: "#0950C3" }}
+                  >
+                    Verify at trueminds.ng/cert
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </main>

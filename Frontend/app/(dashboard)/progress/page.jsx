@@ -25,9 +25,9 @@ const fallbackActivities = [
 ];
 
 export default function ProgressPage() {
-  const [cards, setCards] = useState(fallbackCards);
-  const [skills, setSkills] = useState(fallbackSkills);
-  const [activities, setActivities] = useState(fallbackActivities);
+  const [cards, setCards] = useState([]);
+  const [skills, setSkills] = useState([]);
+  const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -54,15 +54,15 @@ export default function ProgressPage() {
           color: '#EF9807',
         };
 
-        setCards((courseCards.length ? [...courseCards, overall] : fallbackCards).slice(0, 4));
+        if (courseCards.length) {
+          setCards([...courseCards, overall].slice(0, 4));
+        }
 
         const apiSkills = (payload.skillBreakdown || []).map((item) => ({
           name: item.skill,
           value: Math.round(item.score || 0),
         }));
-        if (apiSkills.length) {
-          setSkills(apiSkills);
-        }
+        setSkills(apiSkills);
 
         const apiActivities = (payload.gradedWork || []).slice(0, 4).map((item, index) => {
           const activityDate = item.activityDate ? new Date(item.activityDate) : null;
@@ -78,9 +78,7 @@ export default function ProgressPage() {
           };
         });
 
-        if (apiActivities.length) {
-          setActivities(apiActivities);
-        }
+        setActivities(apiActivities);
       } catch (err) {
         console.error('Progress fetch error:', err);
         setError('Unable to load progress right now. Showing current layout data.');
@@ -93,11 +91,7 @@ export default function ProgressPage() {
   }, []);
 
   const visibleCards = useMemo(() => {
-    if (cards.length === 4) {
-      return cards;
-    }
-
-    return [...cards, ...fallbackCards].slice(0, 4);
+    return cards;
   }, [cards]);
 
   return (
