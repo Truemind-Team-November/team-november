@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { ThemeColors } from "@/components/ThemeColors";
 import Spinner from "@/components/Spinner";
 import client from "@/lib/client";
@@ -97,10 +98,14 @@ const notifications = [
   },
 ];
 
-function NotificationItem({ notif, index }) {
+function NotificationItem({ notif, onMarkRead }) {
   return (
-    <div
-      className={`relative flex items-center px-6 py-0 border-b transition-all duration-200 cursor-pointer group hover:bg-black/20 ${notif.isRead ? "bg-transparent" : "bg-[#131d2e]"}`}
+    <Link
+      href={notif.actionUrl || "#"}
+      onClick={() => {
+        if (!notif.isRead) onMarkRead(notif.id);
+      }}
+      className={`relative flex items-center px-6 py-0 border-b transition-all duration-200 cursor-pointer group hover:bg-black/20 no-underline ${notif.isRead ? "bg-transparent" : "bg-[#131d2e]"}`}
       style={{
         height: "117px",
         borderColor: "#D6E3F5",
@@ -192,7 +197,7 @@ function NotificationItem({ notif, index }) {
           />
         </div>
       )}
-    </div>
+    </Link>
   );
 }
 
@@ -215,27 +220,27 @@ async function fetchNotifications() {
   return data.data ?? data;
 }
 
-// async function fetchUnreadNotificationsCount() {
-//   const token = localStorage.getItem("token");
-//
-//   const response = await fetch(
-//     `${client.defaults.baseURL}/Notification/unread-count`,
-//     {
-//       method: "GET",
-//       headers: {
-//         "Content-Type": "application/json",
-//         ...(token && { Authorization: `Bearer ${token}` }),
-//       },
-//     },
-//   );
-//
-//   if (!response.ok) {
-//     throw new Error(`Failed to fetch notifications (${response.status})`);
-//   }
-//
-//   const data = await response.json();
-//   return data.data ?? data;
-// }
+async function fetchUnreadNotificationsCount() {
+  const token = localStorage.getItem("token");
+
+  const response = await fetch(
+    `${client.defaults.baseURL}/Notification/unread-count`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch unread count (${response.status})`);
+  }
+
+  const data = await response.json();
+  return data.data ?? data;
+}
 
 async function markAllNotificationsRead() {
   const token = localStorage.getItem("token");
@@ -260,6 +265,28 @@ async function markAllNotificationsRead() {
   return response.json();
 }
 
+async function markNotificationRead(notificationId) {
+  const token = localStorage.getItem("token");
+
+  const response = await fetch(
+    `${client.defaults.baseURL}/Notification/${notificationId}/read`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to mark notification as read (${response.status})`,
+    );
+  }
+
+  return response.json();
+}
 export default function NotificationsPage() {
   const [notificationList, setNotificationList] = useState(notifications);
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
@@ -274,6 +301,10 @@ export default function NotificationsPage() {
       .then(setNotificationList)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
+
+    fetchUnreadNotificationsCount()
+      .then(setUnreadNotificationCount)
+      .catch(console.error);
   }
 
   useEffect(() => {
@@ -281,6 +312,16 @@ export default function NotificationsPage() {
   }, []);
 
   const newCount = notificationList.filter((n) => !n.isRead).length;
+
+  function handleMarkRead(notificationId) {
+    setNotificationList((prev) =>
+      prev.map((n) =>
+        n.id === notificationId ? { ...n, isRead: true } : n,
+      ),
+    );
+    setUnreadNotificationCount((prev) => Math.max(0, prev - 1));
+    markNotificationRead(notificationId).catch(console.error);
+  }
 
   return (
     <main
@@ -318,31 +359,43 @@ export default function NotificationsPage() {
 
             {/* Mark all read button — hidden while loading or when empty */}
             {!loading && notificationList.length > 0 && (
-              <button
-                onClick={async () => {
-                  try {
-                    await markAllNotificationsRead();
-                    setNotificationList((prev) =>
-                      prev.map((n) => ({ ...n, isRead: true })),
-                    );
-                  } catch (err) {
-                    setError(err.message);
-                  }
-                }}
-                className="flex items-center justify-center font-bold text-white rounded-lg transition-colors duration-150 hover:bg-[#5a5b5d] cursor-pointer"
-                style={{
-                  padding: "0 16px",
-                  height: 40,
-                  minWidth: 120,
-                  background: "#4B4C4E",
-                  border: "1px solid #D6E3F5",
-                  borderRadius: 8,
-                  fontSize: 14,
-                  whiteSpace: "nowrap",
-                }}
-              >
-                Mark all read
-              </button>
+              <div className="relative">
+                <button
+                  onClick={async () => {
+                    try {
+                      await markAllNotificationsRead();
+                      setNotificationList((prev) =>
+                        prev.map((n) => ({ ...n, isRead: true })),
+                      );
+                      setUnreadNotificationCount(0);
+                    } catch (err) {
+                      setError(err.message);
+                    }
+                  }}
+                  className="flex items-center justify-center font-bold text-white rounded-lg transition-colors duration-150 hover:bg-[#5a5b5d] cursor-pointer"
+                  style={{
+                    padding: "0 16px",
+                    height: 40,
+                    minWidth: 120,
+                    background: "#4B4C4E",
+                    border: "1px solid #D6E3F5",
+                    borderRadius: 8,
+                    fontSize: 14,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  Mark all read
+                </button>
+
+                {unreadNotificationCount > 0 && (
+                  <span
+                    className="absolute -top-2 -right-2 flex items-center justify-center rounded-full bg-[#0950C3] text-white text-xs font-bold"
+                    style={{ width: 22, height: 22, fontSize: 11 }}
+                  >
+                    {unreadNotificationCount}
+                  </span>
+                )}
+              </div>
             )}
           </div>
 
@@ -389,8 +442,12 @@ export default function NotificationsPage() {
 
             {!loading &&
               !error &&
-              notificationList.map((notif, i) => (
-                <NotificationItem key={notif.id} notif={notif} index={i} />
+              notificationList.map((notif) => (
+                <NotificationItem
+                  key={notif.id}
+                  notif={notif}
+                  onMarkRead={handleMarkRead}
+                />
               ))}
           </div>
         </div>
