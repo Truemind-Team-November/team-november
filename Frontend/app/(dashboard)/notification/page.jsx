@@ -30,74 +30,6 @@ function formatTime(dateString) {
   return `${diffInDays} day${diffInDays > 1 ? "s" : ""} ago`;
 }
 
-const notifications = [
-  {
-    id: "3fa85f64-5717-4562-b3fc-2c963f66afa1",
-    type: "assignment_due",
-    title: "Assignment Due in 2 Days",
-    message: "Wireframe Challenge #3 is due on Feb 26. Submit before midnight.",
-    actionUrl: "/dashboard",
-    isRead: false,
-    createdAt: "2026-03-31T14:00:00.000Z",
-    readAt: null,
-  },
-  {
-    id: "3fa85f64-5717-4562-b3fc-2c963f66afa2",
-    type: "graded",
-    title: "Assignment Graded — 88/100",
-    message:
-      "Emeka Obi graded your Sprint Retrospective Report. View feedback.",
-    actionUrl: "/dashboard",
-    isRead: false,
-    createdAt: "2026-03-31T13:00:00.000Z",
-    readAt: null,
-  },
-  {
-    id: "3fa85f64-5717-4562-b3fc-2c963f66afa3",
-    type: "reply",
-    title: "Reply on your Discussion Post",
-    message:
-      "Fatima Aliyu replied: 'Have you tried the Colour Contrast Analyser tool? It's WCAG compliant!'",
-    actionUrl: "/discussion",
-    isRead: false,
-    createdAt: "2026-03-31T12:00:00.000Z",
-    readAt: null,
-  },
-  {
-    id: "3fa85f64-5717-4562-b3fc-2c963f66afa4",
-    type: "lesson",
-    title: "New Lessons Available",
-    message:
-      "Lesson 4: Design Systems has been unlocked in UI/UX Fundamentals.",
-    actionUrl: "/coursecatalog",
-    isRead: true,
-    createdAt: "2026-03-30T15:00:00.000Z",
-    readAt: "2026-03-31T10:00:00.000Z",
-  },
-  {
-    id: "3fa85f64-5717-4562-b3fc-2c963f66afa5",
-    type: "team",
-    title: "Team Update",
-    message:
-      "You have been added to the Design & Engineering cross-functional team.",
-    actionUrl: "/teamallocation",
-    isRead: true,
-    createdAt: "2026-03-29T15:00:00.000Z",
-    readAt: "2026-03-30T08:00:00.000Z",
-  },
-  {
-    id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-    type: "certificate",
-    title: "Certificate Milestone",
-    message:
-      "You're 28% away from completing UI/UX Fundamentals and earning your certificate!",
-    actionUrl: "/dashboard",
-    isRead: true,
-    createdAt: "2026-03-28T15:00:00.000Z",
-    readAt: "2026-03-29T12:00:00.000Z",
-  },
-];
-
 function NotificationItem({ notif, onMarkRead }) {
   return (
     <Link
@@ -280,9 +212,7 @@ async function markNotificationRead(notificationId) {
   );
 
   if (!response.ok) {
-    throw new Error(
-      `Failed to mark notification as read (${response.status})`,
-    );
+    throw new Error(`Failed to mark notification as read (${response.status})`);
   }
 
   return response.json();
@@ -315,9 +245,7 @@ export default function NotificationsPage() {
 
   function handleMarkRead(notificationId) {
     setNotificationList((prev) =>
-      prev.map((n) =>
-        n.id === notificationId ? { ...n, isRead: true } : n,
-      ),
+      prev.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n)),
     );
     setUnreadNotificationCount((prev) => Math.max(0, prev - 1));
     markNotificationRead(notificationId).catch(console.error);
