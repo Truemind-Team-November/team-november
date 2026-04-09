@@ -1,6 +1,12 @@
+
 "use client";
+
+import { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { ThemeColors } from "@/components/ThemeColors";
+import Spinner from "@/components/Spinner";
+import client from "@/lib/client";
 
 const iconMap = {
   assignment_due: "/assets/notifications/assignment-due.svg",
@@ -25,78 +31,14 @@ function formatTime(dateString) {
   return `${diffInDays} day${diffInDays > 1 ? "s" : ""} ago`;
 }
 
-const notifications = [
-  {
-    id: "3fa85f64-5717-4562-b3fc-2c963f66afa1",
-    type: "assignment_due",
-    title: "Assignment Due in 2 Days",
-    message: "Wireframe Challenge #3 is due on Feb 26. Submit before midnight.",
-    actionUrl: "/dashboard",
-    isRead: false,
-    createdAt: "2026-03-31T14:00:00.000Z",
-    readAt: null,
-  },
-  {
-    id: "3fa85f64-5717-4562-b3fc-2c963f66afa2",
-    type: "graded",
-    title: "Assignment Graded — 88/100",
-    message:
-      "Emeka Obi graded your Sprint Retrospective Report. View feedback.",
-    actionUrl: "/dashboard",
-    isRead: false,
-    createdAt: "2026-03-31T13:00:00.000Z",
-    readAt: null,
-  },
-  {
-    id: "3fa85f64-5717-4562-b3fc-2c963f66afa3",
-    type: "reply",
-    title: "Reply on your Discussion Post",
-    message:
-      "Fatima Aliyu replied: 'Have you tried the Colour Contrast Analyser tool? It's WCAG compliant!'",
-    actionUrl: "/discussion",
-    isRead: false,
-    createdAt: "2026-03-31T12:00:00.000Z",
-    readAt: null,
-  },
-  {
-    id: "3fa85f64-5717-4562-b3fc-2c963f66afa4",
-    type: "lesson",
-    title: "New Lessons Available",
-    message:
-      "Lesson 4: Design Systems has been unlocked in UI/UX Fundamentals.",
-    actionUrl: "/coursecatalog",
-    isRead: true,
-    createdAt: "2026-03-30T15:00:00.000Z",
-    readAt: "2026-03-31T10:00:00.000Z",
-  },
-  {
-    id: "3fa85f64-5717-4562-b3fc-2c963f66afa5",
-    type: "team",
-    title: "Team Update",
-    message:
-      "You have been added to the Design & Engineering cross-functional team.",
-    actionUrl: "/teamallocation",
-    isRead: true,
-    createdAt: "2026-03-29T15:00:00.000Z",
-    readAt: "2026-03-30T08:00:00.000Z",
-  },
-  {
-    id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-    type: "certificate",
-    title: "Certificate Milestone",
-    message:
-      "You're 28% away from completing UI/UX Fundamentals and earning your certificate!",
-    actionUrl: "/dashboard",
-    isRead: true,
-    createdAt: "2026-03-28T15:00:00.000Z",
-    readAt: "2026-03-29T12:00:00.000Z",
-  },
-];
-
-function NotificationItem({ notif, index }) {
+function NotificationItem({ notif, onMarkRead }) {
   return (
-    <div
-      className={`relative flex items-center px-6 py-0 border-b transition-all duration-200 cursor-pointer group hover:bg-black/20 ${notif.isRead ? "bg-transparent" : "bg-[#131d2e]"}`}
+    <Link
+      href={notif.actionUrl || "#"}
+      onClick={() => {
+        if (!notif.isRead) onMarkRead(notif.id);
+      }}
+      className={`relative flex items-center px-6 py-0 border-b transition-all duration-200 cursor-pointer group hover:bg-black/20 no-underline ${notif.isRead ? "bg-transparent" : "bg-[#131d2e]"}`}
       style={{
         height: "117px",
         borderColor: "#D6E3F5",
@@ -188,19 +130,137 @@ function NotificationItem({ notif, index }) {
           />
         </div>
       )}
-    </div>
+    </Link>
   );
 }
 
+async function fetchNotifications() {
+  const token = localStorage.getItem("token");
+
+  const response = await fetch(`${client.defaults.baseURL}/Notification`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token && { Authorization: `Bearer ${token}` }),
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch notifications (${response.status})`);
+  }
+
+  const data = await response.json();
+  return data.data ?? data;
+}
+
+async function fetchUnreadNotificationsCount() {
+  const token = localStorage.getItem("token");
+
+  const response = await fetch(
+    `${client.defaults.baseURL}/Notification/unread-count`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch unread count (${response.status})`);
+  }
+
+  const data = await response.json();
+  return data.data ?? data;
+}
+
+async function markAllNotificationsRead() {
+  const token = localStorage.getItem("token");
+
+  const response = await fetch(
+    `${client.defaults.baseURL}/Notification/read-all`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to mark notifications as read (${response.status})`,
+    );
+  }
+
+  return response.json();
+}
+
+async function markNotificationRead(notificationId) {
+  const token = localStorage.getItem("token");
+
+  const response = await fetch(
+    `${client.defaults.baseURL}/Notification/${notificationId}/read`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to mark notification as read (${response.status})`);
+  }
+
+  return response.json();
+}
 export default function NotificationsPage() {
-  const newCount = notifications.filter((n) => !n.isRead).length;
+  const [notificationList, setNotificationList] = useState(notifications);
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  function loadNotifications() {
+    setLoading(true);
+    setError(null);
+
+    fetchNotifications()
+      .then(setNotificationList)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+
+    fetchUnreadNotificationsCount()
+      .then(setUnreadNotificationCount)
+      .catch(console.error);
+  }
+
+  useEffect(() => {
+    loadNotifications();
+  }, []);
+
+  const newCount = notificationList.filter((n) => !n.isRead).length;
+
+  function handleMarkRead(notificationId) {
+    setNotificationList((prev) =>
+      prev.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n)),
+    );
+    setUnreadNotificationCount((prev) => Math.max(0, prev - 1));
+    markNotificationRead(notificationId).catch(console.error);
+  }
 
   return (
     <main
       className=""
       style={{ fontFamily: "var(--font-inter), 'Inter', sans-serif" }}
     >
-      <div className="min-h-screen w-full" style={{ backgroundColor: ThemeColors.bgBlue }}>
+      <div
+        className="min-h-screen w-full"
+        style={{ backgroundColor: ThemeColors.bgBlue }}
+      >
         {/* Main container — max 1436px, full width on tablet */}
         <div
           className="mx-auto w-full"
@@ -226,29 +286,98 @@ export default function NotificationsPage() {
               Notifications
             </h1>
 
-            {/* Mark all read button */}
-            <button
-              className="flex items-center justify-center font-bold text-white rounded-lg transition-colors duration-150 hover:bg-[#5a5b5d] cursor-pointer"
-              style={{
-                padding: "0 16px",
-                height: 40,
-                minWidth: 120,
-                background: "#4B4C4E",
-                border: "1px solid #D6E3F5",
-                borderRadius: 8,
-                fontSize: 14,
-                whiteSpace: "nowrap",
-              }}
-            >
-              Mark all read
-            </button>
+            {/* Mark all read button — hidden while loading or when empty */}
+            {!loading && notificationList.length > 0 && (
+              <div className="relative">
+                <button
+                  onClick={async () => {
+                    try {
+                      await markAllNotificationsRead();
+                      setNotificationList((prev) =>
+                        prev.map((n) => ({ ...n, isRead: true })),
+                      );
+                      setUnreadNotificationCount(0);
+                    } catch (err) {
+                      setError(err.message);
+                    }
+                  }}
+                  className="flex items-center justify-center font-bold text-white rounded-lg transition-colors duration-150 hover:bg-[#5a5b5d] cursor-pointer"
+                  style={{
+                    padding: "0 16px",
+                    height: 40,
+                    minWidth: 120,
+                    background: "#4B4C4E",
+                    border: "1px solid #D6E3F5",
+                    borderRadius: 8,
+                    fontSize: 14,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  Mark all read
+                </button>
+
+                {unreadNotificationCount > 0 && (
+                  <span
+                    className="absolute -top-2 -right-2 flex items-center justify-center rounded-full bg-[#0950C3] text-white text-xs font-bold"
+                    style={{ width: 22, height: 22, fontSize: 11 }}
+                  >
+                    {unreadNotificationCount}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
           {/* ── Notification list ── */}
           <div className="flex flex-col" style={{ borderLeft: "none" }}>
-            {notifications.map((notif, i) => (
-              <NotificationItem key={notif.id} notif={notif} index={i} />
-            ))}
+            {loading && <Spinner message="Loading notifications..." />}
+
+            {error && (
+              <div className="flex flex-col items-center justify-center min-h-[calc(100vh-98px)] gap-4">
+                <span className="text-[#7D7F82] text-base font-medium">
+                  Something went wrong while loading your notifications.
+                </span>
+                <button
+                  onClick={loadNotifications}
+                  className="flex items-center justify-center font-bold text-white rounded-lg transition-colors duration-150 hover:bg-[#0950C3]/80 cursor-pointer"
+                  style={{
+                    padding: "0 20px",
+                    height: 40,
+                    background: "#0950C3",
+                    borderRadius: 8,
+                    fontSize: 14,
+                    border: "none",
+                  }}
+                >
+                  Retry
+                </button>
+              </div>
+            )}
+
+            {!loading && !error && notificationList.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-24 gap-4">
+                <Image
+                  src="/assets/notifications/notification_icon.svg"
+                  alt="No notifications"
+                  width={48}
+                  height={48}
+                  className="opacity-40"
+                />
+                <span className="text-[#7D7F82] text-base font-medium">
+                  You're all caught up — no notifications right now.
+                </span>
+              </div>
+            )}
+
+            {!loading &&
+              !error &&
+              notificationList.map((notif) => (
+                <NotificationItem
+                  key={notif.id}
+                  notif={notif}
+                  onMarkRead={handleMarkRead}
+                />
+              ))}
           </div>
         </div>
       </div>

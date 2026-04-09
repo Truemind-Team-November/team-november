@@ -15,6 +15,8 @@ export default function CertificatesPage() {
         const response = await client.get("/Certificate/me");
         const items = response.data?.data;
 
+        console.log(response,items);        
+
         if (Array.isArray(items)) {
           setCertificates(items);
         }

@@ -3,6 +3,8 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import client from "@/lib/client";
+// Reverting to the hook so we can keep YOUR custom button UI
+import { useGoogleLogin } from '@react-oauth/google';
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -12,55 +14,66 @@ export default function LoginPage() {
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-
-    if (errors[name]) {
-      setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[name];
-        return newErrors;
-      });
-    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
-    setErrors({});
 
     try {
       const response = await client.post('/auth/login', formData);
-      // console.log(response);
-
 
       if (response.data.success && response.data.data.token) {
         localStorage.setItem("token", response.data.data.token);
         localStorage.setItem("userName", response.data.data.firstName);
-        setMessage("Login successful! Redirecting...");
         window.location.href = "/dashboard";
       }
-
     } catch (error) {
-      if (error.response && error.response.status === 401) {
-        setMessage("Invalid email or password.");
-      } else if (error.response && error.response.data.message) {
-        setMessage(error.response.data.message);
-      } else {
-        setMessage("An unexpected error occurred. Please try again.");
-      }
+      setMessage(error.response?.data?.message || "Invalid email or password.");
     } finally {
       setLoading(false);
     }
   };
 
+  // Google Login Logic using the hook to preserve your UI
+  const handleGoogleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setLoading(true);
+      try {
+        // Sending ONLY the idToken (access_token) as requested
+        const payload = {
+          idToken: tokenResponse.access_token 
+        };
+        console.log(payload);        
+
+        const response = await client.post('/Auth/google', payload);
+        console.log(response);          
+
+        if (response.data.success) {
+          localStorage.setItem("token", response.data.data.token);
+          localStorage.setItem("userName", response.data.data.firstName);
+          window.location.href = "/dashboard";
+        }
+      } catch (error) {
+        console.error("Backend Error:", error.response?.data);
+        setMessage("Server rejected the Google token. Check your API requirements.");
+      } finally {
+        setLoading(false);
+      }
+    },
+    onError: () => setMessage("Google Login Failed"),
+  });
+
   return (
     <div className="min-h-screen bg-[#0B1220] flex items-center justify-center p-6">
       <div className="w-full max-w-6xl grid md:grid-cols-2 rounded-2xl overflow-hidden">
+        
+        {/* LEFT SIDE - YOUR INITIAL UI */}
         <div className="p-10 text-white border-r border-gray-500 hidden md:block">
           <Image src={"/logo.svg"} alt="logo" width={500} height={500} className="w-20 h-20 mb-5" />
           <h1 className="text-4xl font-bold mb-3">
@@ -88,6 +101,7 @@ export default function LoginPage() {
           </div>
         </div>
 
+        {/* RIGHT SIDE - YOUR INITIAL UI */}
         <div className="p-10 text-white">
           <h2 className="text-2xl font-semibold">Welcome back</h2>
           <p className="text-sm text-gray-400 mt-1">
@@ -138,7 +152,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 py-3 rounded-lg hover:bg-blue-700 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-blue-600 py-3 rounded-lg hover:bg-blue-700 transition font-semibold disabled:opacity-50"
             >
               {loading ? "Signing in..." : "Sign in"}
             </button>
@@ -149,12 +163,22 @@ export default function LoginPage() {
               <hr className="flex-1 border-gray-600" />
             </div>
 
-            <button type="button" className="w-full border border-gray-600 py-3 rounded-lg hover:bg-gray-800 flex items-center justify-center gap-2 transition">
+            {/* YOUR ORIGINAL GOOGLE BUTTON UI - NOW FUNCTIONAL */}
+            <button 
+              type="button" 
+              onClick={() => handleGoogleLogin()}
+              disabled={loading}
+              className="w-full border border-gray-600 py-3 rounded-lg hover:bg-gray-800 flex items-center justify-center gap-2 transition"
+            >
               <Image width={20} height={20} alt="google" src="/google.png" className="w-5 h-5" />
               Google Workspace
             </button>
 
-            <button type="button" className="w-full bg-gray-700 py-3 rounded-lg opacity-70 cursor-not-allowed flex items-center justify-center gap-2">
+            {/* YOUR ORIGINAL SOS BUTTON UI */}
+            <button 
+              type="button" 
+              className="w-full bg-gray-700 py-3 rounded-lg opacity-70 cursor-not-allowed flex items-center justify-center gap-2"
+            >
               <Image width={20} height={20} alt="sos" src="/sos.png" className="w-5 h-5" />
               SOS LOGIN
             </button>
