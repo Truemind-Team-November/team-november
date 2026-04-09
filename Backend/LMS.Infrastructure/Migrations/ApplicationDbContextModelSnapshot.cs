@@ -682,10 +682,6 @@ namespace LMS.Infrastructure.Migrations
                     b.ToTable("LessonProgresses");
                 });
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
             modelBuilder.Entity("LMS.Domain.Entities.Notification", b =>
                 {
                     b.Property<Guid>("Id")
@@ -742,7 +738,6 @@ namespace LMS.Infrastructure.Migrations
                     b.ToTable("Notifications");
                 });
 
->>>>>>> 2e43ad23257ebf37dc09f30bd18ad4c63734c055
             modelBuilder.Entity("LMS.Domain.Entities.PasswordResetToken", b =>
                 {
                     b.Property<Guid>("Id")
@@ -784,7 +779,6 @@ namespace LMS.Infrastructure.Migrations
                     b.ToTable("PasswordResetTokens");
                 });
 
->>>>>>> origin/master
             modelBuilder.Entity("LMS.Domain.Entities.Progress", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1221,10 +1215,6 @@ namespace LMS.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
             modelBuilder.Entity("LMS.Domain.Entities.Notification", b =>
                 {
                     b.HasOne("LMS.Domain.Entities.User", "User")
@@ -1236,7 +1226,6 @@ namespace LMS.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
->>>>>>> 2e43ad23257ebf37dc09f30bd18ad4c63734c055
             modelBuilder.Entity("LMS.Domain.Entities.PasswordResetToken", b =>
                 {
                     b.HasOne("LMS.Domain.Entities.User", "User")
@@ -1248,7 +1237,6 @@ namespace LMS.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
->>>>>>> origin/master
             modelBuilder.Entity("LMS.Domain.Entities.Progress", b =>
                 {
                     b.HasOne("LMS.Domain.Entities.Course", "Course")
