@@ -58,10 +58,9 @@ public class TeamController : ControllerBase
     }
 
     /// <summary>
-    /// Get the full team allocation view (Admin only)
+    /// Get the full team allocation view (All authenticated users)
     /// </summary>
     [HttpGet("allocation")]
-    [Authorize(Roles = "Admin")]
     [ProducesResponseType(typeof(BaseResponse<IEnumerable<TeamAllocationResponse>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(BaseResponse<string>), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetTeamAllocation()

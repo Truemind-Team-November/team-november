@@ -84,7 +84,7 @@ public class AuthService : IAuthService
 
         await _notificationService.NotifyUserAsync(new LMS.Application.DTOs.Notification.CreateNotificationRequest(
             user.Id,
-            LMS.Domain.Enums.NotificationType.System,
+            NotificationType.System,
             "Welcome to TalentFlow",
             "Your account is ready. Explore your courses and upcoming tasks.",
             "/dashboard"
@@ -92,7 +92,7 @@ public class AuthService : IAuthService
 
         await _notificationService.NotifyUserAsync(new LMS.Application.DTOs.Notification.CreateNotificationRequest(
             user.Id,
-            LMS.Domain.Enums.NotificationType.System,
+            NotificationType.System,
             "Team Allocation Pending",
             "Your discipline has been recorded. An admin will assign you to a cross-functional team soon.",
             "/my-team"
