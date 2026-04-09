@@ -63,7 +63,7 @@ public class DashboardRepository : IDashboardRepository
             .CountAsync();
 
         var continueLearning = progresses
-            .Where(item => item.Percentage < 100)
+            .Where(item => item.Percentage < 100 && item.Course != null)
             .OrderByDescending(item => item.UpdatedAt ?? item.CreatedAt)
             .Take(continueLearningLimit)
             .Select(item => new ContinueLearningItemResponse(
@@ -82,6 +82,7 @@ public class DashboardRepository : IDashboardRepository
                 submission.AssignmentId == item.Id && submission.UserId == userId))
             .OrderBy(item => item.DueDate)
             .Include(item => item.Course)
+            .Where(item => item.Course != null)
             .Take(deadlineLimit)
             .Select(item => new UpcomingDeadlineResponse(
                 item.Id,
@@ -94,7 +95,7 @@ public class DashboardRepository : IDashboardRepository
 
         var lessonActivities = await _context.LessonProgresses
             .AsNoTracking()
-            .Where(item => item.UserId == userId && item.CompletedAt != null)
+            .Where(item => item.UserId == userId && item.CompletedAt != null && item.Lesson != null && item.Lesson.Course != null)
             .Include(item => item.Lesson)
                 .ThenInclude(lesson => lesson.Course)
             .Select(item => new RecentActivityResponse(
@@ -106,7 +107,7 @@ public class DashboardRepository : IDashboardRepository
 
         var submissionActivities = await _context.Submissions
             .AsNoTracking()
-            .Where(item => item.UserId == userId)
+            .Where(item => item.UserId == userId && item.Assignment != null)
             .Include(item => item.Assignment)
             .Select(item => new RecentActivityResponse(
                 "assignment_submitted",
@@ -117,7 +118,7 @@ public class DashboardRepository : IDashboardRepository
 
         var certificateActivities = await _context.Certificates
             .AsNoTracking()
-            .Where(item => item.UserId == userId)
+            .Where(item => item.UserId == userId && item.Course != null)
             .Include(item => item.Course)
             .Select(item => new RecentActivityResponse(
                 "certificate_earned",
@@ -138,7 +139,7 @@ public class DashboardRepository : IDashboardRepository
 
         var discussionReplyActivities = await _context.DiscussionReplies
             .AsNoTracking()
-            .Where(item => item.UserId == userId)
+            .Where(item => item.UserId == userId && item.Post != null)
             .Include(item => item.Post)
             .Select(item => new RecentActivityResponse(
                 "discussion_replied",
@@ -149,7 +150,7 @@ public class DashboardRepository : IDashboardRepository
 
         var enrollmentActivities = await _context.Enrollments
             .AsNoTracking()
-            .Where(item => item.UserId == userId)
+            .Where(item => item.UserId == userId && item.Course != null)
             .Include(item => item.Course)
             .Select(item => new RecentActivityResponse(
                 "course_joined",
