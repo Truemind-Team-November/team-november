@@ -14,7 +14,7 @@ namespace LMS.Application.Services;
 public class AuthService : IAuthService
 {
     private readonly IUserRepository _userRepository;
-    private readonly ITeamRepository _teamRepository;
+    private readonly IDisciplineRepository _disciplineRepository;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtService _jwtService;
     private readonly IPasswordResetTokenRepository _tokenRepository;
@@ -27,7 +27,7 @@ public class AuthService : IAuthService
 
     public AuthService(
         IUserRepository userRepository,
-        ITeamRepository teamRepository,
+        IDisciplineRepository disciplineRepository,
         IPasswordHasher passwordHasher,
         IJwtService jwtService,
         IPasswordResetTokenRepository tokenRepository,
@@ -39,7 +39,7 @@ public class AuthService : IAuthService
         Microsoft.Extensions.Options.IOptions<GoogleAuthOptions> googleAuthOptions)
     {
         _userRepository = userRepository;
-        _teamRepository = teamRepository;
+        _disciplineRepository = disciplineRepository;
         _passwordHasher = passwordHasher;
         _jwtService = jwtService;
         _tokenRepository = tokenRepository;
@@ -52,9 +52,13 @@ public class AuthService : IAuthService
     }
     public async Task<BaseResponse<AuthResponse>> RegisterAsync(RegisterRequest request)
     {
+        if (!await _disciplineRepository.HasAnyAsync())
+            return BaseResponse<AuthResponse>.Fail("Registration is unavailable until an admin creates at least one discipline");
+
         var email = request.Email.Trim().ToLowerInvariant();
-        var discipline = TeamCatalog.NormalizeDiscipline(request.Discipline);
-        var teamName = TeamCatalog.GetTeamNameForDiscipline(discipline);
+        var discipline = await _disciplineRepository.GetByNameAsync(request.Discipline);
+        if (discipline == null)
+            return BaseResponse<AuthResponse>.Fail("Please select a valid discipline");
 
         var existingUser = await _userRepository.GetByEmailAsync(email);
         if (existingUser != null && existingUser.IsActive)
@@ -63,23 +67,14 @@ public class AuthService : IAuthService
         }
 
         var hashedPassword = _passwordHasher.HashPassword(request.Password);
-        var team = await _teamRepository.GetByNameAsync(teamName);
-
-        if (team == null)
-        {
-            var teamDefinition = TeamCatalog.GetTeamDefinition(teamName);
-            team = Team.Create(teamDefinition.Name, teamDefinition.Description);
-            await _teamRepository.AddAsync(team);
-        }
-
         var user = User.Create(
             request.FirstName,
             request.LastName,
             email,
-            discipline,
+            discipline.Name,
             hashedPassword,
             UserRole.Learner,
-            team.Id,
+            null,
             LearnerProfileDefaults.CohortLabel,
             LearnerProfileDefaults.Location
         );
@@ -89,17 +84,17 @@ public class AuthService : IAuthService
 
         await _notificationService.NotifyUserAsync(new LMS.Application.DTOs.Notification.CreateNotificationRequest(
             user.Id,
-            LMS.Domain.Enums.NotificationType.System,
+            NotificationType.System,
             "Welcome to TalentFlow",
-            "Your account is ready. Explore your courses, team, and upcoming tasks.",
+            "Your account is ready. Explore your courses and upcoming tasks.",
             "/dashboard"
         ));
 
         await _notificationService.NotifyUserAsync(new LMS.Application.DTOs.Notification.CreateNotificationRequest(
             user.Id,
-            LMS.Domain.Enums.NotificationType.TeamUpdate,
-            "Team Update",
-            $"You have been added to the {team.Name} cross-functional team.",
+            NotificationType.System,
+            "Team Allocation Pending",
+            "Your discipline has been recorded. An admin will assign you to a cross-functional team soon.",
             "/my-team"
         ));
 
@@ -113,7 +108,7 @@ public class AuthService : IAuthService
             user.Email,
             user.Discipline,
             user.TeamId,
-            team.Name,
+            null,
             user.Role,
             token
         );
@@ -180,29 +175,25 @@ public class AuthService : IAuthService
             if (!_googleAuthOptions.AllowJustInTimeRegistration)
                 return BaseResponse<AuthResponse>.Fail("No account was found for this Google user");
 
+            if (!await _disciplineRepository.HasAnyAsync())
+                return BaseResponse<AuthResponse>.Fail("Registration is unavailable until an admin creates at least one discipline");
+
             if (string.IsNullOrWhiteSpace(request.Discipline))
                 return BaseResponse<AuthResponse>.Fail("Discipline is required to create a new account with Google");
 
-            var discipline = TeamCatalog.NormalizeDiscipline(request.Discipline);
-            var teamName = TeamCatalog.GetTeamNameForDiscipline(discipline);
-            var team = await _teamRepository.GetByNameAsync(teamName);
-
-            if (team == null)
-            {
-                var teamDefinition = TeamCatalog.GetTeamDefinition(teamName);
-                team = Team.Create(teamDefinition.Name, teamDefinition.Description);
-                await _teamRepository.AddAsync(team);
-            }
+            var discipline = await _disciplineRepository.GetByNameAsync(request.Discipline);
+            if (discipline == null)
+                return BaseResponse<AuthResponse>.Fail("Please select a valid discipline");
 
             var generatedPassword = _passwordHasher.HashPassword(Guid.NewGuid().ToString("N"));
             user = User.Create(
                 googleUser.GivenName ?? "Google",
                 googleUser.FamilyName ?? "User",
                 email,
-                discipline,
+                discipline.Name,
                 generatedPassword,
                 UserRole.Learner,
-                team.Id,
+                null,
                 LearnerProfileDefaults.CohortLabel,
                 LearnerProfileDefaults.Location
             );
@@ -217,15 +208,15 @@ public class AuthService : IAuthService
                 user.Id,
                 LMS.Domain.Enums.NotificationType.System,
                 "Welcome to TalentFlow",
-                "Your Google account has been linked successfully. Explore your courses, team, and upcoming tasks.",
+                "Your Google account has been linked successfully. Explore your courses and upcoming tasks.",
                 "/dashboard"
             ));
 
             await _notificationService.NotifyUserAsync(new LMS.Application.DTOs.Notification.CreateNotificationRequest(
                 user.Id,
-                LMS.Domain.Enums.NotificationType.TeamUpdate,
-                "Team Update",
-                $"You have been added to the {team.Name} cross-functional team.",
+                LMS.Domain.Enums.NotificationType.System,
+                "Team Allocation Pending",
+                "Your discipline has been recorded. An admin will assign you to a cross-functional team soon.",
                 "/my-team"
             ));
         }

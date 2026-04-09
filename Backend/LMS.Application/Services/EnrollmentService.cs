@@ -11,15 +11,26 @@ public class EnrollmentService : IEnrollmentService
     private readonly IEnrollmentRepository _enrollmentRepository;
     private readonly ICourseRepository _courseRepository;
     private readonly IProgressRepository _progressRepository;
+    private readonly ICurrentUserService _currentUserService;
 
     public EnrollmentService(
         IEnrollmentRepository enrollmentRepository, 
         ICourseRepository courseRepository,
-        IProgressRepository progressRepository)
+        IProgressRepository progressRepository,
+        ICurrentUserService currentUserService)
     {
         _enrollmentRepository = enrollmentRepository;
         _courseRepository = courseRepository;
         _progressRepository = progressRepository;
+        _currentUserService = currentUserService;
+    }
+
+    public async Task<BaseResponse<EnrollmentResponse>> EnrollCurrentUserAsync(Guid courseId)
+    {
+        if (!_currentUserService.UserId.HasValue)
+            return BaseResponse<EnrollmentResponse>.Fail("Unauthorized");
+
+        return await EnrollUserAsync(new EnrollRequest(_currentUserService.UserId.Value, courseId));
     }
 
     public async Task<BaseResponse<EnrollmentResponse>> EnrollUserAsync(EnrollRequest request)

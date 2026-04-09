@@ -14,6 +14,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<User> Users => Set<User>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<Team> Teams => Set<Team>();
+    public DbSet<Discipline> Disciplines => Set<Discipline>();
     public DbSet<Course> Courses => Set<Course>();
     public DbSet<Lesson> Lessons => Set<Lesson>();
     public DbSet<LessonContent> LessonContents => Set<LessonContent>();
@@ -28,6 +29,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<InstructorRoleRequest> InstructorRoleRequests => Set<InstructorRoleRequest>();
     public DbSet<Assignment> Assignments => Set<Assignment>();
     public DbSet<Submission> Submissions => Set<Submission>();
+    public DbSet<CourseReview> CourseReviews => Set<CourseReview>();
     public DbSet<Certificate> Certificates => Set<Certificate>();
     public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
 

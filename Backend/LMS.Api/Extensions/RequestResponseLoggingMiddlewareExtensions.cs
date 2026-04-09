@@ -29,10 +29,11 @@ public class RequestResponseLoggingMiddleware
 
         var originalBodyStream = context.Response.Body;
 
-        var responseBody = new MemoryStream(); // ❌ removed "using"
+        var responseBody = new MemoryStream();
         context.Response.Body = responseBody;
 
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        var requestFailed = false;
 
         try
         {
@@ -40,25 +41,23 @@ public class RequestResponseLoggingMiddleware
         }
         catch
         {
-            // reset stream before rethrow so exception middleware works
-            context.Response.Body = originalBodyStream;
+            requestFailed = true;
             throw;
         }
         finally
         {
             stopwatch.Stop();
-
-            responseBody.Seek(0, SeekOrigin.Begin);
-
-            await LogResponse(context, stopwatch.ElapsedMilliseconds);
-
-            responseBody.Seek(0, SeekOrigin.Begin);
-
-            await responseBody.CopyToAsync(originalBodyStream);
-
             context.Response.Body = originalBodyStream;
 
-            await responseBody.DisposeAsync(); // dispose AFTER copying
+            if (!requestFailed)
+            {
+                responseBody.Seek(0, SeekOrigin.Begin);
+                await LogResponse(context, responseBody, stopwatch.ElapsedMilliseconds);
+                responseBody.Seek(0, SeekOrigin.Begin);
+                await responseBody.CopyToAsync(originalBodyStream);
+            }
+
+            await responseBody.DisposeAsync();
         }
     }
 
@@ -90,16 +89,19 @@ public class RequestResponseLoggingMiddleware
             SanitizeBody(requestBody));
     }
 
-    private async Task LogResponse(HttpContext context, long elapsedMs)
+    private async Task LogResponse(HttpContext context, Stream responseStream, long elapsedMs)
     {
-        context.Response.Body.Seek(0, SeekOrigin.Begin);
+        if (responseStream.CanSeek)
+        {
+            responseStream.Seek(0, SeekOrigin.Begin);
+        }
 
         string responseBody = "[Empty]";
 
         if (context.Response.ContentType?.Contains("application/json") == true)
         {
             using var reader = new StreamReader(
-                context.Response.Body,
+                responseStream,
                 Encoding.UTF8,
                 leaveOpen: true
             );
@@ -107,7 +109,10 @@ public class RequestResponseLoggingMiddleware
             responseBody = await reader.ReadToEndAsync();
         }
 
-        context.Response.Body.Seek(0, SeekOrigin.Begin);
+        if (responseStream.CanSeek)
+        {
+            responseStream.Seek(0, SeekOrigin.Begin);
+        }
 
         var headers = GetHeaders(context.Response.Headers);
 
@@ -144,7 +149,7 @@ public class RequestResponseLoggingMiddleware
         if (string.IsNullOrWhiteSpace(body))
             return "[Empty]";
 
-        var sensitiveFields = new[] { "password", "token", "secret", "apikey" };
+        var sensitiveFields = new[] { "password", "confirmPassword", "token", "secret", "apikey" };
 
         foreach (var field in sensitiveFields)
         {

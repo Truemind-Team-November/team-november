@@ -12,4 +12,5 @@ public class FileStorageOptions
     public string CourseThumbnailFolder { get; set; } = "talentflow/course-thumbnails";
     public string LessonDocumentFolder { get; set; } = "talentflow/lesson-documents";
     public string SubmissionAttachmentFolder { get; set; } = "talentflow/submission-attachments";
+    public string CertificateDocumentFolder { get; set; } = "talentflow/certificates";
 }

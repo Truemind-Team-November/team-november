@@ -6,6 +6,9 @@ public class LessonProgress : BaseEntity
 
     public bool IsCompleted { get; private set; }
     public DateTime? CompletedAt { get; private set; }
+    public int PlaybackPositionSeconds { get; private set; }
+    public int? PlaybackDurationSeconds { get; private set; }
+    public DateTime? LastAccessedAt { get; private set; }
 
     // Navigation
     public User User { get; private set; } = default!;
@@ -33,6 +36,23 @@ public class LessonProgress : BaseEntity
         };
     }
 
+    public void RecordPlayback(int playbackPositionSeconds, int? playbackDurationSeconds)
+    {
+        if (playbackPositionSeconds < 0)
+            throw new ArgumentException("Playback position cannot be negative");
+
+        if (playbackDurationSeconds.HasValue && playbackDurationSeconds.Value <= 0)
+            throw new ArgumentException("Playback duration must be greater than zero");
+
+        if (playbackDurationSeconds.HasValue && playbackPositionSeconds > playbackDurationSeconds.Value)
+            throw new ArgumentException("Playback position cannot be greater than playback duration");
+
+        PlaybackPositionSeconds = playbackPositionSeconds;
+        PlaybackDurationSeconds = playbackDurationSeconds;
+        LastAccessedAt = DateTime.UtcNow;
+        SetUpdated();
+    }
+
     // Domain behavior
     public void MarkAsCompleted()
     {
@@ -43,6 +63,7 @@ public class LessonProgress : BaseEntity
 
         IsCompleted = true;
         CompletedAt = DateTime.UtcNow;
+        LastAccessedAt = DateTime.UtcNow;
 
         SetUpdated();
     }

@@ -53,6 +53,7 @@ public class SubmissionRepository : ISubmissionRepository
             .Where(s => s.UserId == userId)
             .Include(s => s.Assignment)
                 .ThenInclude(a => a.Course)
+            .Include(s => s.User)
             .OrderByDescending(s => s.SubmittedAt)
             .ToListAsync();
     }

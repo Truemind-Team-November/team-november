@@ -51,7 +51,23 @@ public class ProfileService : IProfileService
         if (user == null)
             return BaseResponse<UserProfileResponse>.Fail("User not found");
 
-        user.UpdateProfile(request.FirstName, request.LastName, request.PhoneNumber);
+        var normalizedEmail = string.IsNullOrWhiteSpace(request.Email)
+            ? user.Email
+            : request.Email.Trim().ToLowerInvariant();
+
+        if (!string.Equals(user.Email, normalizedEmail, StringComparison.OrdinalIgnoreCase))
+        {
+            var existingUser = await _userRepository.GetByEmailAsync(normalizedEmail);
+            if (existingUser != null && existingUser.Id != user.Id)
+                return BaseResponse<UserProfileResponse>.Fail("Email already exists");
+        }
+
+        user.UpdateProfile(
+            request.FirstName,
+            request.LastName,
+            normalizedEmail,
+            request.PhoneNumber,
+            request.Location);
         await _userRepository.UpdateAsync(user);
 
         var profile = await _profileRepository.GetProfileAsync(user.Id);

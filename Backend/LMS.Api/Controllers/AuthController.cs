@@ -54,7 +54,31 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
-    /// Request password reset link
+    /// Sign in using the workspace SSO flow backed by Google ID tokens
+    /// </summary>
+    [HttpPost("sso")]
+    [ProducesResponseType(typeof(BaseResponse<AuthResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BaseResponse<string>), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> SsoSignIn([FromBody] GoogleSignInRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _authService.GoogleSignInAsync(request, cancellationToken);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
+    /// <summary>
+    /// Sign in using Google Workspace
+    /// </summary>
+    [HttpPost("workspace")]
+    [ProducesResponseType(typeof(BaseResponse<AuthResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BaseResponse<string>), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> WorkspaceSignIn([FromBody] GoogleSignInRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _authService.GoogleSignInAsync(request, cancellationToken);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
+    /// <summary>
+    /// Request password reset link 
     /// </summary>
     [HttpPost("forgot-password")]
     [ProducesResponseType(typeof(BaseResponse<string>), StatusCodes.Status200OK)]

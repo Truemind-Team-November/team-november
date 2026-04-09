@@ -32,7 +32,19 @@ public class CourseBrowseRepository : ICourseBrowseRepository
                 .ToListAsync()
             : [];
 
+        var reviewSummaries = await _context.CourseReviews
+            .AsNoTracking()
+            .GroupBy(item => item.CourseId)
+            .Select(group => new
+            {
+                CourseId = group.Key,
+                AverageRating = group.Average(item => item.Rating),
+                ReviewCount = group.Count()
+            })
+            .ToListAsync();
+
         var progressByCourseId = progresses.ToDictionary(item => item.CourseId);
+        var reviewsByCourseId = reviewSummaries.ToDictionary(item => item.CourseId);
 
         var query = courses.AsEnumerable();
 
@@ -68,6 +80,10 @@ public class CourseBrowseRepository : ICourseBrowseRepository
                     course.ThumbnailUrl,
                     course.Instructor?.FullName ?? "Unknown",
                     course.Lessons.Count,
+                    reviewsByCourseId.TryGetValue(course.Id, out var reviewSummary)
+                        ? Math.Round((decimal)reviewSummary.AverageRating, 1)
+                        : 0,
+                    reviewSummary?.ReviewCount ?? 0,
                     progress != null,
                     progress?.Percentage >= 100,
                     Math.Round(progress?.Percentage ?? 0, 1)
@@ -103,6 +119,17 @@ public class CourseBrowseRepository : ICourseBrowseRepository
         var assignmentsCount = await _context.Assignments
             .AsNoTracking()
             .CountAsync(item => item.CourseId == courseId);
+
+        var reviewSummary = await _context.CourseReviews
+            .AsNoTracking()
+            .Where(item => item.CourseId == courseId)
+            .GroupBy(item => item.CourseId)
+            .Select(group => new
+            {
+                AverageRating = group.Average(item => item.Rating),
+                ReviewCount = group.Count()
+            })
+            .FirstOrDefaultAsync();
 
         var instructorRoleRequest = await _context.InstructorRoleRequests
             .AsNoTracking()
@@ -161,11 +188,32 @@ public class CourseBrowseRepository : ICourseBrowseRepository
                 instructorRoleRequest?.Bio
             ),
             Math.Round(progress?.Percentage ?? 0, 1),
+            reviewSummary == null ? 0 : Math.Round((decimal)reviewSummary.AverageRating, 1),
+            reviewSummary?.ReviewCount ?? 0,
             progress != null,
             course.Lessons.Count,
             includes,
             modules,
             firstIncompleteLesson?.Id
         );
+    }
+
+    public async Task<IReadOnlyCollection<CourseReviewResponse>> GetCourseReviewsAsync(Guid courseId)
+    {
+        return await _context.CourseReviews
+            .AsNoTracking()
+            .Include(item => item.User)
+            .Where(item => item.CourseId == courseId)
+            .OrderByDescending(item => item.UpdatedAt ?? item.CreatedAt)
+            .Select(item => new CourseReviewResponse(
+                item.Id,
+                item.CourseId,
+                item.UserId,
+                item.User.FullName,
+                item.User.PublicId,
+                item.Rating,
+                item.Comment,
+                item.UpdatedAt ?? item.CreatedAt))
+            .ToListAsync();
     }
 }

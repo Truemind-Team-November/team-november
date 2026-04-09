@@ -68,3 +68,4 @@ obj/
 .vscode/
 appsettings.*.json
 !appsettings.json
+/Backend/.qwen

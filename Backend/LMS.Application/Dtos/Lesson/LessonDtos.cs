@@ -7,6 +7,7 @@ public record CreateLessonRequest(Guid CourseId, string Title, int Order, string
 public record AddLessonContentRequest(Guid LessonId, ContentType ContentType, string? Title, string? ContentUrl, string? TextContent);
 public record LessonResponse(Guid Id, Guid CourseId, string Title, string? Description, int? EstimatedMinutes, int Order, int ContentCount);
 public record SaveLessonNoteRequest(string Content);
+public record UpdateLessonPlaybackRequest(int PlaybackPositionSeconds, int? PlaybackDurationSeconds);
 public record LessonPlayerContentResponse(Guid Id, ContentType ContentType, string? Title, string? Url, string? TextContent);
 public record LessonPlayerSidebarItemResponse(Guid LessonId, string Title, int Order, int? EstimatedMinutes, bool IsCompleted, bool IsLocked, bool IsCurrent);
 public record LessonNoteResponse(Guid Id, string Content, DateTime UpdatedAt);
@@ -19,6 +20,8 @@ public record LessonPlayerResponse(
     int LessonOrder,
     double ProgressPercentage,
     bool IsCompleted,
+    int PlaybackPositionSeconds,
+    int? PlaybackDurationSeconds,
     Guid? PreviousLessonId,
     Guid? NextLessonId,
     IReadOnlyCollection<LessonPlayerContentResponse> Contents,
