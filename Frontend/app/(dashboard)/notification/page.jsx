@@ -18,16 +18,26 @@ const iconMap = {
 };
 
 function formatTime(dateString) {
-  const date = new Date(dateString);
-  const now = new Date("2026-03-31T15:00:00Z"); // Using current approximate time as base
-  const diffInHours = Math.floor((now - date) / (1000 * 60 * 60));
-
-  if (diffInHours < 1) return "Just now";
-  if (diffInHours < 24)
-    return `${diffInHours} hour${diffInHours > 1 ? "s" : ""} ago`;
-
+  if (!dateString) return "Just now";
+  const date = new Date(dateString).getTime();
+  const now = new Date().getTime();
+  if (isNaN(date)) return "Just now";
+  
+  const diffInMs = now - date;
+  if (diffInMs < 0) return "Just now";
+  
+  const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+  if (diffInMinutes < 1) return "Just now";
+  if (diffInMinutes === 1) return "1 min ago";
+  if (diffInMinutes < 60) return `${diffInMinutes} mins ago`;
+  
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours === 1) return "1 hour ago";
+  if (diffInHours < 24) return `${diffInHours} hours ago`;
+  
   const diffInDays = Math.floor(diffInHours / 24);
-  return `${diffInDays} day${diffInDays > 1 ? "s" : ""} ago`;
+  if (diffInDays === 1) return "1 day ago";
+  return `${diffInDays} days ago`;
 }
 
 function NotificationItem({ notif, onMarkRead }) {

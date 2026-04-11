@@ -51,9 +51,9 @@ export default function LoginPage() {
       const response = await client.post("/auth/login", formData);
       const authPayload = response.data?.data;
 
-      if (response.data.success && authPayload?.token) {
-        storeAuthSession(authPayload);
-        setMessage("Login successful! Redirecting...");
+      if (response.data.success && response.data.data.token) {
+        localStorage.setItem("token", response.data.data.token);
+        localStorage.setItem("userName", `${response.data.data.firstName} ${response.data.data.lastName || ''}`.trim());
         window.location.href = "/dashboard";
       }
     } catch (error) {
@@ -73,7 +73,8 @@ export default function LoginPage() {
       });
 
       if (response.data.success) {
-        storeAuthSession(response.data.data);
+        localStorage.setItem("token", response.data.data.token);
+        localStorage.setItem("userName", `${response.data.data.firstName} ${response.data.data.lastName || ''}`.trim());
         window.location.href = "/dashboard";
       }
     } catch (error) {
