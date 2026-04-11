@@ -30,7 +30,7 @@ export default function LoginPage() {
 
       if (response.data.success && response.data.data.token) {
         localStorage.setItem("token", response.data.data.token);
-        localStorage.setItem("userName", response.data.data.firstName);
+        localStorage.setItem("userName", `${response.data.data.firstName} ${response.data.data.lastName || ''}`.trim());
         window.location.href = "/dashboard";
       }
     } catch (error) {
@@ -54,7 +54,7 @@ export default function LoginPage() {
 
       if (response.data.success) {
         localStorage.setItem("token", response.data.data.token);
-        localStorage.setItem("userName", response.data.data.firstName);
+        localStorage.setItem("userName", `${response.data.data.firstName} ${response.data.data.lastName || ''}`.trim());
         window.location.href = "/dashboard";
       }
     } catch (error) {
