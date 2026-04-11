@@ -37,6 +37,7 @@ public record UserProfileResponse(
     string PublicId,
     string? ProfileImageUrl,
     string Headline,
+    string Role,
     IReadOnlyCollection<ProfileBadgeResponse> Badges,
     PersonalInformationResponse PersonalInformation,
     LearningSummaryResponse LearningSummary,
