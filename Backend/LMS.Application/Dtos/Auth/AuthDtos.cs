@@ -7,6 +7,7 @@ public record RegisterRequest(
     string LastName,
     string Email,
     string Discipline,
+    string? Location,
     string Password,
     string ConfirmPassword
 );

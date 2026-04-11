@@ -56,6 +56,7 @@ public class ProfileRepository : IProfileRepository
             user.PublicId,
             user.ProfileImageUrl,
             BuildHeadline(user),
+            user.Role.ToString(),
             badges,
             new PersonalInformationResponse(
                 user.FullName,

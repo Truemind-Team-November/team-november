@@ -69,3 +69,4 @@ obj/
 appsettings.*.json
 !appsettings.json
 /Backend/.qwen
+/Backend/QWEN.md
