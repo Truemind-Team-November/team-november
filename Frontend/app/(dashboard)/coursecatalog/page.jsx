@@ -1,15 +1,41 @@
+"use client";
+import { useState, useEffect } from "react";
 import CourseCard from "@/components/CourseCard";
 import { DarkSunIcon, LightningIcon, PaletteIcon } from "@/components/Icons";
 import Link from "next/link";
+import client from "@/lib/client";
 
 export default function CourseCatalog() {
-  
+  const [userDiscipline, setUserDiscipline] = useState("");
+  const [activeTab, setActiveTab] = useState("All courses");
+  const [loading, setLoading] = useState(true);
+
+  // 1. Fetch User Profile to get the Discipline
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await client.get("/Profile/me");
+        const discipline = response.data?.data?.personalInformation?.discipline || "";
+        setUserDiscipline(discipline);
+        
+        // Auto-set the active tab based on discipline if possible
+        if (discipline.toLowerCase().includes("design")) setActiveTab("Design");
+        else if (discipline.toLowerCase().includes("engineer")) setActiveTab("Engineering");
+      } catch (err) {
+        console.error("Error fetching profile for catalog:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProfile();
+  }, []);
+
   const courses = [
     {
       title: "UI/UX Fundamentals",
-      category: "UI/UX DESIGN",
-      description:
-        "Learn the core principles of user interface design and experience from scratch",
+      category: "Design", // Normalized category for filtering
+      displayCategory: "UI/UX DESIGN",
+      description: "Learn the core principles of user interface design and experience from scratch",
       lessons: 12,
       duration: "-6h",
       author: "Emeka Obi",
@@ -21,9 +47,9 @@ export default function CourseCatalog() {
     },
     {
       title: "Product Thinking",
-      category: "PRODUCT MANAGEMENT",
-      description:
-        "Understand how to think like a product manager and solve user problems effectively",
+      category: "Product",
+      displayCategory: "PRODUCT MANAGEMENT",
+      description: "Understand how to think like a product manager and solve user problems effectively",
       lessons: 8,
       duration: "-6h",
       author: "Segun Obe",
@@ -35,9 +61,9 @@ export default function CourseCatalog() {
     },
     {
       title: "Agile & Scrum Mastery",
-      category: "ENGINEERING",
-      description:
-        "Master modern agile methodologies and learn to ship products fast and collaboratively",
+      category: "Engineering",
+      displayCategory: "ENGINEERING",
+      description: "Master modern agile methodologies and learn to ship products fast and collaboratively",
       lessons: 10,
       duration: "-5h",
       author: "Tunde Ige",
@@ -48,9 +74,9 @@ export default function CourseCatalog() {
     },
     {
       title: "Data-Driven Decision Making",
-      category: "DATA SCIENCE",
-      description:
-        "Use data to drive product decisions, identify trends and validate hypothesis",
+      category: "Data Science",
+      displayCategory: "DATA SCIENCE",
+      description: "Use data to drive product decisions, identify trends and validate hypothesis",
       lessons: 15,
       duration: "-5h",
       author: "Ife Babs",
@@ -60,9 +86,9 @@ export default function CourseCatalog() {
     },
     {
       title: "Communications & Presentation",
-      category: "SOFT SKILLS",
-      description:
-        "Build confidence, clarity, and storytelling skills for professional settings",
+      category: "Business",
+      displayCategory: "SOFT SKILLS",
+      description: "Build confidence, clarity, and storytelling skills for professional settings",
       lessons: 6,
       duration: "-5h",
       author: "Herny Jaji",
@@ -72,9 +98,9 @@ export default function CourseCatalog() {
     },
     {
       title: "Building APIs With Node.js",
-      category: "BACKEND DEVELOPMENT",
-      description:
-        "Develop powerful systems and APIs that run behind the scenes",
+      category: "Engineering",
+      displayCategory: "BACKEND DEVELOPMENT",
+      description: "Develop powerful systems and APIs that run behind the scenes",
       lessons: 10,
       duration: "-5h",
       author: "Adeola Kore",
@@ -84,7 +110,8 @@ export default function CourseCatalog() {
     },
     {
       title: "Design Principles",
-      category: "GRAPHICS DESIGN",
+      category: "Design",
+      displayCategory: "GRAPHICS DESIGN",
       description: "Learn to create stunning visuals and user friendly designs",
       lessons: 10,
       duration: "-9h",
@@ -95,7 +122,8 @@ export default function CourseCatalog() {
     },
     {
       title: "HTML & CSS Fundamentals",
-      category: "FRONTEND DEVELOPMENT",
+      category: "Engineering",
+      displayCategory: "FRONTEND DEVELOPMENT",
       description: "Build responsive and interactive user interfaces for web",
       lessons: 11,
       duration: "-8h",
@@ -106,9 +134,9 @@ export default function CourseCatalog() {
     },
     {
       title: "Git & Version Control",
-      category: "ENGINEERING",
-      description:
-        "Learn how to collaborate on code using Git, Github, and branching strategies",
+      category: "Engineering",
+      displayCategory: "ENGINEERING",
+      description: "Learn how to collaborate on code using Git, Github, and branching strategies",
       lessons: 13,
       duration: "-5h",
       author: "Olumide Obe",
@@ -127,45 +155,62 @@ export default function CourseCatalog() {
     "Business",
   ];
 
+  // 2. Filter Logic: If "All courses" is selected, we show all. Otherwise, we match the tab name.
+  const filteredCourses = activeTab === "All courses" 
+    ? courses 
+    : courses.filter(course => course.category === activeTab);
+
   return (
     <main className="min-h-screen bg-[#0f172a] p-8">
       {/* Page Header */}
-      <div className="mb-6">
+      <div className="mb-2 flex items-center justify-between">
         <h1 className="text-xl font-bold text-white">Course Catalog</h1>
+        {!loading && userDiscipline && (
+          <div className="text-[10px] bg-blue-500/20 text-blue-400 px-3 py-1 rounded-full border border-blue-500/30 uppercase font-bold tracking-widest">
+            {userDiscipline} Track
+          </div>
+        )}
       </div>
 
       {/* Tab Bar */}
-      <div className="flex items-center justify-between border-b border-white/10 mb-8">
-        <div className="flex gap-1">
-          {tabs.map((tab, i) => (
+      <div className="flex items-center justify-between border-b border-white/10 mb-8 overflow-x-auto">
+        <div className="flex gap-1 min-w-max">
+          {tabs.map((tab) => (
             <button
               key={tab}
-              className={`px-4 py-3 text-sm font-medium transition-colors duration-150
-                ${
-                  i === 0
-                    ? "text-white border-b-2 border-blue-400 -mb-px"
-                    : "text-slate-400 hover:text-white"
-                }`}
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 py-3 text-sm font-medium transition-colors duration-150 relative
+                ${activeTab === tab ? "text-white" : "text-slate-400 hover:text-white"}`}
             >
               {tab}
+              {activeTab === tab && (
+                <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-400"></div>
+              )}
             </button>
           ))}
         </div>
 
         {/* My Courses link */}
-        <button className="flex items-center gap-1.5 text-slate-300 text-sm font-medium hover:text-white transition-colors mb-2">
-          <span className="text-blue-400">▶</span>
-          My Courses
-        </button>
+        <Link href="/dashboard" className="flex items-center gap-1.5 text-slate-300 text-sm font-medium hover:text-white transition-colors mb-2 whitespace-nowrap ml-4">
+          <span className="text-blue-400 text-[10px]">▶</span>
+          Go to Dashboard
+        </Link>
       </div>
 
       {/* Course Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {courses.map((course, index) => (
-          <Link key={index}  href={"/lesson"}>
-            <CourseCard course={course} />
-          </Link>
-        ))}
+        {filteredCourses.length > 0 ? (
+          filteredCourses.map((course, index) => (
+            <Link key={index} href={"/lesson"}>
+              {/* Note: I added 'category: course.displayCategory' inside the mapping to match your UI component expectations */}
+              <CourseCard course={{...course, category: course.displayCategory}} />
+            </Link>
+          ))
+        ) : (
+          <div className="col-span-full py-20 text-center">
+            <p className="text-slate-500 italic">No courses available in this category yet.</p>
+          </div>
+        )}
       </div>
     </main>
   );

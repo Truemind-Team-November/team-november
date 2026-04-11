@@ -307,8 +307,8 @@ export default function ProfilePage() {
               <h2 className="mb-5 text-[33px] font-bold leading-tight">Learning Summary</h2>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="rounded-2xl border border-[#D6E3F5] p-6 text-center">
-                  <div className="text-[33px] font-bold text-[#09C398]">{profile.courses}</div>
-                  <div className="text-[23px] text-white">Courses</div>
+                  <div className="text-[33px] font-bold text-[#09C398]">1</div>
+                  <div className="text-[23px] text-white">Course(s)</div>
                 </div>
                 <div className="rounded-2xl border border-[#D6E3F5] p-6 text-center">
                   <div className="text-[33px] font-bold text-[#0950C3]">{profile.avgProgress}%</div>

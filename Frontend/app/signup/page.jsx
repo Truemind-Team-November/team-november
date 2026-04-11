@@ -49,7 +49,8 @@ export default function Signup() {
 
     try {
       console.log(formData);      
-      const response = await client.post('/auth/register', formData);
+      const response = await client.post('/Auth/register', formData);
+      console.log(response);      
       setMessage("Registration Successful! Redirecting in 2 seconds...");
       setErrors({});
 

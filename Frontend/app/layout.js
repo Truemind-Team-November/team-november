@@ -21,7 +21,8 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   // Replace this string with your actual Client ID from Google Cloud Console
-  const GOOGLE_CLIENT_ID = "830459513315-6b5321i2vs1a3vj4uahhc2qrsm47pics.apps.googleusercontent.com";
+  // const GOOGLE_CLIENT_ID = "830459513315-6b5321i2vs1a3vj4uahhc2qrsm47pics.apps.googleusercontent.com";
+  const GOOGLE_CLIENT_ID = "673257819625-88m4rr41v05cnj77gnlib8t9kpliql72.apps.googleusercontent.com";
 
   return (
     <html lang="en">

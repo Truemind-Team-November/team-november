@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -219,7 +218,7 @@ async function markNotificationRead(notificationId) {
   return response.json();
 }
 export default function NotificationsPage() {
-  const [notificationList, setNotificationList] = useState(notifications);
+  const [notificationList, setNotificationList] = useState([]);
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
