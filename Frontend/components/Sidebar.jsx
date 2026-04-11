@@ -12,16 +12,17 @@ const navSections = [
     title: "MAIN",
     items: [
       { icon: "/assets/sidebar/dashboard_icon.svg", label: "Dashboard", href: "/dashboard" },
-      { icon: "/assets/sidebar/course_catalog_icon.svg", label: "Course Catalog", href: "/coursecatalog" },
-      { icon: "/assets/sidebar/assignment_icon.svg", label: "Assignments", href: "/assignments" },
-      { icon: "/assets/sidebar/my_progress_icon.svg", label: "My Progress", href: "/progress" },
+      { icon: "/assets/sidebar/course_catalog_icon.svg", label: "Course Catalog", href: "/coursecatalog", hideForAdmins: true },
+      { icon: "/assets/sidebar/assignment_icon.svg", label: "Assignments", href: "/assignments", hideForAdmins: true },
+      { icon: "/assets/sidebar/my_progress_icon.svg", label: "My Progress", href: "/progress", hideForAdmins: true },
     ],
   },
   {
     title: "COMMUNITY",
     items: [
       { icon: "/assets/sidebar/discussions_icon.svg", label: "Discussions", href: "/discussion" },
-      { icon: "/assets/sidebar/my_team_icon.svg", label: "My Team", href: "/my-team" },
+      { icon: "/assets/sidebar/my_team_icon.svg", label: "Users", href: "/users", adminOnly: true },
+      { icon: "/assets/sidebar/my_team_icon.svg", label: "My Team", href: "/my-team", hideForAdmins: true },
       { icon: "/assets/sidebar/notification_icon.svg", label: "Notifications", href: "/notification" },
     ],
   },
@@ -39,8 +40,9 @@ const Sidebar = ({ badges = {} }) => {
   const [userData, setUserData] = useState({
     name: "User",
     initials: "U",
-    publicId: "TMI-047", 
-    discipline: "UI/UX Intern" 
+    publicId: "TMI-047",
+    discipline: "UI/UX Intern",
+    role: "Learner" 
   });
   const [loading, setLoading] = useState(true);
 
@@ -51,37 +53,22 @@ const Sidebar = ({ badges = {} }) => {
         if (response.data.success) {
           const profile = response.data.data;
           const fullName = profile.fullName || "User";
-          
-          const initials = fullName
-            .split(' ')
-            .map(n => n[0])
-            .join('')
-            .toUpperCase()
-            .substring(0, 2);
+          const initials = fullName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
 
           setUserData({
             name: fullName,
             initials: initials,
             publicId: profile.publicId || "TMI-047",
-            discipline: profile.personalInformation?.discipline || "UI/UX Intern"
+            discipline: profile.personalInformation?.discipline || "UI/UX Intern",
+            role: profile.role || "Learner"
           });
         }
       } catch (err) {
         console.error("Sidebar fetch error:", err);
-        const storedUser = localStorage.getItem("user");
-        if (storedUser) {
-          const user = JSON.parse(storedUser);
-          setUserData(prev => ({
-            ...prev,
-            name: user.fullName || "User",
-            publicId: user.publicId || "TMI-047"
-          }));
-        }
       } finally {
         setLoading(false);
       }
     };
-
     fetchUserData();
   }, []);
 
@@ -105,6 +92,14 @@ const Sidebar = ({ badges = {} }) => {
 
               <div className="flex flex-col items-start gap-[clamp(4px,1.5vh,20px)] w-full">
                 {section.items.map((item) => {
+                  const isAdmin = userData.role === 'Admin';
+                  
+                  // 1. Hide if it's admin-only and user isn't admin
+                  if (item.adminOnly && !isAdmin) return null;
+
+                  // 2. Hide if it's learner-only and user IS admin
+                  if (item.hideForAdmins && isAdmin) return null;
+
                   const badgeCount = badges[item.label];
                   const showBadge = badgeCount != null && badgeCount > 0;
                   const isActive = pathname === item.href;
@@ -148,6 +143,7 @@ const Sidebar = ({ badges = {} }) => {
         </nav>
       </div>
 
+      {/* Identity Footer */}
       <div className="flex flex-row items-center px-[10px] py-[clamp(8px,1vh,16px)] gap-[10px] w-full border-t-[0.75px] border-[#7D7F82] box-border mt-auto relative">
         <div className="w-[clamp(32px,3vh,48px)] h-[clamp(32px,3vh,48px)] bg-[#0950C3] rounded-full flex items-center justify-center shrink-0">
           <span className="text-[clamp(14px,1.5vh,20px)] font-bold leading-[125%] text-[#FAFCFF]">
