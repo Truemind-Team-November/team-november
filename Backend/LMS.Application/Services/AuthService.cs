@@ -75,8 +75,8 @@ public class AuthService : IAuthService
             hashedPassword,
             UserRole.Learner,
             null,
-            LearnerProfileDefaults.CohortLabel,
-            LearnerProfileDefaults.Location
+            null, // Cohort is assigned by Admin/Instructor later
+            string.IsNullOrWhiteSpace(request.Location) ? null : request.Location.Trim()
         );
 
         await _userRepository.AddAsync(user);
@@ -194,8 +194,8 @@ public class AuthService : IAuthService
                 generatedPassword,
                 UserRole.Learner,
                 null,
-                LearnerProfileDefaults.CohortLabel,
-                LearnerProfileDefaults.Location
+                null, // Cohort is assigned by Admin/Instructor later
+                null // Location is updated by user later
             );
 
             if (!string.IsNullOrWhiteSpace(googleUser.PictureUrl))
