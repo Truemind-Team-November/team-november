@@ -1,10 +1,32 @@
 "use client";
+
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import client from "@/lib/client";
-// 1. Import the standard GoogleLogin component
-import { GoogleLogin } from '@react-oauth/google';
+import { GoogleLogin } from "@react-oauth/google";
+
+const storeAuthSession = (payload) => {
+  if (!payload?.token) return;
+
+  localStorage.setItem("token", payload.token);
+  localStorage.setItem("userName", payload.firstName || "");
+  localStorage.setItem(
+    "user",
+    JSON.stringify({
+      id: payload.id,
+      firstName: payload.firstName,
+      lastName: payload.lastName,
+      fullName: [payload.firstName, payload.lastName].filter(Boolean).join(" "),
+      email: payload.email,
+      role: payload.role,
+      teamId: payload.teamId,
+      teamName: payload.teamName,
+      publicId: payload.publicId,
+      discipline: payload.discipline,
+    })
+  );
+};
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -26,11 +48,12 @@ export default function LoginPage() {
     setMessage("");
 
     try {
-      const response = await client.post('/auth/login', formData);
+      const response = await client.post("/auth/login", formData);
+      const authPayload = response.data?.data;
 
-      if (response.data.success && response.data.data.token) {
-        localStorage.setItem("token", response.data.data.token);
-        localStorage.setItem("userName", response.data.data.firstName);
+      if (response.data.success && authPayload?.token) {
+        storeAuthSession(authPayload);
+        setMessage("Login successful! Redirecting...");
         window.location.href = "/dashboard";
       }
     } catch (error) {
@@ -40,21 +63,17 @@ export default function LoginPage() {
     }
   };
 
-  // 2. Success handler for the standard button
   const handleGoogleSuccess = async (credentialResponse) => {
     setLoading(true);
     setMessage("");
-    try {
-      // credentialResponse.credential is the real JWT ID Token (starts with eyJ...)
-      const payload = {
-        idToken: credentialResponse.credential 
-      };
 
-      const response = await client.post('/Auth/google', payload);
+    try {
+      const response = await client.post("/Auth/google", {
+        idToken: credentialResponse.credential,
+      });
 
       if (response.data.success) {
-        localStorage.setItem("token", response.data.data.token);
-        localStorage.setItem("userName", response.data.data.firstName);
+        storeAuthSession(response.data.data);
         window.location.href = "/dashboard";
       }
     } catch (error) {
@@ -68,10 +87,8 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-[#0B1220] flex items-center justify-center p-6">
       <div className="w-full max-w-6xl grid md:grid-cols-2 rounded-2xl overflow-hidden">
-        
-        {/* LEFT SIDE */}
         <div className="p-10 text-white border-r border-gray-500 hidden md:block">
-          <Image src={"/logo.svg"} alt="logo" width={500} height={500} className="w-20 h-20 mb-5" />
+          <Image src="/logo.svg" alt="logo" width={500} height={500} className="w-20 h-20 mb-5" />
           <h1 className="text-4xl font-bold mb-3">
             Start Your <br /> <span className="text-[#0950C3]">Journey</span> Today
           </h1>
@@ -85,8 +102,8 @@ export default function LoginPage() {
               { icon: "/logo2.png", title: "Progress Tracking", desc: "See your growth in real life" },
               { icon: "/logo3.png", title: "Earn Certificates", desc: "on 100% course completion" },
               { icon: "/logo4.png", title: "Team Collaboration", desc: "Work with cross functional team" },
-            ].map((feature, i) => (
-              <div key={i} className="flex items-start gap-3">
+            ].map((feature, index) => (
+              <div key={index} className="flex items-start gap-3">
                 <Image width={20} height={20} alt="icon" src={feature.icon} className="w-5 h-5 mt-1" />
                 <p>
                   <span className="font-semibold">{feature.title}</span>
@@ -97,12 +114,11 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* RIGHT SIDE */}
         <div className="p-10 text-white">
           <h2 className="text-2xl font-semibold">Welcome back</h2>
           <p className="text-sm text-gray-400 mt-1">
             New to TalentFlow?{" "}
-            <Link href={"/signup"} className="text-blue-500 hover:underline">
+            <Link href="/signup" className="text-blue-500 hover:underline">
               Create an account
             </Link>
           </p>
@@ -139,7 +155,7 @@ export default function LoginPage() {
                 required
               />
               <div className="text-right mt-2">
-                <Link href="/forgot-password" size="sm" className="text-blue-500 text-sm hover:underline">
+                <Link href="/forgot-password" className="text-blue-500 text-sm hover:underline">
                   Forgot password?
                 </Link>
               </div>
@@ -148,7 +164,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 py-3 rounded-lg hover:bg-blue-700 transition font-semibold disabled:opacity-50"
+              className="w-full bg-blue-600 py-3 rounded-lg hover:bg-blue-700 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? "Signing in..." : "Sign in"}
             </button>
@@ -159,7 +175,6 @@ export default function LoginPage() {
               <hr className="flex-1 border-gray-600" />
             </div>
 
-            {/* 3. The Functional Google Button */}
             <div className="w-full flex justify-center">
               <GoogleLogin
                 onSuccess={handleGoogleSuccess}
@@ -171,8 +186,8 @@ export default function LoginPage() {
               />
             </div>
 
-            <button 
-              type="button" 
+            <button
+              type="button"
               className="w-full bg-gray-700 py-3 rounded-lg opacity-70 cursor-not-allowed flex items-center justify-center gap-2"
             >
               <Image width={20} height={20} alt="sos" src="/sos.png" className="w-5 h-5" />
