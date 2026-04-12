@@ -251,6 +251,13 @@ export default function NotificationsPage() {
     loadNotifications();
   }, []);
 
+  // Sync state to localStorage for Sidebar instant updates
+  useEffect(() => {
+    localStorage.setItem("unreadNotificationCount", unreadNotificationCount);
+    // Dispatch storage event manually for same-tab updates if needed
+    window.dispatchEvent(new Event("storage"));
+  }, [unreadNotificationCount]);
+
   const newCount = notificationList.filter((n) => !n.isRead).length;
 
   function handleMarkRead(notificationId) {
@@ -327,7 +334,7 @@ export default function NotificationsPage() {
 
                 {unreadNotificationCount > 0 && (
                   <span
-                    className="absolute -top-2 -right-2 flex items-center justify-center rounded-full bg-[#0950C3] text-white text-xs font-bold"
+                    className="absolute -top-2 -right-2 flex items-center justify-center rounded-full bg-red-600 text-white text-xs font-bold"
                     style={{ width: 22, height: 22, fontSize: 11 }}
                   >
                     {unreadNotificationCount}

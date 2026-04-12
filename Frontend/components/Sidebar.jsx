@@ -43,6 +43,53 @@ const Sidebar = ({ badges = {} }) => {
     discipline: "UI/UX Intern" 
   });
   const [loading, setLoading] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const fetchUnreadCount = async () => {
+    try {
+      const response = await client.get("/Notification/unread-count");
+      if (response.data.success) {
+        const count = response.data.data;
+        setUnreadCount(count);
+        localStorage.setItem("unreadNotificationCount", count);
+      }
+    } catch (err) {
+      console.error("Failed to fetch unread count:", err);
+    }
+  };
+
+  useEffect(() => {
+    // Initial fetch
+    fetchUnreadCount();
+
+    // Setup polling every 30 seconds
+    const interval = setInterval(fetchUnreadCount, 30000);
+
+    // Listen for optimistic updates from other pages
+    const handleStorageChange = (e) => {
+      if (e.key === "unreadNotificationCount") {
+        setUnreadCount(parseInt(e.newValue || "0", 10));
+      }
+    };
+
+    // Also check on component mount/focus
+    const checkFreshCount = () => {
+      const stored = localStorage.getItem("unreadNotificationCount");
+      if (stored !== null) {
+        setUnreadCount(parseInt(stored, 10));
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("focus", checkFreshCount);
+    checkFreshCount();
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("focus", checkFreshCount);
+    };
+  }, []);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -105,7 +152,13 @@ const Sidebar = ({ badges = {} }) => {
 
               <div className="flex flex-col items-start gap-[clamp(4px,1.5vh,20px)] w-full">
                 {section.items.map((item) => {
-                  const badgeCount = badges[item.label];
+                  let badgeCount = badges[item.label];
+                  
+                  // Inject dynamic unread count for Notifications
+                  if (item.label === "Notifications") {
+                    badgeCount = unreadCount;
+                  }
+
                   const showBadge = badgeCount != null && badgeCount > 0;
                   const isActive = pathname === item.href;
 
@@ -133,7 +186,7 @@ const Sidebar = ({ badges = {} }) => {
                       </div>
 
                       {showBadge && (
-                        <div className="flex items-center justify-center w-[clamp(20px,2.5vh,32px)] h-[clamp(20px,2.5vh,32px)] bg-[#0950C3] rounded-full shrink-0">
+                        <div className="flex items-center justify-center w-[clamp(20px,2.5vh,32px)] h-[clamp(20px,2.5vh,32px)] bg-red-600 rounded-full shrink-0">
                           <span className="text-[clamp(12px,1.6vh,16px)] font-bold leading-[125%] text-center text-white">
                             {badgeCount}
                           </span>
