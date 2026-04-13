@@ -50,6 +50,7 @@ const Sidebar = ({ badges = {} }) => {
     const fetchUserData = async () => {
       try {
         const response = await client.get("/Profile/me");
+        // console.log(response);
         if (response.data.success) {
           const profile = response.data.data;
           const fullName = profile.fullName || "User";

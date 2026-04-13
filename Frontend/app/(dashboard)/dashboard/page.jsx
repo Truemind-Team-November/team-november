@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ThemeColors } from "@/components/ThemeColors";
 import client from "@/lib/client";
+import RequestInstructorModal from "@/components/RequestInstructorModal";
 
 export default function Dashboard() {
   const router = useRouter();
