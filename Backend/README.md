@@ -75,7 +75,6 @@ Set these in `appsettings.json` or environment variables:
 "ConnectionStrings": {
   "DefaultConnection": "Host=localhost;Port=5432;Database=lmsdb;Username=postgres;Password=your_password"
 }
-```
 
 ### JWT
 
@@ -141,3 +140,4 @@ http://localhost:5000/swagger
 - API versioning
 - Caching
 - Real-time notifications
+- Structured Logging
