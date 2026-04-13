@@ -248,13 +248,26 @@ export default function DiscussionThread() {
           </div>
         </div>
 
+<<<<<<< HEAD
         {/* Reply Box */}
         <div className="mt-8 ml-4 md:ml-12 pt-4">
           <div className="border border-[#7D7F82]/40 focus-within:border-[#0950C3] rounded-2xl bg-black/10 overflow-hidden transition-all shadow-inner">
+=======
+      </div>
+
+      {/* Reply Sticky Box */}
+      <div 
+        className="sticky bottom-0 -mx-4 md:-mx-8 px-4 md:px-8 py-4 md:py-6 border-t border-[#7D7F82]/30 mt-8 z-50 shadow-[0_-20px_30px_-15px_rgba(0,0,0,0.3)]"
+        style={{ backgroundColor: ThemeColors.bgBlue }}
+      >
+        <div className="max-w-4xl mx-auto">
+          <div className="ml-4 md:ml-12 border border-[#7D7F82]/40 focus-within:border-[#0950C3] rounded-2xl bg-black/10 overflow-hidden transition-all shadow-inner flex items-end p-2 pl-4 pr-2 pb-2 gap-3">
+>>>>>>> 8a54e0abe85e9f5f052191fc566a85de05539053
             <textarea 
               value={replyContent}
               onChange={(e) => setReplyContent(e.target.value)}
               placeholder="Write a thoughtful response..."
+<<<<<<< HEAD
               className="w-full bg-transparent text-white p-5 outline-none resize-y min-h-[140px] text-[15px] placeholder:text-zinc-600"
             />
             <div className="flex justify-end p-4 border-t border-[#7D7F82]/30 bg-black/20">
@@ -266,6 +279,18 @@ export default function DiscussionThread() {
                 Reply
               </button>
             </div>
+=======
+              rows={3}
+              className="flex-1 bg-transparent text-white pt-3 pb-2 outline-none resize-none min-h-[72px] max-h-[150px] text-[15px] placeholder:text-zinc-600 self-stretch"
+            />
+            <button 
+              onClick={handleReply}
+              disabled={isReplying || !replyContent.trim()}
+              className="bg-[#0950C3] hover:bg-[#3E5C8E] disabled:bg-slate-700 disabled:cursor-not-allowed text-white px-6 h-[42px] rounded-xl text-sm font-bold transition-all shadow-sm shrink-0 mb-0.5 mr-0.5"
+            >
+              Reply
+            </button>
+>>>>>>> 8a54e0abe85e9f5f052191fc566a85de05539053
           </div>
         </div>
       </div>
