@@ -558,6 +558,11 @@ export default function Dashboard() {
           </div>
         </div>
       </section>
+      <RequestInstructorModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={() => alert("Application submitted successfully!")}
+      />
     </main>
   );
 }
