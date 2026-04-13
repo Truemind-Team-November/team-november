@@ -25,6 +25,7 @@ export default function AdminUsersPage() {
                 if (profileRes.data?.success && profileRes.data.data.role === 'Admin') {
                     setIsAuthorized(true);
                     const usersRes = await client.get('/Users');
+                    console.log(usersRes);                    
                     if (usersRes.data?.success) {
                         setUsers(usersRes.data.data);
                     }
@@ -115,7 +116,6 @@ export default function AdminUsersPage() {
                                     <th className="p-4 font-bold">Name & Email</th>
                                     <th className="p-4 font-bold">Role</th>
                                     <th className="p-4 font-bold">Discipline</th>
-                                    <th className="p-4 font-bold">Cohort</th>
                                     <th className="p-4 font-bold">Location</th>
                                 </tr>
                             </thead>
@@ -139,7 +139,6 @@ export default function AdminUsersPage() {
                                             </span>
                                         </td>
                                         <td className="p-4 text-zinc-400">{user.discipline || "N/A"}</td>
-                                        <td className="p-4 text-zinc-400">{user.cohortLabel || "N/A"}</td>
                                         <td className="p-4 text-zinc-400">{user.location || "Remote"}</td>
                                     </tr>
                                 ))}

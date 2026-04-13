@@ -10,6 +10,7 @@ export default function Signup() {
     firstName: "",
     lastName: "",
     email: "",
+    location: "", // Added address to state
     discipline: "UI/UX Design",
     password: "",
     confirmPassword: "",
@@ -48,9 +49,9 @@ export default function Signup() {
     }
 
     try {
-      console.log(formData);      
+      console.log(formData);
       const response = await client.post('/Auth/register', formData);
-      console.log(response);      
+      console.log(response);
       setMessage("Registration Successful! Redirecting in 2 seconds...");
       setErrors({});
 
@@ -58,6 +59,7 @@ export default function Signup() {
         firstName: "",
         lastName: "",
         email: "",
+        location: "", // Reset address field
         discipline: "UI/UX Design",
         password: "",
         confirmPassword: "",
@@ -66,8 +68,31 @@ export default function Signup() {
       setTimeout(() => window.location.href = "/login", 2000);
 
     } catch (error) {
-      if (error.response && error.response.status === 400) {
-        setErrors(error.response.data.errors || {});
+      if (error.response) {
+        const { status, data } = error.response;
+
+        if (status === 400) {
+          // Handle field-specific validation errors
+          setErrors(data.errors || {});
+
+          // Handle "Email already exists" or other specific logic messages
+          if (data.message && data.message.includes("Email")) {
+            setErrors((prev) => ({
+              ...prev,
+              Email: [data.message],
+            }));
+          }
+        } else if (status === 409 || !data.success) {
+          // If the email exists, some APIs return 409 Conflict or 400 with a message
+          if (data.message && data.message.includes("Email")) {
+            setErrors((prev) => ({
+              ...prev,
+              Email: [data.message],
+            }));
+          } else {
+            setMessage(data.message || "An error occurred.");
+          }
+        }
       } else {
         setMessage("Server error. Please try again later.");
       }
@@ -139,7 +164,7 @@ export default function Signup() {
             <Link href={"/login"} className="text-base font-semibold text-blue-600">Log In</Link>
           </div>
 
-          {/* Status Message for non-field specific errors (like server 500) */}
+          {/* Status Message */}
           {message && <p className="text-sm my-2 text-blue-400">{message}</p>}
 
           {/* ── First Name + Last Name ── */}
@@ -190,6 +215,23 @@ export default function Signup() {
             />
             {errors.Email && (
               <p className="text-red-500 text-xs mt-1">{errors.Email[0]}</p>
+            )}
+          </div>
+
+          {/* ── Home Address ── */}
+          <div className="mb-4">
+            <label className="text-white text-sm font-semibold block mb-2">Home Address</label>
+            <input
+              type="text"
+              name="location"
+              value={formData.address}
+              onChange={handleChange}
+              placeholder="123 Talent Street, Abuja"
+              className={`w-full border ${errors.Address ? 'border-red-500' : 'border-gray-300'} bg-transparent text-white text-sm rounded-lg px-3 py-2.5 outline-none`}
+              required
+            />
+            {errors.Address && (
+              <p className="text-red-500 text-xs mt-1">{errors.Address[0]}</p>
             )}
           </div>
 

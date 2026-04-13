@@ -24,7 +24,6 @@ export default function Dashboard() {
         cohortLabel: 'Cohort 3',
     });
 
-    // Helper to format "time ago"
     const formatTimeAgo = (dateString) => {
         if (!dateString) return "Just now";
         const now = new Date();
@@ -36,20 +35,22 @@ export default function Dashboard() {
         if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
         if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
         
-        return past.toLocaleDateString(); // Fallback to date for old items
+        return past.toLocaleDateString();
     };
 
     useEffect(() => {
         const fetchDashboardData = async () => {
             try {
+                // 1. Fetch Profile to check authentication
                 const profileRes = await client.get('/Profile/me');
-                const profile = profileRes.data?.data;
-
-                if (!profile) {
+                
+                // If API returns success: false or missing data, redirect
+                if (!profileRes.data?.success || !profileRes.data?.data) {
                     router.push("/signup");
                     return;
                 }
 
+                const profile = profileRes.data.data;
                 const role = profile.role || 'Learner';
                 const name = profile.fullName || 'User';
                 const discipline = profile.personalInformation?.discipline || 'General Track';
@@ -60,6 +61,7 @@ export default function Dashboard() {
                 setUserBadges(profile.badges || []);
                 setLearnerData(profile);
 
+                // 2. Fetch Dashboard Metrics based on Role
                 let endpoint = role === 'Admin' ? '/Dashboard/admin' : role === 'Instructor' ? '/Dashboard/instructor' : '/Dashboard/me';
                 const dashRes = await client.get(endpoint);
                 const payload = dashRes.data?.data;
@@ -100,7 +102,9 @@ export default function Dashboard() {
                 });
 
             } catch (err) {
-                console.error("Dashboard Error:", err);
+                console.error("Dashboard Auth Error:", err);
+                // Redirect to signup on 401 or any fetch failure
+                router.push("/signup");
             } finally {
                 setLoading(false);
             }
@@ -115,7 +119,7 @@ export default function Dashboard() {
             <div style={{ backgroundColor: ThemeColors.bgBlue }} className="min-h-screen flex items-center justify-center text-white font-sans">
                 <div className="flex flex-col items-center gap-4">
                     <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                    <div className="animate-pulse font-medium tracking-wide text-sm">Initializing dashboard...</div>
+                    <div className="animate-pulse font-medium tracking-wide text-sm">Verifying Session...</div>
                 </div>
             </div>
         );
@@ -144,7 +148,7 @@ export default function Dashboard() {
                 {/* Metrics Grid */}
                 <div className="grid md:grid-cols-4 grid-cols-2 gap-3 mb-5">
                     {stats.map((s, i) => (
-                        <div key={i} className="border border-slate-400 rounded-xl p-3.5 shadow-sm">
+                        <div key={i} className="border border-slate-400 rounded-xl p-3.5 bg-white/5 shadow-sm">
                             <div className="text-sm mb-2 p-1 rounded-sm bg-gray-200/10 w-fit">{s.icon}</div>
                             <div className="text-[26px] font-bold text-white mb-0.5">{s.value}</div>
                             <div className="text-[11px] text-zinc-400 font-medium mb-2">{s.title}</div>
@@ -158,7 +162,7 @@ export default function Dashboard() {
 
                 <div className="grid md:grid-cols-[1.6fr_1fr] gap-4">
                     <div className="flex flex-col gap-4">
-                        <section className="border border-slate-400 rounded-xl md:p-4 p-2">
+                        <section className="border border-slate-400 rounded-xl md:p-4 p-2 bg-white/5">
                             <div className="flex items-center justify-between mb-4 px-2">
                                 <h3 className="text-[14px] font-bold text-white">
                                     {userRole === 'Admin' ? "System Management" : userRole === 'Instructor' ? "Course Management" : "Continue Learning"}
@@ -168,30 +172,30 @@ export default function Dashboard() {
                             <div className="space-y-3">
                                 {userRole === 'Admin' ? (
                                     <>
-                                        <div onClick={() => router.push('/users')} className="border border-slate-400/30 rounded-xl p-3.5 flex items-center justify-between cursor-pointer transition-all group">
+                                        <div onClick={() => router.push('/users')} className="border border-slate-400/30 rounded-xl p-3.5 flex items-center justify-between cursor-pointer transition-all hover:bg-white/5">
                                             <div className="flex items-center gap-3.5 w-full">
                                                 <div className="min-w-[50px] h-[50px] bg-emerald-600/20 border border-emerald-500/30 rounded-xl flex items-center justify-center text-[20px]">👥</div>
                                                 <div className='w-full'>
-                                                    <h4 className="text-[15px] font-bold text-white mb-0.5 transition-colors">User Management</h4>
-                                                    <p className="text-[12px] text-zinc-400">View and manage all registered platform users</p>
+                                                    <h4 className="text-[15px] font-bold text-white mb-0.5">User Management</h4>
+                                                    <p className="text-[12px] text-zinc-400">View and manage all registered members</p>
                                                 </div>
                                             </div>
                                             <div className="px-4 py-1.5 bg-emerald-600/20 text-emerald-400 border border-emerald-600/30 text-[10px] rounded-lg font-bold ml-4 whitespace-nowrap">View All</div>
                                         </div>
 
-                                        <div onClick={() => router.push('/role-requests')} className="border border-slate-400/30 rounded-xl p-3.5 flex items-center justify-between cursor-pointer transition-all group">
+                                        <div onClick={() => router.push('/role-requests')} className="border border-slate-400/30 rounded-xl p-3.5 flex items-center justify-between cursor-pointer transition-all hover:bg-white/5">
                                             <div className="flex items-center gap-3.5 w-full">
                                                 <div className="min-w-[50px] h-[50px] bg-blue-600/20 border border-blue-500/30 rounded-xl flex items-center justify-center text-[20px]">🛡️</div>
                                                 <div className='w-full'>
                                                     <h4 className="text-[15px] font-bold text-white mb-0.5">Instructor Applications</h4>
-                                                    <p className="text-[12px] text-zinc-400">Review pending role transition requests</p>
+                                                    <p className="text-[12px] text-zinc-400">Review pending role requests</p>
                                                 </div>
                                             </div>
                                             <div className="px-4 py-1.5 bg-blue-600/20 text-blue-400 border border-blue-600/30 text-[10px] rounded-lg font-bold ml-4 whitespace-nowrap">Manage</div>
                                         </div>
                                     </>
                                 ) : (
-                                    <div className="border border-slate-400/30 rounded-xl p-3.5 flex items-center justify-between">
+                                    <div className="border border-slate-400/30 rounded-xl p-3.5 flex items-center justify-between bg-white/5">
                                         <div className="flex items-center gap-3.5 w-full">
                                             <div className="min-w-[60px] h-[60px] bg-gray-200/20 rounded-xl flex items-center justify-center text-[22px]">
                                                 {userRole === 'Learner' ? "⏰" : "📂"}
@@ -227,19 +231,19 @@ export default function Dashboard() {
                     {/* Recent Activity Sidebar */}
                     <div className="flex flex-col gap-4">
                         {userRole === 'Admin' ? (
-                            <section className="border border-slate-400 rounded-xl p-4">
-                                <h3 className="text-base font-bold text-white mb-4 flex items-center gap-2"><span>⚡</span> Recent Activity</h3>
+                            <section className="border border-slate-400 rounded-xl p-4 bg-white/5">
+                                <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2"><span>⚡</span> Recent Activity</h3>
                                 <div className="space-y-2.5">
                                     {activities.length > 0 ? activities.slice(0, 6).map((act, i) => (
                                         <div key={i} className="flex flex-col border-b border-gray-600/50 py-2 last:border-0">
-                                            <p className="text-sm font-bold text-white">{act.description}</p>
-                                            <p className="text-[11px] text-zinc-500">{formatTimeAgo(act.occurredAt)}</p>
+                                            <p className="text-[11px] font-bold text-white">{act.description}</p>
+                                            <p className="text-[9px] text-zinc-500">{formatTimeAgo(act.occurredAt)}</p>
                                         </div>
                                     )) : <p className="text-xs text-zinc-500 italic">No activity logs.</p>}
                                 </div>
                             </section>
                         ) : (
-                            <section className="border border-slate-400 rounded-xl p-6 text-center shadow-inner relative overflow-hidden">
+                            <section className="border border-slate-400 rounded-xl p-6 text-center bg-white/5 shadow-inner relative overflow-hidden">
                                 <div className="absolute -top-10 -right-10 w-32 h-32 bg-blue-500/10 blur-3xl rounded-full"></div>
                                 <p className="text-[10px] font-bold text-slate-400 tracking-[2px] mb-2 uppercase tracking-widest">TRUEMINDS {userRole}</p>
                                 <p className="text-xl font-black text-blue-500 mb-1.5">{identityCard.publicId}</p>
