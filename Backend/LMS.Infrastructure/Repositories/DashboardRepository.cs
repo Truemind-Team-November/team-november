@@ -1,5 +1,6 @@
 using LMS.Application.DTOs.Dashboard;
 using LMS.Application.Interfaces.Repositories;
+using LMS.Domain.Entities;
 using LMS.Domain.Enums;
 using LMS.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -27,12 +28,20 @@ public class DashboardRepository : IDashboardRepository
 
         var user = await _context.Users
             .AsNoTracking()
-            .Include(item => item.Team!)
-                .ThenInclude(team => team.Members)
             .FirstOrDefaultAsync(item => item.Id == userId);
 
         if (user == null)
             return null;
+
+        // Load team separately to avoid cycle in no-tracking query
+        Team? team = null;
+        if (user.TeamId.HasValue)
+        {
+            team = await _context.Teams
+                .AsNoTracking()
+                .Include(t => t.Members)
+                .FirstOrDefaultAsync(t => t.Id == user.TeamId.Value);
+        }
 
         var progresses = await _context.Progresses
             .AsNoTracking()
@@ -170,17 +179,17 @@ public class DashboardRepository : IDashboardRepository
             .ToList();
 
         TeamPreviewResponse? myTeam = null;
-        if (user.Team != null)
+        if (team != null)
         {
-            var orderedMembers = user.Team.Members
+            var orderedMembers = team.Members
                 .OrderByDescending(member => member.Id == userId)
                 .ThenBy(member => member.FirstName)
                 .ThenBy(member => member.LastName)
                 .ToList();
 
             myTeam = new TeamPreviewResponse(
-                user.Team.Id,
-                user.Team.Name,
+                team.Id,
+                team.Name,
                 orderedMembers.Count,
                 orderedMembers
                     .Take(teamMemberPreviewLimit)
@@ -214,7 +223,7 @@ public class DashboardRepository : IDashboardRepository
                 user.CohortLabel,
                 user.Location,
                 user.Role.ToString(),
-                user.Team?.Name
+                team?.Name
             )
         );
     }
