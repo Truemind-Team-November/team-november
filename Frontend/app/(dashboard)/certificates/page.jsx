@@ -30,13 +30,8 @@ export default function CertificatesPage() {
           setCertificates(items);
         }
       } catch (error) {
-<<<<<<< HEAD
         console.error("Certificate fetch error:", error);
         setMessage("Unable to load certificates. Please try again later.");
-=======
-        console.error("Fetch error:", error);
-        setMessage("Unable to load certificates right now.");
->>>>>>> f0f6b8a8965a8ac6cc9e8f7541277bc6c2d05cd1
       } finally {
         setLoading(false);
         setHasFetched(true);
@@ -50,15 +45,7 @@ export default function CertificatesPage() {
     return certificates.length > 0 ? certificates[0] : null;
   }, [certificates]);
 
-<<<<<<< HEAD
-  const completionValue = useMemo(() => {
-    if (!activeCertificate) {
-      return 0;
-    }
-=======
-  // Determine the display name: Priority to Certificate data, fallback to Profile name
   const displayName = activeCertificate?.userFullName || userName || 'Student Name';
->>>>>>> f0f6b8a8965a8ac6cc9e8f7541277bc6c2d05cd1
 
   const completionValue = useMemo(() => {
     if (!activeCertificate) return 72; // Default preview value
@@ -104,7 +91,6 @@ export default function CertificatesPage() {
             </div>
           )}
 
-<<<<<<< HEAD
           {activeCertificate && (
             <div
               className="flex flex-wrap items-center gap-6 px-6 py-7 rounded-2xl"
