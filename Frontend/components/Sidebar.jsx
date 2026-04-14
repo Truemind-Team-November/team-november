@@ -12,9 +12,45 @@ const navSections = [
     title: "MAIN",
     items: [
       { icon: "/assets/sidebar/dashboard_icon.svg", label: "Dashboard", href: "/dashboard" },
-      { icon: "/assets/sidebar/course_catalog_icon.svg", label: "Course Catalog", href: "/coursecatalog", hideForAdmins: true },
-      { icon: "/assets/sidebar/assignment_icon.svg", label: "Assignments", href: "/assignments", hideForAdmins: true },
-      { icon: "/assets/sidebar/my_progress_icon.svg", label: "My Progress", href: "/progress", hideForAdmins: true },
+      { 
+        icon: "/assets/sidebar/course_catalog_icon.svg", 
+        label: "Course Catalog", 
+        href: "/coursecatalog", 
+        hideForAdmins: true,
+        hideForInstructors: true 
+      },
+      { 
+        icon: "/assets/sidebar/discussions_icon.svg", 
+        label: "Create Lesson", 
+        href: "/create-lesson", 
+        instructorOnly: true 
+      },
+      { 
+        icon: "/assets/sidebar/certificates_icon.svg", 
+        label: "Grade Submissions", 
+        href: "/grade-assignment", 
+        instructorOnly: true 
+      },
+      { 
+        icon: "/assets/sidebar/assignment_icon.svg", 
+        label: "Post Assignment", 
+        href: "/post-assignment", 
+        instructorOnly: true 
+      },
+      { 
+        icon: "/assets/sidebar/assignment_icon.svg", 
+        label: "Assignments", 
+        href: "/assignments", 
+        hideForAdmins: true,
+        hideForInstructors: true // Removed for instructors as requested
+      },
+      { 
+        icon: "/assets/sidebar/my_progress_icon.svg", 
+        label: "My Progress", 
+        href: "/progress", 
+        hideForAdmins: true,
+        hideForInstructors: true 
+      },
     ],
   },
   {
@@ -22,6 +58,7 @@ const navSections = [
     items: [
       { icon: "/assets/sidebar/discussions_icon.svg", label: "Discussions", href: "/discussion" },
       { icon: "/assets/sidebar/my_team_icon.svg", label: "Users", href: "/users", adminOnly: true },
+      { icon: "/assets/sidebar/assignment_icon.svg", label: "Team Assignment", href: "/team-assignment", adminOnly: true },
       { icon: "/assets/sidebar/my_team_icon.svg", label: "My Team", href: "/my-team", hideForAdmins: true },
       { icon: "/assets/sidebar/notification_icon.svg", label: "Notifications", href: "/notification" },
     ],
@@ -93,12 +130,12 @@ const Sidebar = ({ badges = {} }) => {
               <div className="flex flex-col items-start gap-[clamp(4px,1.5vh,20px)] w-full">
                 {section.items.map((item) => {
                   const isAdmin = userData.role === 'Admin';
+                  const isInstructor = userData.role === 'Instructor';
                   
-                  // 1. Hide if it's admin-only and user isn't admin
                   if (item.adminOnly && !isAdmin) return null;
-
-                  // 2. Hide if it's learner-only and user IS admin
                   if (item.hideForAdmins && isAdmin) return null;
+                  if (item.hideForInstructors && isInstructor) return null;
+                  if (item.instructorOnly && !isInstructor) return null;
 
                   const badgeCount = badges[item.label];
                   const showBadge = badgeCount != null && badgeCount > 0;
@@ -143,7 +180,6 @@ const Sidebar = ({ badges = {} }) => {
         </nav>
       </div>
 
-      {/* Identity Footer */}
       <div className="flex flex-row items-center px-[10px] py-[clamp(8px,1vh,16px)] gap-[10px] w-full border-t-[0.75px] border-[#7D7F82] box-border mt-auto relative">
         <div className="w-[clamp(32px,3vh,48px)] h-[clamp(32px,3vh,48px)] bg-[#0950C3] rounded-full flex items-center justify-center shrink-0">
           <span className="text-[clamp(14px,1.5vh,20px)] font-bold leading-[125%] text-[#FAFCFF]">
@@ -155,7 +191,7 @@ const Sidebar = ({ badges = {} }) => {
             {loading ? "Loading..." : userData.name}
           </p>
           <p className="text-[clamp(11px,1.2vh,14px)] font-normal leading-[125%] text-[#FAFCFF] m-0 whitespace-nowrap overflow-hidden text-ellipsis w-full">
-            {userData.discipline}-{userData.publicId}
+            {userData.publicId} 
           </p>
         </div>
         <button className="absolute top-[12px] right-[12px] w-[16px] h-[16px] flex items-center justify-center bg-transparent border-none p-0">

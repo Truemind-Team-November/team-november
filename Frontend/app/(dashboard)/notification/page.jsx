@@ -25,12 +25,33 @@ const iconMap = {
 };
 
 function formatTime(dateString) {
+<<<<<<< HEAD
   const date = new Date(dateString);
   const diffInHours = Math.floor((Date.now() - date.getTime()) / (1000 * 60 * 60));
   if (diffInHours < 1) return "Just now";
   if (diffInHours < 24) return `${diffInHours} hour${diffInHours > 1 ? "s" : ""} ago`;
+=======
+  if (!dateString) return "Just now";
+  const date = new Date(dateString).getTime();
+  const now = new Date().getTime();
+  if (isNaN(date)) return "Just now";
+  
+  const diffInMs = now - date;
+  if (diffInMs < 0) return "Just now";
+  
+  const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+  if (diffInMinutes < 1) return "Just now";
+  if (diffInMinutes === 1) return "1 min ago";
+  if (diffInMinutes < 60) return `${diffInMinutes} mins ago`;
+  
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours === 1) return "1 hour ago";
+  if (diffInHours < 24) return `${diffInHours} hours ago`;
+  
+>>>>>>> 76435d7df82bb9102461d7ab91f5ce9cdfd7423d
   const diffInDays = Math.floor(diffInHours / 24);
-  return `${diffInDays} day${diffInDays > 1 ? "s" : ""} ago`;
+  if (diffInDays === 1) return "1 day ago";
+  return `${diffInDays} days ago`;
 }
 
 <<<<<<< HEAD
@@ -222,6 +243,7 @@ export default function NotificationsPage() {
   }, []);
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   const newCount = useMemo(() => notifications.filter((n) => !n.isRead).length, [notifications]);
 
   const markOneRead = async (notif) => {
@@ -280,6 +302,15 @@ export default function NotificationsPage() {
             </div>
           )}
 =======
+=======
+  // Sync state to localStorage for Sidebar instant updates
+  useEffect(() => {
+    localStorage.setItem("unreadNotificationCount", unreadNotificationCount);
+    // Dispatch storage event manually for same-tab updates if needed
+    window.dispatchEvent(new Event("storage"));
+  }, [unreadNotificationCount]);
+
+>>>>>>> 76435d7df82bb9102461d7ab91f5ce9cdfd7423d
   const newCount = notificationList.filter((n) => !n.isRead).length;
 
   function handleMarkRead(notificationId) {
@@ -356,7 +387,7 @@ export default function NotificationsPage() {
 
                 {unreadNotificationCount > 0 && (
                   <span
-                    className="absolute -top-2 -right-2 flex items-center justify-center rounded-full bg-[#0950C3] text-white text-xs font-bold"
+                    className="absolute -top-2 -right-2 flex items-center justify-center rounded-full bg-red-600 text-white text-xs font-bold"
                     style={{ width: 22, height: 22, fontSize: 11 }}
                   >
                     {unreadNotificationCount}
