@@ -17,16 +17,40 @@ const navSections = [
         label: "Course Catalog", 
         href: "/coursecatalog", 
         hideForAdmins: true,
-        hideForInstructors: true // Added flag
+        hideForInstructors: true 
       },
       { 
-        icon: "/assets/sidebar/course_catalog_icon.svg", 
+        icon: "/assets/sidebar/discussions_icon.svg", 
         label: "Create Lesson", 
         href: "/create-lesson", 
-        instructorOnly: true // Added flag
+        instructorOnly: true 
       },
-      { icon: "/assets/sidebar/assignment_icon.svg", label: "Assignments", href: "/assignments", hideForAdmins: true },
-      { icon: "/assets/sidebar/my_progress_icon.svg", label: "My Progress", href: "/progress", hideForAdmins: true },
+      { 
+        icon: "/assets/sidebar/certificates_icon.svg", 
+        label: "Grade Submissions", 
+        href: "/grade-assignment", 
+        instructorOnly: true 
+      },
+      { 
+        icon: "/assets/sidebar/assignment_icon.svg", 
+        label: "Post Assignment", 
+        href: "/post-assignment", 
+        instructorOnly: true 
+      },
+      { 
+        icon: "/assets/sidebar/assignment_icon.svg", 
+        label: "Assignments", 
+        href: "/assignments", 
+        hideForAdmins: true,
+        hideForInstructors: true // Removed for instructors as requested
+      },
+      { 
+        icon: "/assets/sidebar/my_progress_icon.svg", 
+        label: "My Progress", 
+        href: "/progress", 
+        hideForAdmins: true,
+        hideForInstructors: true 
+      },
     ],
   },
   {
@@ -108,14 +132,9 @@ const Sidebar = ({ badges = {} }) => {
                   const isAdmin = userData.role === 'Admin';
                   const isInstructor = userData.role === 'Instructor';
                   
-                  // Logic for Admin filtering
                   if (item.adminOnly && !isAdmin) return null;
                   if (item.hideForAdmins && isAdmin) return null;
-
-                  // Logic for Instructor filtering
-                  // 1. Hide "Course Catalog" if the user is an Instructor
                   if (item.hideForInstructors && isInstructor) return null;
-                  // 2. Hide "Create Lesson" if the user is NOT an Instructor
                   if (item.instructorOnly && !isInstructor) return null;
 
                   const badgeCount = badges[item.label];
@@ -161,7 +180,6 @@ const Sidebar = ({ badges = {} }) => {
         </nav>
       </div>
 
-      {/* Identity Footer */}
       <div className="flex flex-row items-center px-[10px] py-[clamp(8px,1vh,16px)] gap-[10px] w-full border-t-[0.75px] border-[#7D7F82] box-border mt-auto relative">
         <div className="w-[clamp(32px,3vh,48px)] h-[clamp(32px,3vh,48px)] bg-[#0950C3] rounded-full flex items-center justify-center shrink-0">
           <span className="text-[clamp(14px,1.5vh,20px)] font-bold leading-[125%] text-[#FAFCFF]">
