@@ -9,7 +9,8 @@ const defaultProfile = {
   email: '',
   location: '',
   userId: 'TMI-XXXX',
-  role: 'Intern',
+  role: 'Member',
+  userRole: 'Student', 
   tags: ['Learner'],
   courses: 0,
   avgProgress: 0,
@@ -36,33 +37,39 @@ export default function ProfilePage() {
       try {
         const response = await client.get('/Profile/me');
         const payload = response.data?.data;
+        console.log(payload);        
 
         if (!payload) return;
 
         const personal = payload.personalInformation || {};
         const summary = payload.learningSummary || {};
-        
-        const dynamicAchievements = Array.isArray(payload.achievements) && payload.achievements.length
-          ? payload.achievements.map((item, index) => ({
-              id: String(index + 1),
-              icon: item.icon || (index % 2 === 0 ? '🏆' : '⭐'),
-              title: item.title,
-              description: item.description,
-            }))
-          : [];
+        const rawRole = payload.role || 'Student';
+        const isInstructor = rawRole === "Instructor";
+
+        // Logic to remove "Intern" related text from headline for Instructors
+        let displayHeadline = payload.headline || personal.discipline || '';
+        if (isInstructor && displayHeadline.toLowerCase().includes('intern')) {
+          displayHeadline = displayHeadline
+            .split('-')
+            .filter(part => !part.toLowerCase().includes('intern'))
+            .join('-')
+            .replace(/^[\s-]+|[\s-]+$/g, '') // Clean up leading/trailing dashes/spaces
+            .trim();
+        }
 
         const nextProfile = {
           fullName: payload.fullName || defaultProfile.fullName,
           email: personal.email || defaultProfile.email,
-          location: personal.location || personal.city || 'Abuja, Nigeria',
+          location: personal.city ? `${personal.city}, ${personal.country}` : 'Abuja, Nigeria',
           userId: payload.publicId || defaultProfile.userId,
-          role: payload.headline || personal.discipline || 'Intern',
-          tags: Array.isArray(payload.badges) ? payload.badges.map(b => b.label) : [personal.discipline || 'Learner'],
-          courses: summary.coursesEnrolled || 0,
+          role: displayHeadline,
+          userRole: rawRole, 
+          tags: Array.isArray(payload.badges) ? payload.badges.map(b => b.label) : [],
+          courses: summary.courses || 0,
           avgProgress: Math.round(summary.averageProgress || 0),
           certificates: summary.certificatesEarned || 0,
           avgScore: Number(summary.averageScore || 0),
-          achievements: dynamicAchievements,
+          achievements: Array.isArray(payload.achievements) ? payload.achievements : [],
         };
 
         setProfile(nextProfile);
@@ -119,6 +126,8 @@ export default function ProfilePage() {
     );
   }
 
+  const isInstructor = profile.userRole === "Instructor";
+
   return (
     <div className="relative min-h-screen w-full bg-[#101723] text-[#FAFCFF]">
       {/* Logout Confirmation Modal */}
@@ -172,10 +181,18 @@ export default function ProfilePage() {
                 {getInitials(profile.fullName)}
               </div>
               <div>
-                <h1 className="text-3xl font-bold leading-tight">{profile.fullName}</h1>
+                <div className="flex items-center gap-3">
+                    <h1 className="text-3xl font-bold leading-tight">{profile.fullName}</h1>
+                    {/* ALWAYS DISPLAY THE USER ROLE HERE */}
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest border ${
+                        isInstructor ? "bg-blue-500/10 text-blue-400 border-blue-500/30" : "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+                    }`}>
+                        {profile.userRole}
+                    </span>
+                </div>
                 <p className="text-xl font-medium text-[#0950C3]">{profile.userId}</p>
                 <p className="text-lg text-[#D6E3F5]">
-                  {profile.role} • <span className="opacity-70">{profile.location}</span>
+                  {profile.role} {profile.role && '•'} <span className="opacity-70">{profile.location}</span>
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {profile.tags.map((tag, i) => (
@@ -226,15 +243,17 @@ export default function ProfilePage() {
           </div>
 
           <div className="space-y-6">
-            {/* Learning Summary */}
+            {/* Learning/Teaching Summary */}
             <div className="rounded-2xl border border-[#D6E3F5]/20 bg-[#101723] p-6">
-              <h2 className="mb-4 text-2xl font-bold">Learning Summary</h2>
+              <h2 className="mb-4 text-2xl font-bold">
+                {isInstructor ? 'Teaching Summary' : 'Learning Summary'}
+              </h2>
               <div className="grid gap-4 sm:grid-cols-2">
                 {[
-                  { label: 'Courses', val: profile.courses, color: 'text-[#09C398]' },
-                  { label: 'Avg Progress', val: `${profile.avgProgress}%`, color: 'text-[#0950C3]' },
-                  { label: 'Certificates', val: profile.certificates, color: 'text-[#DE55F3]' },
-                  { label: 'Avg Score', val: profile.avgScore, color: 'text-[#EF9B15]' },
+                  { label: isInstructor ? 'Assigned Courses' : 'Courses', val: profile.courses, color: 'text-[#09C398]' },
+                  { label: isInstructor ? 'Student Avg Progress' : 'Avg Progress', val: `${profile.avgProgress}%`, color: 'text-[#0950C3]' },
+                  { label: isInstructor ? 'Published Lessons' : 'Certificates', val: profile.certificates, color: 'text-[#DE55F3]' },
+                  { label: isInstructor ? 'Avg Rating' : 'Avg Score', val: profile.avgScore, color: 'text-[#EF9B15]' },
                 ].map((stat, i) => (
                   <div key={i} className="rounded-xl border border-[#D6E3F5]/10 p-5 text-center bg-[#161f2c]">
                     <div className={`text-2xl font-bold ${stat.color}`}>{stat.val}</div>
@@ -244,25 +263,27 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* Achievements */}
-            <div className="rounded-2xl border border-[#D6E3F5]/20 bg-[#101723] p-6">
-              <h2 className="mb-4 text-2xl font-bold">Achievements</h2>
-              <div className="space-y-3">
-                {profile.achievements.length > 0 ? (
-                  profile.achievements.map((ach) => (
-                    <div key={ach.id} className="flex items-center gap-4 rounded-xl border border-[#D6E3F5]/10 bg-[#161f2c] px-4 py-4 hover:border-blue-500/50 transition-all">
-                      <span className="text-2xl">{ach.icon}</span>
-                      <div>
-                        <div className="text-lg font-bold leading-tight">{ach.title}</div>
-                        <div className="text-sm text-[#ADC7EB]">{ach.description}</div>
+            {/* Achievements - Only show for Students */}
+            {!isInstructor && (
+              <div className="rounded-2xl border border-[#D6E3F5]/20 bg-[#101723] p-6">
+                <h2 className="mb-4 text-2xl font-bold">Achievements</h2>
+                <div className="space-y-3">
+                  {profile.achievements.length > 0 ? (
+                    profile.achievements.map((ach, index) => (
+                      <div key={index} className="flex items-center gap-4 rounded-xl border border-[#D6E3F5]/10 bg-[#161f2c] px-4 py-4 hover:border-blue-500/50 transition-all">
+                        <span className="text-2xl">{ach.icon || '🏆'}</span>
+                        <div>
+                          <div className="text-lg font-bold leading-tight">{ach.title}</div>
+                          <div className="text-sm text-[#ADC7EB]">{ach.description}</div>
+                        </div>
                       </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-[#ADC7EB] italic">No achievements unlocked yet.</p>
-                )}
+                    ))
+                  ) : (
+                    <p className="text-sm text-[#ADC7EB] italic">No achievements unlocked yet.</p>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

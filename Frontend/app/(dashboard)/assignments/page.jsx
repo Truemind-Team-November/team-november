@@ -21,6 +21,8 @@ export default function Assignments() {
       setError("");
       const statusQuery = activeCategory === "All" ? "" : `?status=${encodeURIComponent(activeCategory)}`;
       const response = await client.get(`/Assignment/my${statusQuery}`);
+      console.log(response);
+      
       setAssignments(Array.isArray(response.data?.data) ? response.data.data : []);
     } catch (err) {
       console.error("Assignments fetch error:", err);

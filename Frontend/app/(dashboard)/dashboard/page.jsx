@@ -134,9 +134,9 @@ export default function Dashboard() {
                     <div>
                         <h1 className="text-[22px] font-bold text-white leading-tight">Welcome,</h1>
                         <h2 className="text-[22px] font-bold text-white leading-tight">{userName}</h2>
-                        {userRole === 'Learner' && learnerData?.headline && (
+                        {/* {userRole === 'Learner' && learnerData?.headline && (
                             <p className="text-xs text-zinc-500 mt-1 italic">{learnerData.headline}</p>
-                        )}
+                        )} */}
                     </div>
                     <div className="flex items-center gap-3">
                         <div className="flex items-center justify-center w-9 h-9 rounded-full bg-blue-600 text-white font-bold text-[14px]">

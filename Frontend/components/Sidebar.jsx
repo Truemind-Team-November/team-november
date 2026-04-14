@@ -12,7 +12,19 @@ const navSections = [
     title: "MAIN",
     items: [
       { icon: "/assets/sidebar/dashboard_icon.svg", label: "Dashboard", href: "/dashboard" },
-      { icon: "/assets/sidebar/course_catalog_icon.svg", label: "Course Catalog", href: "/coursecatalog", hideForAdmins: true },
+      { 
+        icon: "/assets/sidebar/course_catalog_icon.svg", 
+        label: "Course Catalog", 
+        href: "/coursecatalog", 
+        hideForAdmins: true,
+        hideForInstructors: true // Added flag
+      },
+      { 
+        icon: "/assets/sidebar/course_catalog_icon.svg", 
+        label: "Create Lesson", 
+        href: "/create-lesson", 
+        instructorOnly: true // Added flag
+      },
       { icon: "/assets/sidebar/assignment_icon.svg", label: "Assignments", href: "/assignments", hideForAdmins: true },
       { icon: "/assets/sidebar/my_progress_icon.svg", label: "My Progress", href: "/progress", hideForAdmins: true },
     ],
@@ -22,6 +34,7 @@ const navSections = [
     items: [
       { icon: "/assets/sidebar/discussions_icon.svg", label: "Discussions", href: "/discussion" },
       { icon: "/assets/sidebar/my_team_icon.svg", label: "Users", href: "/users", adminOnly: true },
+      { icon: "/assets/sidebar/assignment_icon.svg", label: "Team Assignment", href: "/team-assignment", adminOnly: true },
       { icon: "/assets/sidebar/my_team_icon.svg", label: "My Team", href: "/my-team", hideForAdmins: true },
       { icon: "/assets/sidebar/notification_icon.svg", label: "Notifications", href: "/notification" },
     ],
@@ -50,7 +63,6 @@ const Sidebar = ({ badges = {} }) => {
     const fetchUserData = async () => {
       try {
         const response = await client.get("/Profile/me");
-        // console.log(response);
         if (response.data.success) {
           const profile = response.data.data;
           const fullName = profile.fullName || "User";
@@ -94,12 +106,17 @@ const Sidebar = ({ badges = {} }) => {
               <div className="flex flex-col items-start gap-[clamp(4px,1.5vh,20px)] w-full">
                 {section.items.map((item) => {
                   const isAdmin = userData.role === 'Admin';
+                  const isInstructor = userData.role === 'Instructor';
                   
-                  // 1. Hide if it's admin-only and user isn't admin
+                  // Logic for Admin filtering
                   if (item.adminOnly && !isAdmin) return null;
-
-                  // 2. Hide if it's learner-only and user IS admin
                   if (item.hideForAdmins && isAdmin) return null;
+
+                  // Logic for Instructor filtering
+                  // 1. Hide "Course Catalog" if the user is an Instructor
+                  if (item.hideForInstructors && isInstructor) return null;
+                  // 2. Hide "Create Lesson" if the user is NOT an Instructor
+                  if (item.instructorOnly && !isInstructor) return null;
 
                   const badgeCount = badges[item.label];
                   const showBadge = badgeCount != null && badgeCount > 0;
@@ -156,7 +173,7 @@ const Sidebar = ({ badges = {} }) => {
             {loading ? "Loading..." : userData.name}
           </p>
           <p className="text-[clamp(11px,1.2vh,14px)] font-normal leading-[125%] text-[#FAFCFF] m-0 whitespace-nowrap overflow-hidden text-ellipsis w-full">
-            {userData.discipline}-{userData.publicId}
+            {userData.publicId} 
           </p>
         </div>
         <button className="absolute top-[12px] right-[12px] w-[16px] h-[16px] flex items-center justify-center bg-transparent border-none p-0">
