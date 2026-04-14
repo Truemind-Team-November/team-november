@@ -175,6 +175,16 @@ public class SubmissionService : ISubmissionService
         return BaseResponse<SubmissionResponse>.Ok(MapToResponse(submission), "Submission graded successfully");
     }
 
+    public async Task<BaseResponse<SubmissionResponse>> GetByIdAsync(Guid submissionId)
+    {
+        var submission = await _submissionRepository.GetByIdAsync(submissionId);
+
+        if (submission == null)
+            return BaseResponse<SubmissionResponse>.Fail("Submission not found");
+
+        return BaseResponse<SubmissionResponse>.Ok(MapToResponse(submission));
+    }
+
     private static SubmissionResponse MapToResponse(Submission submission)
     {
         return new SubmissionResponse(

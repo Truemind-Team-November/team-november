@@ -1,3 +1,4 @@
+using LMS.Application.Common;
 using LMS.Application.Common.Storage;
 using LMS.Application.DTOs.Assignment;
 using LMS.Application.Interfaces.Services;
@@ -27,6 +28,19 @@ public class SubmissionController : ControllerBase
         var result = await _submissionService.SubmitAsync(request);
 
         return result.Success ? Ok(result) : BadRequest(result);
+    }
+
+    /// <summary>
+    /// Get submission by ID (Authenticated)
+    /// </summary>
+    [HttpGet("{submissionId:guid}")]
+    [Authorize]
+    [ProducesResponseType(typeof(BaseResponse<SubmissionResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BaseResponse<string>), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetById(Guid submissionId)
+    {
+        var result = await _submissionService.GetByIdAsync(submissionId);
+        return result.Success ? Ok(result) : NotFound(result);
     }
 
     [HttpPost("upload")]
