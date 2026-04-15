@@ -6,15 +6,25 @@ import client from "@/lib/client";
 
 export default function CertificatesPage() {
   const [certificates, setCertificates] = useState([]);
+  const [userName, setUserName] = useState(""); // State for the user's name from profile
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [hasFetched, setHasFetched] = useState(false);
 
   useEffect(() => {
-    const loadCertificates = async () => {
+    const loadData = async () => {
       try {
-        const response = await client.get("/Certificate/me");
-        const items = response.data?.data;
+        setLoading(true);
+
+        // 1. Fetch User Profile for the name fallback
+        const profileRes = await client.get("/Profile/me");
+        if (profileRes.data?.data?.fullName) {
+          setUserName(profileRes.data.data.fullName);
+        }
+
+        // 2. Fetch Certificates
+        const certRes = await client.get("/Certificate/me");
+        const items = certRes.data?.data;
 
         if (Array.isArray(items)) {
           setCertificates(items);
@@ -28,23 +38,22 @@ export default function CertificatesPage() {
       }
     };
 
-    loadCertificates();
+    loadData();
   }, []);
 
   const activeCertificate = useMemo(() => {
-    if (!certificates.length) {
-      return null;
-    }
-
-    return certificates[0];
+    return certificates.length > 0 ? certificates[0] : null;
   }, [certificates]);
 
-  const completionValue = useMemo(() => {
-    if (!activeCertificate) {
-      return 0;
-    }
+  const displayName =
+    activeCertificate?.userFullName || userName || "Student Name";
 
-    return Math.max(0, Math.min(100, Math.round(Number(activeCertificate.finalScore || 0))));
+  const completionValue = useMemo(() => {
+    if (!activeCertificate) return 72; // Default preview value
+    return Math.max(
+      0,
+      Math.min(100, Math.round(Number(activeCertificate.finalScore || 0))),
+    );
   }, [activeCertificate]);
 
   const completionRemaining = 100 - completionValue;
@@ -52,12 +61,9 @@ export default function CertificatesPage() {
   return (
     <main
       className="min-h-screen font-sans text-white"
-      style={{ fontFamily: "var(--font-inter), 'Inter', sans-serif", backgroundColor: ThemeColors.bgBlue }}
+      style={{ backgroundColor: ThemeColors.bgBlue }}
     >
-      <div
-        className="flex-1 w-full flex flex-col min-h-screen"
-        style={{ backgroundColor: ThemeColors.bgBlue }}
-      >
+      <div className="flex-1 w-full flex flex-col min-h-screen">
         {/* Top Bar */}
         <div
           className="flex items-center justify-between px-8 py-5"
@@ -70,7 +76,7 @@ export default function CertificatesPage() {
             My Certificates
           </span>
           <button
-            className="flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-lg opacity-50 hover:opacity-100 transition-opacity duration-200"
+            className="flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-lg opacity-50 hover:opacity-100 transition-opacity"
             style={{
               border: "0.5px solid rgba(214,227,245,0.4)",
               background: "transparent",
@@ -83,22 +89,18 @@ export default function CertificatesPage() {
 
         {/* Content */}
         <div className="flex flex-col gap-5 p-7 flex-1">
-          {loading && (
-            <div className="rounded-lg border border-[#4B4C4E] bg-[#0D1522] px-4 py-3 text-sm text-[#CEE0FD]">
-              Loading certificates...
-            </div>
-          )}
-
           {message && (
             <div className="rounded-lg border border-[#4B4C4E] bg-[#0D1522] px-4 py-3 text-sm text-[#CEE0FD]">
               {message}
             </div>
           )}
-
           {activeCertificate && (
             <div
               className="flex flex-wrap items-center gap-6 px-6 py-7 rounded-2xl"
-              style={{ backgroundColor: ThemeColors.bgBlue, border: "1px solid #0950C3" }}
+              style={{
+                backgroundColor: ThemeColors.bgBlue,
+                border: "1px solid #0950C3",
+              }}
             >
               <Image
                 src="/assets/certificates/certficates-page-icon.svg"
@@ -110,20 +112,32 @@ export default function CertificatesPage() {
               <div className="flex-1 min-w-48">
                 <div>
                   <h2 className="text-white font-bold text-xl mb-1">
-                    You are {completionRemaining}% away from your next certificate!
+                    You are {completionRemaining}% away from your next
+                    certificate!
                   </h2>
-                  <p className="text-sm" style={{ color: "rgba(255,255,255,0.7)" }}>
-                    Latest earned: {activeCertificate.courseTitle}. Keep progressing to unlock more.
+                  <p
+                    className="text-sm"
+                    style={{ color: "rgba(255,255,255,0.7)" }}
+                  >
+                    Latest earned: {activeCertificate.courseTitle}. Keep
+                    progressing to unlock more.
                   </p>
                 </div>
 
-                <div className="flex flex-col gap-1.5" style={{ minWidth: "180px", flex: "0 0 220px" }}>
-                  <div className="w-full h-2.5 rounded-full overflow-hidden" style={{ background: "rgba(125,127,130,0.4)" }}>
+                <div
+                  className="flex flex-col gap-1.5"
+                  style={{ minWidth: "180px", flex: "0 0 220px" }}
+                >
+                  <div
+                    className="w-full h-2.5 rounded-full overflow-hidden"
+                    style={{ background: "rgba(125,127,130,0.4)" }}
+                  >
                     <div
                       className="h-full rounded-full"
                       style={{
                         width: `${completionValue}%`,
-                        background: "linear-gradient(90deg, #627185 0%, #ADC7EB 100%)",
+                        background:
+                          "linear-gradient(90deg, #627185 0%, #ADC7EB 100%)",
                       }}
                     />
                   </div>
@@ -141,16 +155,21 @@ export default function CertificatesPage() {
               </button>
             </div>
           )}
-
           {/* Certificate Card or Empty State */}
           {!activeCertificate && hasFetched && !loading ? (
             <div className="flex-1 rounded-2xl border border-[#4B4C4E] bg-[#0D1522] px-8 py-12 flex items-center justify-center text-center">
               <div>
-                <p className="text-2xl font-bold text-white mb-3">No Certificates Yet</p>
-                <p className="text-sm text-[#CEE0FD] mb-5">
-                  Complete your courses to earn certificates and showcase your achievements.
+                <p className="text-2xl font-bold text-white mb-3">
+                  No Certificates Yet
                 </p>
-                <a href="/coursecatalog" className="inline-block bg-[#0950C3] text-white px-6 py-2 rounded-lg font-semibold hover:bg-[#0a61e9] transition">
+                <p className="text-sm text-[#CEE0FD] mb-5">
+                  Complete your courses to earn certificates and showcase your
+                  achievements.
+                </p>
+                <a
+                  href="/coursecatalog"
+                  className="inline-block bg-[#0950C3] text-white px-6 py-2 rounded-lg font-semibold hover:bg-[#0a61e9] transition"
+                >
                   Browse Courses
                 </a>
               </div>
@@ -159,8 +178,7 @@ export default function CertificatesPage() {
             <div
               className="relative flex-1 rounded-2xl overflow-hidden flex flex-col justify-between p-8 md:p-14 lg:p-20"
               style={{
-                background:
-                  `linear-gradient(180deg, ${ThemeColors.bgBlue} 0%, #2D3D58 48%, #051838 80%)`,
+                background: `linear-gradient(180deg, ${ThemeColors.bgBlue} 0%, #2D3D58 48%, #051838 80%)`,
                 border: "1px solid #0950C3",
                 minHeight: "560px",
               }}
@@ -291,11 +309,22 @@ export default function CertificatesPage() {
 
                 {/* Certificate Meta — bottom right */}
                 <div className="flex flex-col items-center sm:items-end text-center sm:text-right">
-                  <p className="text-sm mb-1.5 m-0" style={{ color: "#ADC7EB" }}>
-                    Issued: {activeCertificate?.issuedAt ? new Date(activeCertificate.issuedAt).toLocaleDateString() : '-'}
+                  <p
+                    className="text-sm mb-1.5 m-0"
+                    style={{ color: "#ADC7EB" }}
+                  >
+                    Issued:{" "}
+                    {activeCertificate?.issuedAt
+                      ? new Date(
+                          activeCertificate.issuedAt,
+                        ).toLocaleDateString()
+                      : "-"}
                   </p>
-                  <p className="text-sm mb-1.5 m-0" style={{ color: "#ADC7EB" }}>
-                    ID: {activeCertificate?.certificateNumber || '-'}
+                  <p
+                    className="text-sm mb-1.5 m-0"
+                    style={{ color: "#ADC7EB" }}
+                  >
+                    ID: {activeCertificate?.certificateNumber || "-"}
                   </p>
                   <p
                     className="text-sm m-0 font-medium"

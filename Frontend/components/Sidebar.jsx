@@ -12,16 +12,54 @@ const navSections = [
     title: "MAIN",
     items: [
       { icon: "/assets/sidebar/dashboard_icon.svg", label: "Dashboard", href: "/dashboard" },
-      { icon: "/assets/sidebar/course_catalog_icon.svg", label: "Course Catalog", href: "/coursecatalog" },
-      { icon: "/assets/sidebar/assignment_icon.svg", label: "Assignments", href: "/assignments" },
-      { icon: "/assets/sidebar/my_progress_icon.svg", label: "My Progress", href: "/progress" },
+      { 
+        icon: "/assets/sidebar/course_catalog_icon.svg", 
+        label: "Course Catalog", 
+        href: "/coursecatalog", 
+        hideForAdmins: true,
+        hideForInstructors: true 
+      },
+      { 
+        icon: "/assets/sidebar/discussions_icon.svg", 
+        label: "Create Lesson", 
+        href: "/create-lesson", 
+        instructorOnly: true 
+      },
+      { 
+        icon: "/assets/sidebar/certificates_icon.svg", 
+        label: "Grade Submissions", 
+        href: "/grade-assignment", 
+        instructorOnly: true 
+      },
+      { 
+        icon: "/assets/sidebar/assignment_icon.svg", 
+        label: "Post Assignment", 
+        href: "/post-assignment", 
+        instructorOnly: true 
+      },
+      { 
+        icon: "/assets/sidebar/assignment_icon.svg", 
+        label: "Assignments", 
+        href: "/assignments", 
+        hideForAdmins: true,
+        hideForInstructors: true // Removed for instructors as requested
+      },
+      { 
+        icon: "/assets/sidebar/my_progress_icon.svg", 
+        label: "My Progress", 
+        href: "/progress", 
+        hideForAdmins: true,
+        hideForInstructors: true 
+      },
     ],
   },
   {
     title: "COMMUNITY",
     items: [
       { icon: "/assets/sidebar/discussions_icon.svg", label: "Discussions", href: "/discussion" },
-      { icon: "/assets/sidebar/my_team_icon.svg", label: "My Team", href: "/teamallocation" },
+      { icon: "/assets/sidebar/my_team_icon.svg", label: "Users", href: "/users", adminOnly: true },
+      { icon: "/assets/sidebar/assignment_icon.svg", label: "Team Assignment", href: "/team-assignment", adminOnly: true },
+      { icon: "/assets/sidebar/my_team_icon.svg", label: "My Team", href: "/my-team", hideForAdmins: true },
       { icon: "/assets/sidebar/notification_icon.svg", label: "Notifications", href: "/notification" },
     ],
   },
@@ -39,8 +77,9 @@ const Sidebar = ({ badges = {} }) => {
   const [userData, setUserData] = useState({
     name: "User",
     initials: "U",
-    publicId: "TMI-047", 
-    discipline: "UI/UX Intern" 
+    publicId: "TMI-047",
+    discipline: "UI/UX Intern",
+    role: "Learner" 
   });
   const [loading, setLoading] = useState(true);
 
@@ -51,44 +90,29 @@ const Sidebar = ({ badges = {} }) => {
         if (response.data.success) {
           const profile = response.data.data;
           const fullName = profile.fullName || "User";
-          
-          const initials = fullName
-            .split(' ')
-            .map(n => n[0])
-            .join('')
-            .toUpperCase()
-            .substring(0, 2);
+          const initials = fullName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
 
           setUserData({
             name: fullName,
             initials: initials,
             publicId: profile.publicId || "TMI-047",
-            discipline: profile.personalInformation?.discipline || "UI/UX Intern"
+            discipline: profile.personalInformation?.discipline || "UI/UX Intern",
+            role: profile.role || "Learner"
           });
         }
       } catch (err) {
         console.error("Sidebar fetch error:", err);
-        const storedUser = localStorage.getItem("user");
-        if (storedUser) {
-          const user = JSON.parse(storedUser);
-          setUserData(prev => ({
-            ...prev,
-            name: user.fullName || "User",
-            publicId: user.publicId || "TMI-047"
-          }));
-        }
       } finally {
         setLoading(false);
       }
     };
-
     fetchUserData();
   }, []);
 
   return (
     <aside
       id="sidebar-nav"
-      className="flex flex-col items-start w-full min-w-[250px] border-r-[0.75px] border-[#7D7F82] h-screen sticky top-0 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']"
+      className="flex flex-col items-start w-full min-w-[250px] border-r-[0.75px] border-[#7D7F82] h-full overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']"
       style={{ fontFamily: "var(--font-inter), 'Inter', sans-serif", backgroundColor: ThemeColors.bgBlue }}
     >
       <div className="flex flex-col items-start gap-[clamp(12px,3vh,34px)] w-full">
@@ -105,6 +129,14 @@ const Sidebar = ({ badges = {} }) => {
 
               <div className="flex flex-col items-start gap-[clamp(4px,1.5vh,20px)] w-full">
                 {section.items.map((item) => {
+                  const isAdmin = userData.role === 'Admin';
+                  const isInstructor = userData.role === 'Instructor';
+                  
+                  if (item.adminOnly && !isAdmin) return null;
+                  if (item.hideForAdmins && isAdmin) return null;
+                  if (item.hideForInstructors && isInstructor) return null;
+                  if (item.instructorOnly && !isInstructor) return null;
+
                   const badgeCount = badges[item.label];
                   const showBadge = badgeCount != null && badgeCount > 0;
                   const isActive = pathname === item.href;
@@ -159,7 +191,7 @@ const Sidebar = ({ badges = {} }) => {
             {loading ? "Loading..." : userData.name}
           </p>
           <p className="text-[clamp(11px,1.2vh,14px)] font-normal leading-[125%] text-[#FAFCFF] m-0 whitespace-nowrap overflow-hidden text-ellipsis w-full">
-            {userData.discipline}-{userData.publicId}
+            {userData.publicId} 
           </p>
         </div>
         <button className="absolute top-[12px] right-[12px] w-[16px] h-[16px] flex items-center justify-center bg-transparent border-none p-0">

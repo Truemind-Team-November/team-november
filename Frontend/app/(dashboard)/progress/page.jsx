@@ -1,36 +1,38 @@
 "use client";
 
-import { useEffect, useMemo, useState } from 'react';
-import client from '@/lib/client';
+import { useEffect, useMemo, useState } from "react";
+import client from "@/lib/client";
 
 export default function ProgressPage() {
   const [cards, setCards] = useState([]);
   const [skills, setSkills] = useState([]);
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const loadProgress = async () => {
       try {
-        const response = await client.get('/Progress/me');
+        const response = await client.get("/Progress/me");
         const payload = response.data?.data;
 
         if (!payload) {
           return;
         }
 
-        const palette = ['#00D4AA', '#0950C3', '#8B61E8'];
-        const courseCards = (payload.courseProgressCards || []).slice(0, 3).map((card, index) => ({
-          title: card.courseTitle,
-          value: Math.round(card.percentage || 0),
-          color: palette[index % palette.length],
-        }));
+        const palette = ["#00D4AA", "#0950C3", "#8B61E8"];
+        const courseCards = (payload.courseProgressCards || [])
+          .slice(0, 3)
+          .map((card, index) => ({
+            title: card.courseTitle,
+            value: Math.round(card.percentage || 0),
+            color: palette[index % palette.length],
+          }));
 
         const overall = {
-          title: 'Overall Progress',
+          title: "Overall Progress",
           value: Math.round(payload.overallProgressPercentage || 0),
-          color: '#EF9807',
+          color: "#EF9807",
         };
 
         if (courseCards.length) {
@@ -43,24 +45,33 @@ export default function ProgressPage() {
         }));
         setSkills(apiSkills);
 
-        const apiActivities = (payload.gradedWork || []).slice(0, 4).map((item, index) => {
-          const activityDate = item.activityDate ? new Date(item.activityDate) : null;
-          const dateLabel = activityDate
-            ? activityDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-            : 'Recent';
+        const apiActivities = (payload.gradedWork || [])
+          .slice(0, 4)
+          .map((item, index) => {
+            const activityDate = item.activityDate
+              ? new Date(item.activityDate)
+              : null;
+            const dateLabel = activityDate
+              ? activityDate.toLocaleDateString(undefined, {
+                  month: "short",
+                  day: "numeric",
+                })
+              : "Recent";
 
-          return {
-            title: item.title,
-            subtitle: `${item.courseTitle} - ${dateLabel}`,
-            score: Number(item.score || 0),
-            color: palette[index % palette.length],
-          };
-        });
+            return {
+              title: item.title,
+              subtitle: `${item.courseTitle} - ${dateLabel}`,
+              score: Number(item.score || 0),
+              color: palette[index % palette.length],
+            };
+          });
 
         setActivities(apiActivities);
       } catch (err) {
-        console.error('Progress fetch error:', err);
-        setError('Unable to load progress right now. Showing current layout data.');
+        console.error("Progress fetch error:", err);
+        setError(
+          "Unable to load progress right now. Showing current layout data.",
+        );
       } finally {
         setLoading(false);
       }
@@ -91,72 +102,108 @@ export default function ProgressPage() {
         </div>
       )}
 
-      {!loading && !error && cards.length === 0 && skills.length === 0 && activities.length === 0 && (
-        <div className="mt-12 text-center py-16">
-          <p className="text-xl text-[#CEE0FD] mb-2 font-semibold">No progress yet</p>
-          <p className="text-sm text-[#7D7F82]">Start learning courses to see your progress tracked here</p>
-        </div>
-      )}
+      {!loading &&
+        !error &&
+        cards.length === 0 &&
+        skills.length === 0 &&
+        activities.length === 0 && (
+          <div className="mt-12 text-center py-16">
+            <p className="text-xl text-[#CEE0FD] mb-2 font-semibold">
+              No progress yet
+            </p>
+            <p className="text-sm text-[#7D7F82]">
+              Start learning courses to see your progress tracked here
+            </p>
+          </div>
+        )}
 
       <section className="mt-10 grid gap-6 xl:grid-cols-4 md:grid-cols-2 grid-cols-1">
-        {(visibleCards.length > 0 ? visibleCards.map((card) => (
-          <article
-            key={card.title}
-            className="relative flex min-h-52 flex-col items-center justify-center rounded-2xl border border-[#D6E3F5] bg-[#101723] px-4 py-8"
-          >
-            <div
-              className="grid h-24 w-24 place-items-center rounded-full"
-              style={{ background: `conic-gradient(${card.color} ${card.value}%, #4d4e50 ${card.value}% 100%)` }}
-            >
-              <div className="grid h-20 w-20 place-items-center rounded-full bg-[#101723] text-[23px] font-bold">
-                <span style={{ color: card.color }}>{card.value}%</span>
-              </div>
-            </div>
-            <p className="mt-3 text-center text-base text-[#D6E3F5]">{card.title}</p>
-            <span className="absolute -right-5 -top-7 h-24 w-20 rounded-full bg-[#415C8B]/50" />
-          </article>
-        )) : null)}
+        {visibleCards.length > 0
+          ? visibleCards.map((card) => (
+              <article
+                key={card.title}
+                className="relative flex min-h-52 flex-col items-center justify-center rounded-2xl border border-[#D6E3F5] bg-[#101723] px-4 py-8"
+              >
+                <div
+                  className="grid h-24 w-24 place-items-center rounded-full"
+                  style={{
+                    background: `conic-gradient(${card.color} ${card.value}%, #4d4e50 ${card.value}% 100%)`,
+                  }}
+                >
+                  <div className="grid h-20 w-20 place-items-center rounded-full bg-[#101723] text-[23px] font-bold">
+                    <span style={{ color: card.color }}>{card.value}%</span>
+                  </div>
+                </div>
+                <p className="mt-3 text-center text-base text-[#D6E3F5]">
+                  {card.title}
+                </p>
+                <span className="absolute -right-5 -top-7 h-24 w-20 rounded-full bg-[#415C8B]/50" />
+              </article>
+            ))
+          : null}
       </section>
 
       <section className="mt-16 grid gap-16 xl:grid-cols-2 grid-cols-1">
-        {skills.length > 0 && <article className="rounded-xl border border-[#7D7F82] bg-[#101723] px-6 pb-8 pt-6">
-          <h2 className="text-[33px] font-bold leading-tight">Skill Breakdown</h2>
-          <div className="mt-7 space-y-4">
-            {skills.map((skill) => (
-              <div key={skill.name} className="grid items-center gap-4 lg:grid-cols-[180px_1fr_48px] grid-cols-1">
-                <p className="text-[23px] leading-tight text-[#D6E3F5]">{skill.name}</p>
-                <div className="h-3.5 overflow-hidden rounded-xl bg-[#7D7F82]/50">
-                  <div
-                    className="h-full rounded-xl bg-[linear-gradient(279.23deg,#ADC7EB_7.56%,#627185_156.44%)]"
-                    style={{ width: `${Math.max(0, Math.min(100, skill.value))}%` }}
-                    aria-hidden="true"
-                  />
+        {skills.length > 0 && (
+          <article className="rounded-xl border border-[#7D7F82] bg-[#101723] px-6 pb-8 pt-6">
+            <h2 className="text-[33px] font-bold leading-tight">
+              Skill Breakdown
+            </h2>
+            <div className="mt-7 space-y-4">
+              {skills.map((skill) => (
+                <div
+                  key={skill.name}
+                  className="grid items-center gap-4 lg:grid-cols-[180px_1fr_48px] grid-cols-1"
+                >
+                  <p className="text-[23px] leading-tight text-[#D6E3F5]">
+                    {skill.name}
+                  </p>
+                  <div className="h-3.5 overflow-hidden rounded-xl bg-[#7D7F82]/50">
+                    <div
+                      className="h-full rounded-xl bg-[linear-gradient(279.23deg,#ADC7EB_7.56%,#627185_156.44%)]"
+                      style={{
+                        width: `${Math.max(0, Math.min(100, skill.value))}%`,
+                      }}
+                      aria-hidden="true"
+                    />
+                  </div>
+                  <p className="text-base font-bold text-[#0950C3]">
+                    {skill.value}%
+                  </p>
                 </div>
-                <p className="text-base font-bold text-[#0950C3]">{skill.value}%</p>
-              </div>
-            ))}
-          </div>
-        </article>}
+              ))}
+            </div>
+          </article>
+        )}
 
-        {activities.length > 0 && <article className="rounded-xl border border-[#7D7F82] bg-[#101723] p-6">
-          <h2 className="sr-only">Recent Scores</h2>
-          <div className="space-y-7">
-            {activities.map((activity) => (
-              <div
-                key={activity.title}
-                className="flex items-center justify-between rounded-[10px] bg-[#1A2234] px-7 py-2"
-              >
-                <div>
-                  <p className="text-[23px] font-bold leading-tight">{activity.title}</p>
-                  <p className="text-base font-bold text-[#CEE0FD]">{activity.subtitle}</p>
+        {activities.length > 0 && (
+          <article className="rounded-xl border border-[#7D7F82] bg-[#101723] p-6">
+            <h2 className="sr-only">Recent Scores</h2>
+            <div className="space-y-7">
+              {activities.map((activity) => (
+                <div
+                  key={activity.title}
+                  className="flex items-center justify-between rounded-[10px] bg-[#1A2234] px-7 py-2"
+                >
+                  <div>
+                    <p className="text-[23px] font-bold leading-tight">
+                      {activity.title}
+                    </p>
+                    <p className="text-base font-bold text-[#CEE0FD]">
+                      {activity.subtitle}
+                    </p>
+                  </div>
+                  <p
+                    className="text-[23px] font-bold"
+                    style={{ color: activity.color }}
+                  >
+                    {activity.score}
+                  </p>
                 </div>
-                <p className="text-[23px] font-bold" style={{ color: activity.color }}>
-                  {activity.score}
-                </p>
-              </div>
-            ))}
-          </div>
-        </article>}
+              ))}
+            </div>
+          </article>
+        )}
       </section>
     </div>
   );

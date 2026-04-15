@@ -1,117 +1,129 @@
 "use client";
-import { useEffect, useState } from "react";
-import CourseCard from "@/components/CourseCard";
+
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
+import CourseCard from "@/components/CourseCard";
+import { LightningIcon, PaletteIcon } from "@/components/Icons";
 import client from "@/lib/client";
 
+const tabs = [
+  "All courses",
+  "Design",
+  "Engineering",
+  "Product",
+  "Data Science",
+  "Business",
+];
+
 export default function CourseCatalog() {
+  const router = useRouter();
   const [courses, setCourses] = useState([]);
-  const [filteredCourses, setFilteredCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedTab, setSelectedTab] = useState("All courses");
-  const [showMyCourses, setShowMyCourses] = useState(false);
+  const [enrollingId, setEnrollingId] = useState(null);
+  const [activeTab, setActiveTab] = useState("All courses");
 
   useEffect(() => {
-    fetchCourses();
+    const fetchCatalog = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const catalogRes = await client.get("/Course");
+        if (catalogRes.data?.success) {
+          const mapped = catalogRes.data.data.map((course) => ({
+            ...course,
+            displayCategory: course.category.toUpperCase(),
+            author: course.instructorName,
+            initials:
+              course.instructorName
+                ?.split(" ")
+                .map((n) => n[0])
+                .join("")
+                .toUpperCase() || "??",
+            lessons: course.lessonCount,
+            status: course.isEnrolled ? "Enrolled" : "New",
+            icon: course.category.toLowerCase().includes("design") ? (
+              <PaletteIcon className="w-12 h-12" />
+            ) : course.category.toLowerCase().includes("engineer") ? (
+              <LightningIcon className="w-12 h-12" />
+            ) : (
+              "✨"
+            ),
+          }));
+          setCourses(mapped);
+        } else {
+          setError(catalogRes.data?.message || "Failed to fetch courses");
+        }
+      } catch (err) {
+        setError(err.response?.data?.message || "Failed to load courses");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCatalog();
   }, []);
 
-  useEffect(() => {
-    applyFilters();
-  }, [courses, selectedTab, showMyCourses]);
-
-  const fetchCourses = async () => {
+  const handleEnroll = async (e, courseId) => {
+    e.stopPropagation();
+    setEnrollingId(courseId);
     try {
-      setLoading(true);
-      setError(null);
-      const response = await client.get('/course');
-      if (response.data.success) {
-        setCourses(response.data.data || []);
-      } else {
-        setError(response.data.message || "Failed to fetch courses");
+      const response = await client.post(`/Enrollment/${courseId}`);
+      if (response.data?.success) {
+        setCourses((prev) =>
+          prev.map((c) =>
+            c.id === courseId
+              ? { ...c, status: "Enrolled", isEnrolled: true }
+              : c,
+          ),
+        );
+        alert("Enrolled successfully!");
       }
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to load courses");
-      setCourses([]);
+      alert(err.response?.data?.message || "Enrollment failed.");
     } finally {
-      setLoading(false);
+      setEnrollingId(null);
     }
   };
 
-  const applyFilters = () => {
-    let filtered = courses;
-
-    if (showMyCourses) {
-      filtered = filtered.filter(course => course.isEnrolled);
-    }
-
-    if (selectedTab !== "All courses") {
-      const categoryMap = {
-        "Design": "UI/UX DESIGN",
-        "Engineering": "ENGINEERING",
-        "Product": "PRODUCT MANAGEMENT",
-        "Data Science": "DATA SCIENCE",
-        "Business": "BUSINESS"
-      };
-      const selectedCategory = categoryMap[selectedTab];
-      if (selectedCategory) {
-        filtered = filtered.filter(course =>
-          course.category?.toUpperCase() === selectedCategory.toUpperCase()
+  const filteredCourses =
+    activeTab === "All courses"
+      ? courses
+      : courses.filter(
+          (c) => c.category.toLowerCase() === activeTab.toLowerCase(),
         );
-      }
-    }
 
-    setFilteredCourses(filtered);
-  };
-
-  const handleTabClick = (tab) => {
-    setSelectedTab(tab);
-    setShowMyCourses(false);
-  };
-
-  const handleMyCourses = () => {
-    setShowMyCourses(!showMyCourses);
-  };
-
-  const tabs = [
-    "All courses",
-    "Design",
-    "Engineering",
-    "Product",
-    "Data Science",
-    "Business",
-  ];
+  if (loading)
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#0f172a]">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div>
+      </div>
+    );
 
   return (
     <main className="min-h-screen bg-[#0f172a] p-8">
+      {/* Page Header */}
       <div className="mb-6">
         <h1 className="text-xl font-bold text-white">Course Catalog</h1>
       </div>
 
-      <div className="flex items-center justify-between border-b border-white/10 mb-8">
-        <div className="flex gap-1">
+      {/* Tab Bar */}
+      <div className="flex items-center justify-between border-b border-white/10 mb-8 overflow-x-auto">
+        <div className="flex gap-1 min-w-max">
           {tabs.map((tab) => (
             <button
-              onClick={() => handleTabClick(tab)}
+              onClick={() => setActiveTab(tab)}
               key={tab}
-              className={`px-4 py-3 text-sm font-medium transition-colors duration-150
-                ${selectedTab === tab && !showMyCourses
-                  ? "text-white border-b-2 border-blue-400 -mb-px"
-                  : "text-slate-400 hover:text-white"
-                }`}
+              className={`px-4 py-3 text-sm font-medium transition-colors duration-150 relative
+                ${activeTab === tab ? "text-white" : "text-slate-400 hover:text-white"}`}
             >
               {tab}
+              {activeTab === tab && (
+                <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-400"></div>
+              )}
             </button>
           ))}
         </div>
-        <button 
-          onClick={handleMyCourses} 
-          className={`flex items-center gap-1.5 text-sm font-medium transition-colors mb-2 cursor-pointer
-            ${showMyCourses ? "text-white" : "text-slate-300 hover:text-white"}`}
-        >
-          <span className="text-blue-400">▶</span>
-          My Courses
-        </button>
       </div>
 
       {error && (
@@ -120,52 +132,44 @@ export default function CourseCatalog() {
         </div>
       )}
 
-      {loading && (
-        <div className="text-center py-12">
-          <div className="inline-block">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-          </div>
-          <p className="text-slate-400 mt-4">Loading courses...</p>
-        </div>
-      )}
-
       {!loading && filteredCourses.length === 0 && (
         <div className="text-center py-12">
           <p className="text-slate-400 text-lg">
-            {showMyCourses ? "You haven't enrolled in any courses yet." : "No courses found."}
+            No courses found in this category.
           </p>
-          {showMyCourses && (
-            <button 
-              onClick={() => { setShowMyCourses(false); setSelectedTab("All courses"); }}
-              className="mt-4 text-blue-500 hover:text-blue-400 underline"
-            >
-              Browse all courses
-            </button>
-          )}
         </div>
       )}
 
       {!loading && filteredCourses.length > 0 && (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredCourses.map((course, index) => (
-          <Link key={index} href={`/lesson?courseId=${course.id}`}>
-            <CourseCard 
-              course={{
-                title: course.title,
-                category: course.category,
-                description: course.description,
-                lessons: course.lessonCount,
-                duration: `${course.estimatedHours}h`,
-                author: course.instructorName,
-                initials: course.instructorName?.split(' ').map(n => n[0]).join(''),
-                bgColor: "bg-[#9db1d6]",
-                status: course.isEnrolled ? "Enrolled" : "New",
-                progress: Math.round(course.progressPercentage || 0),
-              }} 
-            />
-          </Link>
-        ))}
-      </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredCourses.map((course) => (
+            <div
+              key={course.id}
+              className="relative cursor-pointer group"
+              onClick={() => {
+                if (course.isEnrolled) {
+                  router.push(`/course/${course.id}/lessons`);
+                } else {
+                  alert("Please enroll to view lessons.");
+                }
+              }}
+            >
+              <CourseCard
+                course={{ ...course, category: course.displayCategory }}
+              />
+
+              {!course.isEnrolled && (
+                <button
+                  onClick={(e) => handleEnroll(e, course.id)}
+                  disabled={enrollingId === course.id}
+                  className="absolute top-4 right-4 z-20 rounded-lg bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-lg hover:bg-blue-500 transition-all disabled:opacity-70"
+                >
+                  {enrollingId === course.id ? "..." : "Enroll Now"}
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
       )}
     </main>
   );

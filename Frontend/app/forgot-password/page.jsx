@@ -1,4 +1,5 @@
 "use client";
+
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -17,8 +18,10 @@ export default function ForgotPasswordPage() {
     setSuccess(false);
 
     try {
-      const response = await client.post('/auth/forgot-password', { email });
-      setMessage("Password reset link sent to your email. Please check your inbox.");
+      const response = await client.post("/auth/forgot-password", { email });
+      setMessage(
+        "Password reset link sent to your email. Please check your inbox.",
+      );
       setSuccess(true);
       setEmail("");
     } catch (error) {
@@ -36,24 +39,25 @@ export default function ForgotPasswordPage() {
     <div className="min-h-screen bg-[#0B1220] flex items-center justify-center p-6">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <Image 
-            src={"/logo.svg"} 
-            alt="logo" 
-            width={500} 
-            height={500} 
-            className="w-16 h-16 mx-auto mb-4" 
+          <Image
+            src={"/logo.svg"}
+            alt="logo"
+            width={500}
+            height={500}
+            className="w-16 h-16 mx-auto mb-4"
           />
           <h1 className="text-2xl font-bold text-white mb-2">Reset Password</h1>
           <p className="text-gray-400 text-sm">
-            Enter your email address and we'll send you a link to reset your password.
+            Enter your email address and we'll send you a link to reset your
+            password.
           </p>
         </div>
 
         {message && (
-          <div 
+          <div
             className={`mb-6 p-3 rounded text-sm ${
-              success 
-                ? "bg-green-900/30 text-green-400 border border-green-800" 
+              success
+                ? "bg-green-900/30 text-green-400 border border-green-800"
                 : "bg-red-900/30 text-red-400 border border-red-800"
             }`}
           >
@@ -63,7 +67,9 @@ export default function ForgotPasswordPage() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="text-sm font-medium text-white block mb-2">Email Address</label>
+            <label className="text-sm font-medium text-white block mb-2">
+              Email Address
+            </label>
             <input
               type="email"
               value={email}
