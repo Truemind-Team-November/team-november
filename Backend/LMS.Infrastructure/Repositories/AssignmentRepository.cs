@@ -42,6 +42,19 @@ public class AssignmentRepository : IAssignmentRepository
             .ToListAsync();
     }
 
+    public async Task<List<Assignment>> GetByCourseIdsAsync(IEnumerable<Guid> courseIds)
+    {
+        var ids = courseIds.ToList();
+        if (!ids.Any()) return new List<Assignment>();
+
+        return await _context.Assignments
+            .AsNoTracking()
+            .Where(a => ids.Contains(a.CourseId))
+            .OrderBy(a => a.DueDate)
+            .Include(a => a.Course)
+            .ToListAsync();
+    }
+
     public async Task AddAsync(Assignment entity)
     {
         await _context.Assignments.AddAsync(entity);

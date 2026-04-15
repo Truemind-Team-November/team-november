@@ -33,83 +33,121 @@ public class DashboardRepository : IDashboardRepository
         if (user == null)
             return null;
 
-        // Load team separately to avoid cycle in no-tracking query
-        Team? team = null;
+        // Load team preview (project only required fields) to avoid full entity tracking
+        TeamPreviewResponse? myTeam = null;
         if (user.TeamId.HasValue)
         {
-            team = await _context.Teams
+            var teamPreview = await _context.Teams
                 .AsNoTracking()
-                .Include(t => t.Members)
-                .FirstOrDefaultAsync(t => t.Id == user.TeamId.Value);
+                .Where(t => t.Id == user.TeamId.Value)
+                .Select(t => new
+                {
+                    t.Id,
+                    t.Name,
+                    MemberCount = t.Members.Count,
+                    Members = t.Members
+                        .OrderByDescending(m => m.Id == userId)
+                        .ThenBy(m => m.FirstName)
+                        .ThenBy(m => m.LastName)
+                        .Select(m => new TeamPreviewMemberResponse(
+                            m.Id,
+                            m.FullName,
+                            m.Discipline,
+                            m.Id == userId
+                        ))
+                        .Take(teamMemberPreviewLimit)
+                        .ToList()
+                })
+                .FirstOrDefaultAsync();
+
+            if (teamPreview != null)
+            {
+                myTeam = new TeamPreviewResponse(
+                    teamPreview.Id,
+                    teamPreview.Name,
+                    teamPreview.MemberCount,
+                    teamPreview.Members
+                );
+            }
         }
 
+        // Load progress entries but project only the required fields to reduce joins
         var progresses = await _context.Progresses
             .AsNoTracking()
-            .Where(item => item.UserId == userId)
-            .Include(item => item.Course)
-                .ThenInclude(course => course.Instructor)
+            .Where(p => p.UserId == userId)
+            .Select(p => new
+            {
+                p.CourseId,
+                Percentage = p.Percentage,
+                LastActivity = p.UpdatedAt ?? p.CreatedAt,
+                CourseTitle = p.Course != null ? p.Course.Title : null,
+                InstructorName = p.Course != null && p.Course.Instructor != null ? p.Course.Instructor.FullName : null
+            })
             .ToListAsync();
 
         var enrolledCourseIds = progresses
-            .Select(item => item.CourseId)
+            .Select(p => p.CourseId)
             .Distinct()
             .ToList();
 
         var enrolledCoursesCount = enrolledCourseIds.Count;
         var averageCompletion = enrolledCoursesCount == 0
             ? 0
-            : Math.Round(progresses.Average(item => item.Percentage), 1);
+            : Math.Round(progresses.Average(p => p.Percentage), 1);
 
         var certificatesCount = await _context.Certificates
             .AsNoTracking()
             .CountAsync(item => item.UserId == userId);
 
-        var pendingTasksCount = await _context.Assignments
-            .AsNoTracking()
-            .Where(item => enrolledCourseIds.Contains(item.CourseId) && item.DueDate >= now)
-            .Where(item => !_context.Submissions.Any(submission =>
-                submission.AssignmentId == item.Id && submission.UserId == userId))
-            .CountAsync();
+        var pendingTasksCount = 0;
+        if (enrolledCourseIds.Count > 0)
+        {
+            pendingTasksCount = await _context.Assignments
+                .AsNoTracking()
+                .Where(item => enrolledCourseIds.Contains(item.CourseId) && item.DueDate >= now)
+                .Where(item => !_context.Submissions.Any(submission => submission.AssignmentId == item.Id && submission.UserId == userId))
+                .CountAsync();
+        }
 
         var continueLearning = progresses
-            .Where(item => item.Percentage < 100 && item.Course != null)
-            .OrderByDescending(item => item.UpdatedAt ?? item.CreatedAt)
+            .Where(item => item.Percentage < 100 && !string.IsNullOrWhiteSpace(item.CourseTitle))
+            .OrderByDescending(item => item.LastActivity)
             .Take(continueLearningLimit)
             .Select(item => new ContinueLearningItemResponse(
                 item.CourseId,
-                item.Course.Title,
-                item.Course.Instructor?.FullName ?? "Unknown",
+                item.CourseTitle ?? "Unknown",
+                item.InstructorName ?? "Unknown",
                 Math.Round(item.Percentage, 1),
-                item.UpdatedAt ?? item.CreatedAt
+                item.LastActivity
             ))
             .ToList();
 
-        var upcomingDeadlines = await _context.Assignments
-            .AsNoTracking()
-            .Where(item => enrolledCourseIds.Contains(item.CourseId) && item.DueDate >= now)
-            .Where(item => !_context.Submissions.Any(submission =>
-                submission.AssignmentId == item.Id && submission.UserId == userId))
-            .OrderBy(item => item.DueDate)
-            .Include(item => item.Course)
-            .Where(item => item.Course != null)
-            .Take(deadlineLimit)
-            .Select(item => new UpcomingDeadlineResponse(
-                item.Id,
-                item.Title,
-                item.Course.Title,
-                item.DueDate,
-                Math.Max(0, (int)Math.Ceiling((item.DueDate - now).TotalDays))
-            ))
-            .ToListAsync();
+        var upcomingDeadlines = new List<UpcomingDeadlineResponse>();
+        if (enrolledCourseIds.Count > 0)
+        {
+            upcomingDeadlines = await _context.Assignments
+                .AsNoTracking()
+                .Where(item => enrolledCourseIds.Contains(item.CourseId) && item.DueDate >= now)
+                .Where(item => !_context.Submissions.Any(submission => submission.AssignmentId == item.Id && submission.UserId == userId))
+                .OrderBy(item => item.DueDate)
+                .Take(deadlineLimit)
+                .Select(item => new UpcomingDeadlineResponse(
+                    item.Id,
+                    item.Title,
+                    item.Course != null ? item.Course.Title : string.Empty,
+                    item.DueDate,
+                    Math.Max(0, (int)Math.Ceiling((item.DueDate - now).TotalDays))
+                ))
+                .ToListAsync();
+        }
 
+        // Recent activity: use projections directly from each source
         var lessonActivities = await _context.LessonProgresses
             .AsNoTracking()
-            .Where(item => item.UserId == userId && item.CompletedAt != null && item.Lesson != null && item.Lesson.Course != null)
-            .Include(item => item.Lesson)
-                .ThenInclude(lesson => lesson.Course)
+            .Where(item => item.UserId == userId && item.CompletedAt != null)
             .Select(item => new RecentActivityResponse(
                 "lesson_completed",
-                $"You completed lesson {item.Lesson.Title} in {item.Lesson.Course.Title}",
+                item.Lesson != null && item.Lesson.Course != null ? $"You completed lesson {item.Lesson.Title} in {item.Lesson.Course.Title}" : "",
                 item.CompletedAt!.Value
             ))
             .ToListAsync();
@@ -117,7 +155,6 @@ public class DashboardRepository : IDashboardRepository
         var submissionActivities = await _context.Submissions
             .AsNoTracking()
             .Where(item => item.UserId == userId && item.Assignment != null)
-            .Include(item => item.Assignment)
             .Select(item => new RecentActivityResponse(
                 "assignment_submitted",
                 $"You submitted {item.Assignment.Title}",
@@ -128,7 +165,6 @@ public class DashboardRepository : IDashboardRepository
         var certificateActivities = await _context.Certificates
             .AsNoTracking()
             .Where(item => item.UserId == userId && item.Course != null)
-            .Include(item => item.Course)
             .Select(item => new RecentActivityResponse(
                 "certificate_earned",
                 $"You earned a certificate in {item.Course.Title}",
@@ -149,7 +185,6 @@ public class DashboardRepository : IDashboardRepository
         var discussionReplyActivities = await _context.DiscussionReplies
             .AsNoTracking()
             .Where(item => item.UserId == userId && item.Post != null)
-            .Include(item => item.Post)
             .Select(item => new RecentActivityResponse(
                 "discussion_replied",
                 $"You replied to {item.Post.Title}",
@@ -160,7 +195,6 @@ public class DashboardRepository : IDashboardRepository
         var enrollmentActivities = await _context.Enrollments
             .AsNoTracking()
             .Where(item => item.UserId == userId && item.Course != null)
-            .Include(item => item.Course)
             .Select(item => new RecentActivityResponse(
                 "course_joined",
                 $"You enrolled in {item.Course.Title}",
@@ -177,31 +211,6 @@ public class DashboardRepository : IDashboardRepository
             .OrderByDescending(item => item.OccurredAt)
             .Take(activityLimit)
             .ToList();
-
-        TeamPreviewResponse? myTeam = null;
-        if (team != null)
-        {
-            var orderedMembers = team.Members
-                .OrderByDescending(member => member.Id == userId)
-                .ThenBy(member => member.FirstName)
-                .ThenBy(member => member.LastName)
-                .ToList();
-
-            myTeam = new TeamPreviewResponse(
-                team.Id,
-                team.Name,
-                orderedMembers.Count,
-                orderedMembers
-                    .Take(teamMemberPreviewLimit)
-                    .Select(member => new TeamPreviewMemberResponse(
-                        member.Id,
-                        member.FullName,
-                        member.Discipline,
-                        member.Id == userId
-                    ))
-                    .ToList()
-            );
-        }
 
         return new DashboardResponse(
             GetGreeting(now),
@@ -223,7 +232,7 @@ public class DashboardRepository : IDashboardRepository
                 user.CohortLabel,
                 user.Location,
                 user.Role.ToString(),
-                team?.Name
+                myTeam?.TeamName
             )
         );
     }
