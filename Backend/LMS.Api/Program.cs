@@ -20,13 +20,9 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Register DbCommandCounterInterceptor as singleton
-builder.Services.AddSingleton<DbCommandCounterInterceptor>();
-
 // 🔹 1. Add Persistence (EF Core + Npgsql)
-builder.Services.AddDbContext<ApplicationDbContext>((serviceProvider, options) =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
-           .AddInterceptors(serviceProvider.GetRequiredService<DbCommandCounterInterceptor>()));
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // 🔹 2. Register Repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -125,12 +121,6 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtConfig["Secret"]!)),
         ClockSkew = TimeSpan.Zero
     };
-})
-.AddGoogle(googleOptions =>
-{
-    googleOptions.ClientId = builder.Configuration["Authentication:Google:ClientId"];
-    googleOptions.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
-    googleOptions.CallbackPath = "/signin-google";
 });
 
 builder.Services.AddControllers()
@@ -175,21 +165,6 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
-
-// Development-only request timing & SQL count middleware
-if (app.Environment.IsDevelopment())
-{
-    app.Use(async (context, next) =>
-    {
-        var sw = System.Diagnostics.Stopwatch.StartNew();
-        DbCommandCounterInterceptor.Reset();
-        await next();
-        sw.Stop();
-        var dbCount = DbCommandCounterInterceptor.GetCount();
-        var logger = app.Services.GetRequiredService<ILogger<Program>>();
-        logger.LogInformation("Request {method} {path} completed in {ms} ms and executed {db} SQL commands", context.Request.Method, context.Request.Path, sw.ElapsedMilliseconds, dbCount);
-    });
-}
 
 using (var scope = app.Services.CreateScope())
 {

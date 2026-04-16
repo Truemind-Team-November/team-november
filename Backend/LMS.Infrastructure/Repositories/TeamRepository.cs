@@ -23,15 +23,12 @@ public class TeamRepository : ITeamRepository
 
     public async Task<List<Team>> GetAllAsync()
     {
-        return await _context.Teams
-            .AsNoTracking()
-            .ToListAsync();
+        return await _context.Teams.ToListAsync();
     }
 
     public async Task<List<Team>> GetAllWithMembersAsync()
     {
         return await _context.Teams
-            .AsNoTracking()
             .Include(team => team.Members)
             .ToListAsync();
     }
@@ -39,14 +36,12 @@ public class TeamRepository : ITeamRepository
     public async Task<Team?> GetByNameAsync(string name)
     {
         return await _context.Teams
-            .AsNoTracking()
             .FirstOrDefaultAsync(team => team.Name.ToLower() == name.Trim().ToLower());
     }
 
     public async Task<Team?> GetByMemberIdAsync(Guid userId)
     {
         return await _context.Teams
-            .AsNoTracking()
             .Include(team => team.Members)
             .FirstOrDefaultAsync(team => team.Members.Any(member => member.Id == userId));
     }

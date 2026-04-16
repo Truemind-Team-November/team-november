@@ -28,43 +28,6 @@ public class UserRepository : IUserRepository
             .ToListAsync();
     }
 
-    public async Task<List<User>> GetUnassignedLearnersAsync()
-    {
-        return await _context.Users
-            .AsNoTracking()
-            .Include(u => u.Team)
-            .Where(u => u.Role == Domain.Enums.UserRole.Learner && u.TeamId == null)
-            .OrderBy(u => u.FirstName)
-            .ThenBy(u => u.LastName)
-            .ToListAsync();
-    }
-
-    public async Task<List<User>> GetUsersByDisciplineAsync(string disciplineName)
-    {
-        if (string.IsNullOrWhiteSpace(disciplineName))
-            return new List<User>();
-
-        var normalized = disciplineName.Trim();
-
-        return await _context.Users
-            .AsNoTracking()
-            .Include(u => u.Team)
-            .Where(u => u.Discipline.ToLower() == normalized.ToLower())
-            .ToListAsync();
-    }
-
-    public async Task<bool> ExistsByDisciplineAsync(string disciplineName)
-    {
-        if (string.IsNullOrWhiteSpace(disciplineName))
-            return false;
-
-        var normalized = disciplineName.Trim().ToLowerInvariant();
-
-        return await _context.Users
-            .AsNoTracking()
-            .AnyAsync(u => u.Discipline.ToLower() == normalized);
-    }
-
     public async Task<User?> GetByEmailAsync(string email)
     {
         return await _context.Users

@@ -110,9 +110,12 @@ public class AssignmentService : IAssignmentService
         var courseIds = enrollments.Select(x => x.CourseId).ToHashSet();
 
         if (courseIds.Count == 0)
-            return BaseResponse<IEnumerable<LearnerAssignmentResponse>>.Ok(Enumerable.Empty<LearnerAssignmentResponse>());
+            return BaseResponse<IEnumerable<LearnerAssignmentResponse>>.Ok([]);
 
-        var assignments = await _assignmentRepository.GetByCourseIdsAsync(courseIds);
+        var assignments = (await _assignmentRepository.GetAllAsync())
+            .Where(x => courseIds.Contains(x.CourseId))
+            .OrderBy(x => x.DueDate)
+            .ToList();
 
         var submissions = await _submissionRepository.GetByUserIdAsync(_currentUserService.UserId.Value);
         var submissionsByAssignmentId = submissions.ToDictionary(x => x.AssignmentId, x => x);

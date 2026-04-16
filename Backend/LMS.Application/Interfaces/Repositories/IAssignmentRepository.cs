@@ -10,6 +10,4 @@ public interface IAssignmentRepository : IRepository<Assignment>
     Task<PagedResult<Assignment>> GetPagedAsync(int page, int pageSize);
 
     Task<PagedResult<Assignment>> GetByCoursePagedAsync(Guid courseId, int page, int pageSize);
-
-    Task<List<Assignment>> GetByCourseIdsAsync(IEnumerable<Guid> courseIds);
 }

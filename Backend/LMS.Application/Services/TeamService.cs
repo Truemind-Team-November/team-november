@@ -84,9 +84,12 @@ public class TeamService : ITeamService
 
     public async Task<BaseResponse<IEnumerable<AllocatableLearnerResponse>>> GetUnassignedLearnersAsync()
     {
-        var users = await _userRepository.GetUnassignedLearnersAsync();
+        var users = await _userRepository.GetAllAsync();
 
         var response = users
+            .Where(user => user.IsLearner() && user.TeamId == null)
+            .OrderBy(user => user.FirstName)
+            .ThenBy(user => user.LastName)
             .Select(MapToAllocatableLearnerResponse)
             .ToList();
 
@@ -251,13 +254,15 @@ public class TeamService : ITeamService
             discipline.Update(request.Name);
             await _disciplineRepository.UpdateAsync(discipline);
 
-            // Fetch only affected users from DB instead of loading all users
-            var affectedUsers = await _userRepository.GetUsersByDisciplineAsync(previousName);
+            var users = await _userRepository.GetAllAsync();
+            var affectedUsers = users
+                .Where(user => string.Equals(user.Discipline, previousName, StringComparison.OrdinalIgnoreCase))
+                .ToList();
 
             foreach (var user in affectedUsers)
             {
                 user.ChangeDiscipline(discipline.Name);
-                // changes will be persisted when committing the unit of work
+                await _userRepository.UpdateAsync(user);
             }
 
             await _unitOfWork.CommitAsync();
@@ -280,8 +285,8 @@ public class TeamService : ITeamService
         if (discipline == null)
             return BaseResponse<string>.Fail("Discipline not found");
 
-        // Check existence by discipline without loading all users
-        if (await _userRepository.ExistsByDisciplineAsync(discipline.Name))
+        var users = await _userRepository.GetAllAsync();
+        if (users.Any(user => string.Equals(user.Discipline, discipline.Name, StringComparison.OrdinalIgnoreCase)))
             return BaseResponse<string>.Fail("Cannot delete a discipline that is assigned to users");
 
         await _disciplineRepository.DeleteAsync(discipline);
